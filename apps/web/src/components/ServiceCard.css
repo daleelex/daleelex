@@ -1,0 +1,93 @@
+.service-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+
+.service-card:hover {
+  border-color: var(--color-accent);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.card-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.badge.tier.tier-1 { background: rgba(239, 68, 68, 0.15); color: var(--color-tier-1); }
+.badge.tier.tier-2 { background: rgba(245, 158, 11, 0.15); color: var(--color-tier-2); }
+.badge.tier.tier-3 { background: rgba(107, 114, 128, 0.15); color: var(--color-tier-3); }
+
+.badge.lifecycle.production { background: rgba(34, 197, 94, 0.12); color: var(--color-production); }
+.badge.lifecycle.beta       { background: rgba(245, 158, 11, 0.12); color: var(--color-beta); }
+.badge.lifecycle.deprecated { background: rgba(107, 114, 128, 0.12); color: var(--color-deprecated); }
+
+.card-description {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.meta-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.meta-value {
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+}
