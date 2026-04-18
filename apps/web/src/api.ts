@@ -1,4 +1,4 @@
-import type { ServiceListResponse, HealthResponse } from '@daleelex/shared';
+import type { ServiceListResponse, TeamListResponse, HealthResponse } from '@daleelex/shared';
 
 const BASE = '/api/v1';
 
@@ -11,4 +11,5 @@ async function get<T>(path: string): Promise<T> {
 export const api = {
   health: () => get<HealthResponse>('/health'),
   services: () => get<ServiceListResponse>('/services'),
+  teams: () => get<TeamListResponse>('/teams'),
 };
