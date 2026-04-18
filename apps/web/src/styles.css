@@ -38,6 +38,8 @@
   --accent: #2FA99B;
   --accent-fg: #FFFFFF;
   --accent-soft: rgba(47,169,155,0.12);
+  --accent-2: #1F5FA5;
+  --accent-2-soft: rgba(31,95,165,0.12);
   --ok: #1FA971;
   --warn: #D89510;
   --danger: #D94A3D;
@@ -58,6 +60,8 @@
   --accent: #2FA99B;
   --accent-fg: #05141A;
   --accent-soft: rgba(47,169,155,0.16);
+  --accent-2: #4B8FDB;
+  --accent-2-soft: rgba(75,143,219,0.16);
   --ok: #3DCB8F;
   --warn: #F2BC4C;
   --danger: #FF8676;

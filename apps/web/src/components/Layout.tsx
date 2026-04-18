@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import './Layout.css';
 
@@ -23,6 +23,10 @@ const NAV_GROUPS = [
 export function Layout() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }, []);
+
   function toggleTheme() {
     const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
@@ -30,7 +34,7 @@ export function Layout() {
   }
 
   return (
-    <div className="root" data-theme={theme}>
+    <div className="root">
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-wordmark">DaleelEx</span>
@@ -60,12 +64,12 @@ export function Layout() {
             All systems operational
           </div>
           <button className="theme-toggle" onClick={toggleTheme}>
-            {theme === 'light' ? '🌙 Dark mode' : '☀️ Light mode'}
+            <span>{theme === 'light' ? '🌙 Dark mode' : '☀️ Light mode'}</span>
           </button>
         </div>
       </aside>
 
-      <main className="main-area">
+      <main className="main">
         <Outlet />
       </main>
     </div>
