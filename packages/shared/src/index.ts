@@ -40,6 +40,21 @@ export interface ServiceListResponse {
   total: number;
 }
 
+export interface ServiceDocSummary {
+  id: number;
+  path: string;
+  title: string;
+}
+
+export interface ServiceDoc extends ServiceDocSummary {
+  contentMd: string;
+  fetchedAt: string;
+}
+
+export interface ServiceDocListResponse {
+  data: ServiceDocSummary[];
+}
+
 export interface TeamWithStats extends Team {
   serviceCount: number;
   tier1Count: number;

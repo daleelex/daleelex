@@ -207,6 +207,134 @@ const services = [
   },
 ];
 
+const serviceDocs: { serviceId: string; path: string; title: string; contentMd: string }[] = [
+  {
+    serviceId: 'svc-auth-001',
+    path: 'docs/index.md',
+    title: 'Overview',
+    contentMd: `# Authentication Gateway
+
+The Authentication Gateway is the single entry point for all identity and access management across the platform. It handles OAuth2 authorization code flows, OIDC token issuance, and federated identity via third-party providers (Google, GitHub).
+
+## Responsibilities
+
+- **Token issuance** — issues short-lived access tokens (15 min) and long-lived refresh tokens (7 days)
+- **SSO** — brokers login via configured OIDC providers
+- **Token validation** — exposes a fast introspection endpoint used by the API Gateway on every request
+- **Session management** — tracks active sessions and supports force-logout for security incidents
+
+## Quick start
+
+Point your service at the gateway's introspection endpoint:
+
+\`\`\`
+POST /v1/introspect
+Authorization: Bearer <token>
+\`\`\`
+
+Returns \`{ active: true, sub: "usr-xxx", scope: "..." }\` on success or \`{ active: false }\` on failure.
+
+## SLO
+
+99.95% availability over a 30-day window. Latency p99 < 50ms for introspection calls.
+`,
+  },
+  {
+    serviceId: 'svc-auth-001',
+    path: 'docs/runbook.md',
+    title: 'Runbook',
+    contentMd: `# Auth Gateway Runbook
+
+## High error rate on /v1/token
+
+**Symptoms:** Error rate on \`POST /v1/token\` > 1% for > 5 minutes.
+
+**Likely causes:**
+1. Upstream DB (Postgres) unreachable — check \`pg-main\` health
+2. Redis session store full — check memory usage on \`redis-sessions\`
+3. Misconfigured OIDC provider — check provider config in Vault
+
+**Steps:**
+1. Check the gateway error logs: \`kubectl logs -l app=auth-gateway --tail=200\`
+2. Confirm DB connectivity: \`kubectl exec -it <pod> -- psql $DATABASE_URL -c 'SELECT 1'\`
+3. If Redis is the issue, flush expired sessions: \`SCAN + DEL\` with TTL filter (do not \`FLUSHALL\`)
+
+## Token validation latency spike
+
+Introspection p99 > 100ms sustained for > 2 minutes pages on-call.
+
+**Check:** introspection is served from an in-memory cache (5s TTL). A cache miss hits Postgres. If Postgres is slow, every cold introspection is slow.
+
+**Mitigation:** scale the gateway horizontally — each replica has its own warm cache, spreading load.
+`,
+  },
+  {
+    serviceId: 'svc-users-003',
+    path: 'docs/index.md',
+    title: 'Overview',
+    contentMd: `# User Service
+
+Manages user profiles, preferences, and account metadata. The source of record for identity data downstream of the Auth Gateway.
+
+## Key concepts
+
+- **User** — an authenticated human. Created on first login via the auth flow.
+- **Profile** — display name, avatar, locale, timezone. Mutable by the user.
+- **Preferences** — per-feature settings (notification cadence, theme, etc.). Stored as a JSON blob keyed by feature name.
+
+## API surface
+
+All endpoints require a valid Bearer token issued by the Auth Gateway.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /v1/users/:id | Fetch a user by ID |
+| PATCH | /v1/users/:id | Update profile or preferences |
+| DELETE | /v1/users/:id | Soft-delete (GDPR) |
+| GET | /v1/users/:id/preferences | Fetch preferences blob |
+| PUT | /v1/users/:id/preferences/:feature | Update one feature's prefs |
+
+## Data model
+
+Users are stored in the primary Postgres cluster (\`svc-pg-main-006\`). Preferences are stored as \`jsonb\` to avoid schema churn as features add preference keys.
+
+## SLO
+
+99.9% availability, p99 < 120ms.
+`,
+  },
+  {
+    serviceId: 'svc-users-003',
+    path: 'docs/gdpr.md',
+    title: 'GDPR & Data Deletion',
+    contentMd: `# GDPR & Data Deletion
+
+The User Service is the coordinator for right-to-erasure requests.
+
+## Flow
+
+1. Request comes in via \`DELETE /v1/users/:id\` (requires admin scope)
+2. User record is **soft-deleted** immediately — \`deleted_at\` set, data intact
+3. A \`user.deletion_requested\` event is published to the event bus
+4. Downstream services (Notification, Analytics, Billing) consume the event and purge their own user data
+5. After a 30-day hold (for legal/billing audit trail), a background job hard-deletes the Postgres row
+
+## What gets deleted
+
+| System | Data | Timeline |
+|--------|------|----------|
+| User Service DB | Profile, preferences | 30 days after request |
+| Notification Service | Delivery history | Within 7 days |
+| Analytics Pipeline | Event logs | Within 14 days |
+| Billing Service | Invoices | Retained 7 years (legal requirement) |
+
+## Testing deletion
+
+Use the admin fixture account (\`test-deletion-user@internal\`) in staging. Never run deletion flows against production data for testing.
+`,
+  },
+];
+
 async function main() {
   console.log('Seeding teams...');
   for (const team of teams) {
@@ -223,6 +351,15 @@ async function main() {
       where: { id: service.id },
       update: { ...service, links: { deleteMany: {}, create: links } },
       create: { ...service, links: { create: links } },
+    });
+  }
+
+  console.log('Seeding service docs...');
+  for (const doc of serviceDocs) {
+    await prisma.serviceDoc.upsert({
+      where: { serviceId_path: { serviceId: doc.serviceId, path: doc.path } },
+      update: { title: doc.title, contentMd: doc.contentMd },
+      create: doc,
     });
   }
 

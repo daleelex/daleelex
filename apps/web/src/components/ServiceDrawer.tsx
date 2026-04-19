@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import type { Service, ServiceLink } from '@daleelex/shared';
+import { useQuery } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
+import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
+import { api } from '../api';
 import './ServiceDrawer.css';
 
 type Tab = 'overview' | 'scorecard' | 'dependencies' | 'docs';
@@ -85,7 +88,7 @@ export function ServiceDrawer({ service, onClose }: Props) {
             {tab === 'overview' && <OverviewTab service={service} />}
             {tab === 'scorecard' && <ScorecardTab checks={checks} passed={passed} score={score} />}
             {tab === 'dependencies' && <DependenciesTab />}
-            {tab === 'docs' && <DocsTab links={service.links} />}
+            {tab === 'docs' && <DocsTab serviceId={service.id} links={service.links} />}
           </div>
         </div>
       </aside>
@@ -196,35 +199,99 @@ function DependenciesTab() {
   );
 }
 
-function DocsTab({ links }: { links: ServiceLink[] }) {
-  if (links.length === 0) {
+function DocsTab({ serviceId, links }: { serviceId: string; links: ServiceLink[] }) {
+  const [selectedDoc, setSelectedDoc] = useState<ServiceDocSummary | null>(null);
+
+  const { data: docList, isLoading: listLoading } = useQuery({
+    queryKey: ['service-docs', serviceId],
+    queryFn: () => api.serviceDocs(serviceId),
+  });
+
+  const { data: docContent, isLoading: contentLoading } = useQuery({
+    queryKey: ['service-doc', serviceId, selectedDoc?.id],
+    queryFn: () => api.serviceDoc(serviceId, selectedDoc!.id),
+    enabled: selectedDoc !== null,
+  });
+
+  const docs = docList?.data ?? [];
+  const hasLinks = links.length > 0;
+
+  if (listLoading) {
+    return <div className="docs-loading">Loading docs…</div>;
+  }
+
+  if (selectedDoc) {
     return (
-      <div className="dep-empty">
-        <DocIcon />
-        <p>No links registered.</p>
-        <p className="dep-empty-sub">Add links to your <code>catalog-info.yaml</code> to surface runbooks, dashboards, and docs here.</p>
+      <div className="techdocs-view">
+        <button className="docs-back-btn" onClick={() => setSelectedDoc(null)}>
+          <BackIcon /> All pages
+        </button>
+        <div className="techdocs-title">{selectedDoc.title}</div>
+        <div className="techdocs-path">{selectedDoc.path}</div>
+        {contentLoading ? (
+          <div className="docs-loading">Loading…</div>
+        ) : (
+          <div className="techdocs-body">
+            <ReactMarkdown>{docContent?.contentMd ?? ''}</ReactMarkdown>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="doc-list">
-      {links.map((link) => (
-        <a
-          key={link.id}
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="doc-row"
-        >
-          <DocIcon />
-          <div style={{ flex: 1 }}>
-            <div className="doc-title">{link.title ?? link.url}</div>
-            <div className="doc-sub">{link.type}</div>
+    <div>
+      {docs.length > 0 && (
+        <>
+          <h4 className="section-title">Documentation</h4>
+          <div className="doc-list">
+            {docs.map((doc) => (
+              <button key={doc.id} className="doc-row doc-row-btn" onClick={() => setSelectedDoc(doc)}>
+                <DocIcon />
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div className="doc-title">{doc.title}</div>
+                  <div className="doc-sub">{doc.path}</div>
+                </div>
+                <ChevronIcon />
+              </button>
+            ))}
           </div>
-          <ExternalIcon />
-        </a>
-      ))}
+        </>
+      )}
+
+      {hasLinks && (
+        <>
+          <h4 className="section-title">Links</h4>
+          <div className="doc-list">
+            {links.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="doc-row"
+              >
+                <DocIcon />
+                <div style={{ flex: 1 }}>
+                  <div className="doc-title">{link.title ?? link.url}</div>
+                  <div className="doc-sub">{link.type}</div>
+                </div>
+                <ExternalIcon />
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      {docs.length === 0 && !hasLinks && (
+        <div className="dep-empty">
+          <DocIcon />
+          <p>No docs yet.</p>
+          <p className="dep-empty-sub">
+            Add a <code>docs/</code> directory to the service repo — the ingestor will pick it up on the next scan.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -280,4 +347,12 @@ function ExternalIcon() {
 
 function DepIcon() {
   return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>;
+}
+
+function BackIcon() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25"><polyline points="15 18 9 12 15 6"/></svg>;
+}
+
+function ChevronIcon() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25"><polyline points="9 18 15 12 9 6"/></svg>;
 }
