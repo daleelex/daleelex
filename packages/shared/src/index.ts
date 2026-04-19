@@ -40,6 +40,19 @@ export interface ServiceListResponse {
   total: number;
 }
 
+export interface TeamWithStats extends Team {
+  serviceCount: number;
+  tier1Count: number;
+  tier2Count: number;
+  tier3Count: number;
+  topServices: { id: string; name: string; type: ServiceType; tier: ServiceTier }[];
+}
+
+export interface TeamListResponse {
+  data: TeamWithStats[];
+  total: number;
+}
+
 export interface HealthResponse {
   status: 'ok';
   version: string;

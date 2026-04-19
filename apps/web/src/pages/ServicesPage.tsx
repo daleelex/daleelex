@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Service } from '@daleelex/shared';
 import { ServiceCard } from '../components/ServiceCard';
+import { ServiceDrawer } from '../components/ServiceDrawer';
 import { api } from '../api';
 import './ServicesPage.css';
 
@@ -11,6 +12,7 @@ export function ServicesPage() {
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState<string>('All');
   const [owner, setOwner] = useState<string>('All');
+  const [selected, setSelected] = useState<Service | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['services'],
@@ -136,7 +138,7 @@ export function ServicesPage() {
           <div className="empty">No services match these filters. Try widening your search.</div>
         )}
         {!isLoading && !isError && filtered.map((service) => (
-          <ServiceCard key={service.id} service={service} />
+          <ServiceCard key={service.id} service={service} onClick={() => setSelected(service)} />
         ))}
       </section>
 
@@ -144,6 +146,8 @@ export function ServicesPage() {
         <span className="mono">DALEELEX v0.5 {new Date().getFullYear()}</span>
         <span>Built on <code>catalog-info.yaml</code></span>
       </footer>
+
+      <ServiceDrawer service={selected} onClose={() => setSelected(null)} />
     </>
   );
 }
