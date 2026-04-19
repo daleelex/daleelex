@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
+import { TeamDrawer } from '../components/TeamDrawer';
 import { api } from '../api';
 import './TeamsPage.css';
 
 export function TeamsPage() {
+  const [selected, setSelected] = useState<TeamWithStats | null>(null);
   const { data, isLoading, isError } = useQuery({
     queryKey: ['teams'],
     queryFn: api.teams,
@@ -70,7 +73,7 @@ export function TeamsPage() {
         {isLoading && <div className="empty">Loading teams…</div>}
         {isError && <div className="empty">Failed to load teams. Check the API.</div>}
         {!isLoading && !isError && teams.map((team) => (
-          <TeamCard key={team.id} team={team} />
+          <TeamCard key={team.id} team={team} onClick={() => setSelected(team)} />
         ))}
       </section>
 
@@ -78,13 +81,15 @@ export function TeamsPage() {
         <span className="mono">DALEELEX v0.5 {new Date().getFullYear()}</span>
         <span>Teams sourced from <code>catalog-info.yaml</code></span>
       </footer>
+
+      <TeamDrawer team={selected} onClose={() => setSelected(null)} />
     </>
   );
 }
 
-function TeamCard({ team }: { team: TeamWithStats }) {
+function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void }) {
   return (
-    <article className="team-card">
+    <article className="team-card" onClick={onClick} style={{ cursor: 'pointer' }}>
       <div className="team-card-head">
         <div className="team-avatar">{initials(team.name)}</div>
         <div className="team-head-text">
