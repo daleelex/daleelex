@@ -55,6 +55,15 @@ export interface ServiceDocListResponse {
   data: ServiceDocSummary[];
 }
 
+export interface TechDocsIndexEntry {
+  service: { id: string; name: string; type: ServiceType; tier: ServiceTier };
+  docs: ServiceDocSummary[];
+}
+
+export interface TechDocsIndexResponse {
+  data: TechDocsIndexEntry[];
+}
+
 export interface TeamWithStats extends Team {
   serviceCount: number;
   tier1Count: number;
