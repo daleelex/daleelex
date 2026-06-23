@@ -20,6 +20,10 @@ interface JenkinsRootResponse {
 
 const REQUEST_TIMEOUT_MS = 5000;
 
+export class JenkinsConfigError extends Error {
+  statusCode = 400;
+}
+
 export async function getJenkinsConfig(): Promise<JenkinsConfigResponse> {
   const resolved = await resolveConfig();
   return {
@@ -35,20 +39,39 @@ export async function saveJenkinsConfig(
   username: string | undefined,
   token: string | undefined,
 ): Promise<void> {
-  const encryptedToken = token ? encrypt(token) : undefined;
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+  const normalizedUsername = normalizeOptional(username);
+
+  if (!normalizedBaseUrl) {
+    throw new JenkinsConfigError('Valid Jenkins URL is required.');
+  }
+
+  if (!normalizedUsername) {
+    throw new JenkinsConfigError('Username is required for saved Jenkins connections.');
+  }
+
+  const existing = await prisma.integrationConfig.findUnique({ where: { provider: 'jenkins' } });
+  const envToken = normalizeOptional(process.env.JENKINS_API_TOKEN);
+  const tokenToEncrypt = normalizeOptional(token) ?? (!existing?.encryptedToken ? envToken : null);
+
+  if (!existing?.encryptedToken && !tokenToEncrypt) {
+    throw new JenkinsConfigError('API token is required for the first saved Jenkins connection.');
+  }
+
+  const encryptedToken = tokenToEncrypt ? encrypt(tokenToEncrypt) : undefined;
 
   await prisma.integrationConfig.upsert({
     where: { provider: 'jenkins' },
     create: {
       provider: 'jenkins',
-      baseUrl: normalizeBaseUrl(baseUrl),
-      username: username?.trim() || null,
+      baseUrl: normalizedBaseUrl,
+      username: normalizedUsername,
       encryptedToken: encryptedToken ?? null,
     },
     update: {
-      baseUrl: normalizeBaseUrl(baseUrl),
-      username: username?.trim() || null,
-      ...(token !== undefined ? { encryptedToken } : {}),
+      baseUrl: normalizedBaseUrl,
+      username: normalizedUsername,
+      ...(encryptedToken !== undefined ? { encryptedToken } : {}),
     },
   });
 }

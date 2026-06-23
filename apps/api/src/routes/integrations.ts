@@ -1,6 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import type { JenkinsHealthResponse, JenkinsConfigResponse, JenkinsConfigRequest, JenkinsTestResponse } from '@daleelex/shared';
-import { checkJenkinsHealth, getJenkinsConfig, saveJenkinsConfig, testJenkinsConnection } from '../integrations/jenkins.js';
+import {
+  JenkinsConfigError,
+  checkJenkinsHealth,
+  getJenkinsConfig,
+  saveJenkinsConfig,
+  testJenkinsConnection,
+} from '../integrations/jenkins.js';
 
 export async function integrationsRoute(app: FastifyInstance) {
   app.get('/integrations/jenkins/health', async (): Promise<JenkinsHealthResponse> => {
@@ -22,7 +28,7 @@ export async function integrationsRoute(app: FastifyInstance) {
     try {
       await saveJenkinsConfig(body.baseUrl, body.username, body.token);
     } catch (error) {
-      reply.status(500);
+      reply.status(error instanceof JenkinsConfigError ? error.statusCode : 500);
       const message = error instanceof Error ? error.message : 'Failed to save config';
       return reply.send({ error: message });
     }
