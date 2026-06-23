@@ -81,10 +81,16 @@ export async function testJenkinsConnection(
   username?: string,
   token?: string,
 ): Promise<JenkinsTestResponse> {
-  const url = buildApiUrl(normalizeBaseUrl(baseUrl));
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+  const existing = await resolveConfig();
+  const existingMatchesBaseUrl = normalizedBaseUrl === existing.baseUrl;
+  const normalizedUsername = normalizeOptional(username);
+  const effectiveUsername = normalizedUsername ?? (existingMatchesBaseUrl ? existing.username : null);
+  const effectiveToken = normalizeOptional(token) ?? (existingMatchesBaseUrl ? existing.apiToken : null);
+  const url = buildApiUrl(normalizedBaseUrl);
   if (!url) return { ok: false, message: 'Invalid URL.', version: null };
 
-  const authHeader = buildAuthHeader(username ?? null, token ?? null);
+  const authHeader = buildAuthHeader(effectiveUsername, effectiveToken);
 
   try {
     const response = await fetchWithTimeout(url, {
