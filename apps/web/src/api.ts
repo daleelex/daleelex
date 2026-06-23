@@ -1,4 +1,4 @@
-import type { ServiceListResponse, TeamListResponse, HealthResponse, ServiceDocListResponse, ServiceDoc, TechDocsIndexResponse } from '@daleelex/shared';
+import type { ServiceListResponse, TeamListResponse, HealthResponse, ServiceDocListResponse, ServiceDoc, TechDocsIndexResponse, JenkinsHealthResponse } from '@daleelex/shared';
 
 const BASE = '/api/v1';
 
@@ -15,4 +15,5 @@ export const api = {
   techDocsIndex: () => get<TechDocsIndexResponse>('/docs'),
   serviceDocs: (serviceId: string) => get<ServiceDocListResponse>(`/services/${serviceId}/docs`),
   serviceDoc: (serviceId: string, docId: number) => get<ServiceDoc>(`/services/${serviceId}/docs/${docId}`),
+  jenkinsHealth: () => get<JenkinsHealthResponse>('/integrations/jenkins/health'),
 };
