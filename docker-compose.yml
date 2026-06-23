@@ -10,5 +10,14 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
 volumes:
   pg_data:
+  jenkins_home:

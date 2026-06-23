@@ -81,3 +81,35 @@ export interface HealthResponse {
   status: 'ok';
   version: string;
 }
+
+export interface JenkinsHealthResponse {
+  provider: 'jenkins';
+  configured: boolean;
+  reachable: boolean;
+  authenticated: boolean;
+  baseUrl: string | null;
+  mode: 'anonymous' | 'basic_auth' | 'not_configured';
+  status: 'ok' | 'auth_required' | 'unreachable' | 'not_configured';
+  version: string | null;
+  message: string;
+  checkedAt: string;
+}
+
+export interface JenkinsConfigResponse {
+  baseUrl: string | null;
+  username: string | null;
+  tokenSet: boolean;
+  source: 'db' | 'env' | 'none';
+}
+
+export interface JenkinsConfigRequest {
+  baseUrl: string;
+  username?: string;
+  token?: string;
+}
+
+export interface JenkinsTestResponse {
+  ok: boolean;
+  message: string;
+  version: string | null;
+}

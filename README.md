@@ -31,6 +31,24 @@ pnpm dev
 
 The web app runs at http://localhost:5173, the API at http://localhost:3000.
 
+## Local Jenkins integration
+
+DaleelEx can connect to a local Jenkins instance for development:
+
+```bash
+pnpm jenkins:up
+```
+
+Jenkins runs at http://localhost:8080. On first boot, complete the Jenkins setup wizard and create an API token. Then set these values in `apps/api/.env`:
+
+```bash
+JENKINS_BASE_URL="http://localhost:8080"
+JENKINS_USERNAME="<your-jenkins-user>"
+JENKINS_API_TOKEN="<your-api-token>"
+```
+
+The API exposes `GET /api/v1/integrations/jenkins/health`, and the Health & SLO page shows the connection status.
+
 ## Workspace structure
 
 ```
@@ -48,6 +66,7 @@ packages/shared/ TypeScript types shared across apps
 | Run all tests | `pnpm test` |
 | Lint everything | `pnpm lint` |
 | Start Postgres | `pnpm db:up` |
+| Start Jenkins | `pnpm jenkins:up` |
 | New DB migration | `pnpm db:migrate` |
 | Seed the database | `pnpm db:seed` |
 
