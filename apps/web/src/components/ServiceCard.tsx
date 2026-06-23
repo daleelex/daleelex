@@ -1,3 +1,4 @@
+import type { CSSProperties, KeyboardEvent } from 'react';
 import type { Service, ServiceType } from '@daleelex/shared';
 import './ServiceCard.css';
 
@@ -22,17 +23,35 @@ const LIFECYCLE_COLOR: Record<string, string> = {
 
 export function ServiceCard({ service, onClick }: Props) {
   const cat = CAT_COLORS[service.type] ?? CAT_COLORS.api;
+  const visibleTags = service.tags.slice(0, 2);
+  const hiddenTagCount = Math.max(service.tags.length - visibleTags.length, 0);
+
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (!onClick) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  }
 
   return (
     <article
       className="card"
-      style={{ '--cat-color': cat.color, '--cat-bg': cat.bg } as React.CSSProperties}
+      style={{ '--cat-color': cat.color, '--cat-bg': cat.bg } as CSSProperties}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
+      aria-label={`Open ${service.name} details`}
     >
       <div className="card-head">
         <div className="card-icon">
           <TypeIcon type={service.type} />
         </div>
+        <span className="type-label">{service.type}</span>
         <span className={`tier-badge tier-${service.tier}`}>T{service.tier}</span>
         <div className="lifecycle">
           <CircleDot color={LIFECYCLE_COLOR[service.lifecycle] ?? 'var(--muted)'} />
@@ -54,7 +73,7 @@ export function ServiceCard({ service, onClick }: Props) {
         </div>
         <div>
           <div className="meta-label">Language</div>
-          <div className="meta-value">{service.language ?? '—'}</div>
+          <div className="meta-value">{service.language ?? 'Unspecified'}</div>
         </div>
       </div>
 
@@ -66,9 +85,10 @@ export function ServiceCard({ service, onClick }: Props) {
           </div>
         </div>
         <div className="card-foot-item">
-          {service.tags.slice(0, 2).map((tag) => (
+          {visibleTags.map((tag) => (
             <span key={tag} className="tag">{tag}</span>
           ))}
+          {hiddenTagCount > 0 && <span className="tag muted">+{hiddenTagCount}</span>}
         </div>
       </div>
     </article>
