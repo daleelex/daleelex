@@ -376,3 +376,163 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+
+.doc-row-btn {
+  width: 100%;
+  border: none;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+/* TechDocs rendered view */
+.techdocs-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.docs-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color 120ms;
+  margin-bottom: 16px;
+}
+
+.docs-back-btn:hover { color: var(--ink); }
+
+.techdocs-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.techdocs-path {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+
+.docs-loading {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+/* Markdown prose rendering */
+.techdocs-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.techdocs-body h1,
+.techdocs-body h2,
+.techdocs-body h3,
+.techdocs-body h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 28px;
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+
+.techdocs-body h1 { font-size: 28px; margin-top: 0; }
+.techdocs-body h2 { font-size: 22px; }
+.techdocs-body h3 { font-size: 17px; }
+.techdocs-body h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-mono); color: var(--muted); }
+
+.techdocs-body p { margin: 0 0 14px; }
+
+.techdocs-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+.techdocs-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.techdocs-body pre {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+
+.techdocs-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.techdocs-body ul,
+.techdocs-body ol {
+  padding-left: 20px;
+  margin: 0 0 14px;
+}
+
+.techdocs-body li { margin-bottom: 4px; }
+
+.techdocs-body blockquote {
+  border-left: 3px solid var(--accent);
+  margin: 0 0 14px;
+  padding: 8px 16px;
+  color: var(--ink-2);
+  background: var(--panel-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.techdocs-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.techdocs-body th {
+  text-align: left;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 500;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.techdocs-body td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.techdocs-body tr:last-child td { border-bottom: none; }
+
+.techdocs-body hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 20px 0;
+}

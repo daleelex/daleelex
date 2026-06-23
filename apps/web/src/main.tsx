@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ServicesPage } from './pages/ServicesPage';
 import { TeamsPage } from './pages/TeamsPage';
+import { TechDocsPage } from './pages/TechDocsPage';
 import './styles.css';
 
 const queryClient = new QueryClient();
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route index element={<Navigate to="/services" replace />} />
             <Route path="services" element={<ServicesPage />} />
             <Route path="teams" element={<TeamsPage />} />
+            <Route path="docs" element={<TechDocsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

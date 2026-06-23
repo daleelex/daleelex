@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import type { Service } from '@daleelex/shared';
 import { ServiceCard } from '../components/ServiceCard';
 import { ServiceDrawer } from '../components/ServiceDrawer';
@@ -9,10 +10,9 @@ import './ServicesPage.css';
 const TIERS = ['All', 'Tier 1', 'Tier 2', 'Tier 3'] as const;
 
 export function ServicesPage() {
-  const [search, setSearch] = useState('');
-  const [tier, setTier] = useState<string>('All');
-  const [owner, setOwner] = useState<string>('All');
+  const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState<Service | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['services'],
@@ -20,6 +20,10 @@ export function ServicesPage() {
   });
 
   const services = data?.data ?? [];
+  const search = params.get('q') ?? '';
+  const tier = params.get('tier') ? `Tier ${params.get('tier')}` : 'All';
+  const owner = params.get('owner') ?? 'All';
+  const activeFilters = [search.trim(), tier !== 'All', owner !== 'All'].filter(Boolean).length;
 
   const owners = useMemo(() => {
     const names = services
@@ -28,13 +32,28 @@ export function ServicesPage() {
     return ['All', ...Array.from(new Set(names)).sort()];
   }, [services]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const filtered = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
     return services.filter((s) => {
       const matchSearch =
-        !search.trim() ||
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.description?.toLowerCase().includes(search.toLowerCase()) ||
-        s.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+        !normalizedSearch ||
+        s.name.toLowerCase().includes(normalizedSearch) ||
+        s.id.toLowerCase().includes(normalizedSearch) ||
+        s.description?.toLowerCase().includes(normalizedSearch) ||
+        s.tags.some((t) => t.toLowerCase().includes(normalizedSearch));
       const matchTier =
         tier === 'All' || s.tier === Number(tier.split(' ')[1]);
       const matchOwner =
@@ -44,6 +63,28 @@ export function ServicesPage() {
   }, [services, search, tier, owner]);
 
   const stats = useMemo(() => computeStats(services), [services]);
+
+  function updateFilter(key: 'q' | 'tier' | 'owner', value: string) {
+    setParams((next) => {
+      const updated = new URLSearchParams(next);
+      const emptyValue =
+        !value.trim() ||
+        (key === 'tier' && value === 'All') ||
+        (key === 'owner' && value === 'All');
+
+      if (emptyValue) {
+        updated.delete(key);
+      } else {
+        updated.set(key, key === 'tier' ? value.split(' ')[1] : value);
+      }
+
+      return updated;
+    });
+  }
+
+  function resetFilters() {
+    setParams(new URLSearchParams());
+  }
 
   return (
     <>
@@ -55,14 +96,17 @@ export function ServicesPage() {
         </div>
         <div className="top-right">
           <div className="search">
+            <label className="sr-only" htmlFor="service-search">Search services</label>
             <SearchIcon />
             <input
+              ref={searchRef}
+              id="service-search"
               type="search"
-              placeholder="Search services…"
+              placeholder="Search by name, ID, tag..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => updateFilter('q', e.target.value)}
             />
-            <kbd className="kbd">K</kbd>
+            <kbd className="kbd">⌘K</kbd>
           </div>
           <button className="icon-btn" title="Notifications">
             <BellIcon />
@@ -72,8 +116,8 @@ export function ServicesPage() {
       </header>
 
       <section className="hero">
-        <div className="crumb" style={{ fontSize: 11 }}>
-          <span style={{ color: 'var(--accent)', fontWeight: 500 }}>SOFTWARE CATALOGUE</span>
+        <div className="hero-kicker">
+          <span>Software catalogue</span>
         </div>
         <h1 className="page-title">
           Every service you ship, <em>in one place.</em>
@@ -104,7 +148,8 @@ export function ServicesPage() {
             <button
               key={t}
               className={`chip${tier === t ? ' active' : ''}`}
-              onClick={() => setTier(t)}
+              onClick={() => updateFilter('tier', t)}
+              aria-pressed={tier === t}
             >
               {t}
             </button>
@@ -115,13 +160,19 @@ export function ServicesPage() {
           <select
             className="filter-select"
             value={owner}
-            onChange={(e) => setOwner(e.target.value)}
+            onChange={(e) => updateFilter('owner', e.target.value)}
+            aria-label="Filter by owner"
           >
             {owners.map((o) => (
               <option key={o} value={o}>{o}</option>
             ))}
           </select>
         </div>
+        {activeFilters > 0 && (
+          <button className="reset-filters" onClick={resetFilters}>
+            Clear {activeFilters}
+          </button>
+        )}
         <div className="count-label">
           {isLoading ? '—' : `${filtered.length} of ${services.length} services`}
         </div>
@@ -135,7 +186,11 @@ export function ServicesPage() {
           <div className="empty">Failed to load services. Check the API.</div>
         )}
         {!isLoading && !isError && filtered.length === 0 && (
-          <div className="empty">No services match these filters. Try widening your search.</div>
+          <div className="empty">
+            <strong>No services match these filters.</strong>
+            <span>Try widening your search or clearing the active filters.</span>
+            <button className="empty-action" onClick={resetFilters}>Reset filters</button>
+          </div>
         )}
         {!isLoading && !isError && filtered.map((service) => (
           <ServiceCard key={service.id} service={service} onClick={() => setSelected(service)} />
@@ -157,10 +212,11 @@ function computeStats(services: Service[]) {
   const tier1 = services.filter((s) => s.tier === 1).length;
   const production = services.filter((s) => s.lifecycle === 'production').length;
   const teams = new Set(services.map((s) => s.ownerTeamId).filter(Boolean)).size;
+  const prodPercent = total > 0 ? Math.round((production / total) * 100) : 0;
   return [
     { label: 'Total services', value: total, sub: 'across all teams', accent: false },
     { label: 'Tier 1 critical', value: tier1, sub: 'require SLO ≥ 99.9%', accent: false },
-    { label: 'In production', value: production, sub: `${total - production} beta / deprecated`, accent: false },
+    { label: 'In production', value: production, sub: `${prodPercent}% of catalog`, accent: false },
     { label: 'Teams', value: teams, sub: 'owning services', accent: true },
   ];
 }

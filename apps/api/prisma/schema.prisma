@@ -40,6 +40,7 @@ model Service {
 
   owner         Team?     @relation(fields: [ownerTeamId], references: [id])
   links         Link[]
+  docs          ServiceDoc[]
   dependencies  ServiceDependency[] @relation("ServiceDeps")
   dependents    ServiceDependency[] @relation("ServiceDependents")
 
@@ -97,6 +98,21 @@ model ScorecardResult {
 
   @@index([serviceId, checkId, ranAt(sort: Desc)])
   @@map("scorecard_results")
+}
+
+model ServiceDoc {
+  id          Int      @id @default(autoincrement())
+  serviceId   String   @map("service_id")
+  path        String
+  title       String
+  contentMd   String   @map("content_md")
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+
+  service     Service  @relation(fields: [serviceId], references: [id])
+
+  @@unique([serviceId, path])
+  @@index([serviceId])
+  @@map("service_docs")
 }
 
 model User {
