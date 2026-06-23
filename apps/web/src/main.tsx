@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { ServicesPage } from './pages/ServicesPage';
 import { TeamsPage } from './pages/TeamsPage';
 import { TechDocsPage } from './pages/TechDocsPage';
+import { HealthPage } from './pages/HealthPage';
 import './styles.css';
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="services" element={<ServicesPage />} />
             <Route path="teams" element={<TeamsPage />} />
             <Route path="docs" element={<TechDocsPage />} />
+            <Route path="health" element={<HealthPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
