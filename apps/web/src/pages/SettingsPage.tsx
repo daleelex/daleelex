@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { JenkinsTestResponse } from '@daleelex/shared';
 import { api } from '../api';
@@ -42,11 +42,12 @@ function JenkinsSection() {
   const [testError, setTestError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
-  if (config && !initialized) {
+  useEffect(() => {
+    if (!config || initialized) return;
     setBaseUrl(config.baseUrl ?? '');
     setUsername(config.username ?? '');
     setInitialized(true);
-  }
+  }, [config, initialized]);
 
   const testMutation = useMutation({
     mutationFn: () => api.testJenkinsConnection({ baseUrl, username: username || undefined, token: token || undefined }),
@@ -69,6 +70,7 @@ function JenkinsSection() {
   });
 
   const dirty = baseUrl !== (config?.baseUrl ?? '') || username !== (config?.username ?? '') || token !== '';
+  const missingRequiredCredentials = !username.trim() || (!config?.tokenSet && !token.trim());
 
   if (isLoading) {
     return <div className="settings-loading">Loading configuration...</div>;
@@ -174,7 +176,7 @@ function JenkinsSection() {
           <button
             className="btn-primary"
             onClick={() => saveMutation.mutate()}
-            disabled={!baseUrl.trim() || !dirty || saveMutation.isPending}
+            disabled={!baseUrl.trim() || missingRequiredCredentials || !dirty || saveMutation.isPending}
           >
             {saveMutation.isPending ? 'Saving...' : 'Save'}
           </button>
