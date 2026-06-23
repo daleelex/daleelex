@@ -94,3 +94,22 @@ export interface JenkinsHealthResponse {
   message: string;
   checkedAt: string;
 }
+
+export interface JenkinsConfigResponse {
+  baseUrl: string | null;
+  username: string | null;
+  tokenSet: boolean;
+  source: 'db' | 'env' | 'none';
+}
+
+export interface JenkinsConfigRequest {
+  baseUrl: string;
+  username?: string;
+  token?: string;
+}
+
+export interface JenkinsTestResponse {
+  ok: boolean;
+  message: string;
+  version: string | null;
+}

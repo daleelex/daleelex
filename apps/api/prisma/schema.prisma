@@ -125,3 +125,13 @@ model User {
 
   @@map("users")
 }
+
+model IntegrationConfig {
+  provider       String   @id
+  baseUrl        String?  @map("base_url")
+  username       String?
+  encryptedToken String?  @map("encrypted_token")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("integration_configs")
+}
