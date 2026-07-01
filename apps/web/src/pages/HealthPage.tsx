@@ -1,25 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Service } from '@daleelex/shared';
 import { api } from '../api';
+import { computeHealth, STATE_LABEL } from '../lib/health';
 import './HealthPage.css';
-
-type HealthState = 'healthy' | 'watch' | 'risk';
-
-interface ServiceHealth {
-  service: Service;
-  state: HealthState;
-  score: number;
-  gaps: string[];
-  hasRunbook: boolean;
-  hasDashboard: boolean;
-}
-
-const STATE_LABEL: Record<HealthState, string> = {
-  healthy: 'Healthy',
-  watch: 'Watch',
-  risk: 'At risk',
-};
 
 export function HealthPage() {
   const { data, isLoading, isError } = useQuery({
@@ -203,82 +186,6 @@ function Stat({ label, value, sub, accent = false }: { label: string; value: str
   );
 }
 
-function computeHealth(services: Service[]) {
-  const rows = services.map(toServiceHealth).sort((a, b) => {
-    if (a.state !== b.state) {
-      return stateWeight(b.state) - stateWeight(a.state);
-    }
-    return a.service.tier - b.service.tier || a.service.name.localeCompare(b.service.name);
-  });
-
-  const total = services.length;
-  const withSlo = services.filter((service) => service.sloTarget && service.sloWindow).length;
-  const withRunbook = rows.filter((row) => row.hasRunbook).length;
-  const withOwner = services.filter((service) => service.owner).length;
-  const tier1 = rows.filter((row) => row.service.tier === 1);
-  const tier1Ready = tier1.filter((row) => row.state === 'healthy').length;
-  const healthyServices = rows.filter((row) => row.state === 'healthy').length;
-  const readinessScore = total > 0
-    ? Math.round(rows.reduce((sum, row) => sum + row.score, 0) / total)
-    : 0;
-
-  return {
-    total,
-    rows,
-    risks: rows.filter((row) => row.state !== 'healthy').slice(0, 5),
-    withSlo,
-    withRunbook,
-    withOwner,
-    healthyServices,
-    tier1Total: tier1.length,
-    tier1Ready,
-    sloCoverage: percent(withSlo, total),
-    runbookCoverage: percent(withRunbook, total),
-    ownerCoverage: percent(withOwner, total),
-    readinessScore,
-    overallState: readinessScore >= 85 ? 'healthy' : readinessScore >= 65 ? 'watch' : 'risk',
-    overallLabel: readinessScore >= 85 ? 'Catalog healthy' : readinessScore >= 65 ? 'Watch gaps' : 'Action needed',
-  };
-}
-
-function toServiceHealth(service: Service): ServiceHealth {
-  const hasSlo = Boolean(service.sloTarget && service.sloWindow);
-  const hasOwner = Boolean(service.owner);
-  const hasRunbook = service.links.some((link) => link.type === 'runbook');
-  const hasDashboard = service.links.some((link) => link.type === 'dashboard');
-  const gaps: string[] = [];
-
-  if (!hasSlo) gaps.push('Missing SLO target or window');
-  if (!hasOwner) gaps.push('Missing owner');
-  if (!hasRunbook) gaps.push('Missing runbook');
-  if (service.tier === 1 && !hasDashboard) gaps.push('Tier 1 missing dashboard');
-  if (service.lifecycle !== 'production') gaps.push(`Lifecycle is ${service.lifecycle}`);
-
-  const score = [
-    hasSlo ? 30 : 0,
-    hasOwner ? 25 : 0,
-    hasRunbook ? 20 : 0,
-    hasDashboard ? 15 : 0,
-    service.lifecycle === 'production' ? 10 : 0,
-  ].reduce((sum, value) => sum + value, 0);
-
-  return {
-    service,
-    state: score >= 85 ? 'healthy' : score >= 60 ? 'watch' : 'risk',
-    score,
-    gaps,
-    hasRunbook,
-    hasDashboard,
-  };
-}
-
-function percent(value: number, total: number) {
-  return total > 0 ? Math.round((value / total) * 100) : 0;
-}
-
-function stateWeight(state: HealthState) {
-  return state === 'risk' ? 3 : state === 'watch' ? 2 : 1;
-}
 
 function formatJenkinsStatus(status: string) {
   switch (status) {

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { Service } from '@daleelex/shared';
 import { ServiceCard } from '../components/ServiceCard';
 import { ServiceDrawer } from '../components/ServiceDrawer';
+import { RegisterServiceModal } from '../components/RegisterServiceModal';
 import { api } from '../api';
 import './ServicesPage.css';
 
@@ -12,6 +13,7 @@ const TIERS = ['All', 'Tier 1', 'Tier 2', 'Tier 3'] as const;
 export function ServicesPage() {
   const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState<Service | null>(null);
+  const [registering, setRegistering] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useQuery({
@@ -108,6 +110,10 @@ export function ServicesPage() {
             />
             <kbd className="kbd">⌘K</kbd>
           </div>
+          <button className="register-btn" onClick={() => setRegistering(true)}>
+            <PlusIcon />
+            Register service
+          </button>
           <button className="icon-btn" title="Notifications">
             <BellIcon />
           </button>
@@ -203,6 +209,7 @@ export function ServicesPage() {
       </footer>
 
       <ServiceDrawer service={selected} onClose={() => setSelected(null)} />
+      {registering && <RegisterServiceModal onClose={() => setRegistering(false)} />}
     </>
   );
 }
@@ -219,6 +226,14 @@ function computeStats(services: Service[]) {
     { label: 'In production', value: production, sub: `${prodPercent}% of catalog`, accent: false },
     { label: 'Teams', value: teams, sub: 'owning services', accent: true },
   ];
+}
+
+function PlusIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  );
 }
 
 function SearchIcon() {

@@ -77,6 +77,18 @@ export interface TeamListResponse {
   total: number;
 }
 
+export interface CreateServiceRequest {
+  id: string;
+  name: string;
+  type: ServiceType;
+  tier: ServiceTier;
+  lifecycle: ServiceLifecycle;
+  ownerTeamId?: string;
+  description?: string;
+  language?: string;
+  repository?: string;
+}
+
 export interface HealthResponse {
   status: 'ok';
   version: string;
