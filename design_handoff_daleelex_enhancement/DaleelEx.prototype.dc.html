@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; }
+  body { -webkit-font-smoothing:antialiased; }
+  *, *::before, *::after { box-sizing:border-box; }
+  [data-scroll]::-webkit-scrollbar { width:9px; height:9px; }
+  [data-scroll]::-webkit-scrollbar-thumb { background:var(--line-strong); border-radius:5px; }
+  [data-scroll]::-webkit-scrollbar-track { background:transparent; }
+  @keyframes pulse { 0%{ transform:scale(1); opacity:0.55; } 100%{ transform:scale(2.4); opacity:0; } }
+  @keyframes drawerIn { from{ transform:translateX(24px); opacity:0; } to{ transform:translateX(0); opacity:1; } }
+  @keyframes fadeUp { from{ transform:translateY(8px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+</style>
+</helmet>
+
+<div ref="{{ setRoot }}" style="--bg:#E8E6DF; --mesh:radial-gradient(1100px 560px at 0% -10%, rgba(47,169,155,0.13), transparent 60%), radial-gradient(760px 480px at 100% 0%, rgba(31,95,165,0.09), transparent 60%); --panel:#FFFFFF; --panel-2:#F4F2EB; --panel-3:#E9E6DD; --line:#DCD8CC; --line-strong:#C3BDAC; --ink:#0B2A47; --ink-2:#3F5465; --muted:#828D97; --accent:#2FA99B; --accent-fg:#FFFFFF; --accent-soft:rgba(47,169,155,0.13); --accent-2:#1F5FA5; --accent-2-soft:rgba(31,95,165,0.12); --ok:#1FA971; --warn:#C98708; --danger:#D94A3D; --shadow-sm:0 1px 2px rgba(11,42,71,0.06),0 1px 3px rgba(11,42,71,0.04); --shadow:0 4px 14px rgba(11,42,71,0.08),0 2px 4px rgba(11,42,71,0.04); --shadow-lg:0 24px 48px rgba(11,42,71,0.16),0 8px 18px rgba(11,42,71,0.09); --brand-deep:#0A3743; --brand-navy:#0B2A47; display:grid; grid-template-columns:266px 1fr; height:100vh; min-height:0; background:var(--bg); background-image:var(--mesh); color:var(--ink); font-family:'Inter',-apple-system,sans-serif;">
+
+  <aside style="background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; height:100vh; position:sticky; top:0;">
+    <div style="padding:22px 22px 22px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#0A3743 0%,#0B2A47 100%); position:relative; overflow:hidden;">
+      <div style="position:absolute; right:-30px; top:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(47,169,155,0.3), transparent 70%); pointer-events:none;"></div>
+      <span style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; color:#fff; letter-spacing:-0.02em; position:relative; z-index:1;">DaleelEx</span>
+    </div>
+
+    <nav data-scroll="1" style="flex:1; padding:14px 12px; overflow:auto;">
+      <div style="padding:14px 11px 6px; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); font-family:'JetBrains Mono',monospace; font-weight:500;">Workspace</div>
+      <button onClick="{{ goHome }}" style="{{ homeNav }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+        <span style="flex:1;">Home</span>
+      </button>
+      <button onClick="{{ goCatalog }}" style="{{ catalogNav }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L18 10.54V7l-4-2"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l-4 2"/></svg>
+        <span style="flex:1;">Catalog</span><span style="{{ catalogCount }}">12</span>
+      </button>
+      <button onClick="{{ goTeams }}" style="{{ teamsNav }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span style="flex:1;">Teams</span><span style="{{ teamsCount }}">6</span>
+      </button>
+      <button onClick="{{ goDocs }}" style="{{ docsNav }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span style="flex:1;">TechDocs</span><span style="{{ docsCount }}">4</span>
+      </button>
+      <div style="padding:18px 11px 6px; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); font-family:'JetBrains Mono',monospace; font-weight:500;">Operations</div>
+      <button onClick="{{ goHealth }}" style="{{ healthNav }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span style="flex:1;">Health &amp; SLO</span>
+      </button>
+      <button onClick="{{ goSettings }}" style="{{ settingsNav }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span style="flex:1;">Settings</span>
+      </button>
+    </nav>
+
+    <div style="padding:14px 18px 16px; border-top:1px solid var(--line);">
+      <div style="display:flex; align-items:center; gap:9px; padding:9px 11px; background:var(--panel-2); border-radius:8px; font-size:12px; color:var(--ink-2);">
+        <span style="position:relative; width:8px; height:8px; flex-shrink:0;"><span style="position:absolute; inset:0; border-radius:50%; background:var(--ok);"></span><span style="position:absolute; inset:0; border-radius:50%; background:var(--ok); animation:pulse 2s ease-out infinite;"></span></span>
+        All systems operational
+      </div>
+      <button onClick="{{ toggleTheme }}" style="display:flex; align-items:center; gap:8px; justify-content:center; margin-top:10px; padding:9px 11px; background:transparent; border:1px solid var(--line); border-radius:8px; width:100%; color:var(--ink-2); font-size:12px; font-family:inherit; cursor:pointer;">
+        <span style="font-size:13px;">{{ themeGlyph }}</span><span>{{ themeLabel }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <main data-scroll="1" style="min-width:0; height:100vh; overflow:auto;">
+    <header style="position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:15px 30px; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--panel) 82%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);">
+      <div style="display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace;">
+        <span>DaleelEx</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="color:var(--ink);">{{ pageTitle }}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 12px; width:320px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Search services, docs, teams…" value="{{ search }}" onInput="{{ setSearch }}" onFocus="{{ focusSearch }}" style="flex:1; background:transparent; border:none; outline:none; color:var(--ink); font-size:13px; font-family:inherit;" />
+          <kbd style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); border:1px solid var(--line); padding:2px 6px; border-radius:4px;">⌘K</kbd>
+        </div>
+        <button style="width:38px; height:38px; display:grid; place-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; color:var(--ink-2); cursor:pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <div style="width:38px; height:38px; background:linear-gradient(135deg,#2FA99B,#1F5FA5); color:#fff; display:grid; place-items:center; font-size:12px; font-weight:600; border-radius:10px; box-shadow:var(--shadow-sm);">MN</div>
+      </div>
+    </header>
+
+    <!-- ===================== HOME ===================== -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:30px 30px 40px;">
+      <section style="position:relative; overflow:hidden; background:linear-gradient(135deg,#0A3743 0%,#0B2A47 100%); border-radius:18px; padding:34px 34px; color:#fff; margin-bottom:22px;">
+        <div style="position:absolute; right:-40px; top:-60px; width:320px; height:320px; background:radial-gradient(circle, rgba(47,169,155,0.34), transparent 70%); pointer-events:none;"></div>
+        <div style="position:relative; z-index:1; max-width:640px;">
+          <div style="display:inline-flex; align-items:center; gap:9px; color:#7FE7D7; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;"><span style="width:26px; height:1px; background:#7FE7D7;"></span>Developer portal</div>
+          <h1 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:42px; letter-spacing:-0.025em; line-height:1.06; margin:14px 0 10px;">{{ greeting }}, Maya. <em style="font-style:italic; color:#7FE7D7;">Here's your platform.</em></h1>
+          <p style="font-size:15px; line-height:1.55; color:rgba(255,255,255,0.78); margin:0 0 20px; max-width:560px;">Every service your company runs — who owns it, how healthy it is, and where its docs live. Find anything in one place and ship with confidence.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button onClick="{{ goCatalog }}" style="display:inline-flex; align-items:center; gap:8px; padding:11px 18px; background:#2FA99B; color:#fff; border:none; border-radius:10px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; box-shadow:0 6px 16px rgba(47,169,155,0.4);">Browse the catalog
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+            <button onClick="{{ goHealth }}" style="display:inline-flex; align-items:center; gap:8px; padding:11px 18px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.22); border-radius:10px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer;">Health board</button>
+          </div>
+        </div>
+      </section>
+
+      <section style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="{{ k.tileStyle }}">
+            <div style="{{ k.labelStyle }}">{{ k.label }}</div>
+            <div style="{{ k.valueStyle }}">{{ k.value }}</div>
+            <div style="{{ k.subStyle }}">{{ k.sub }}</div>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="display:grid; grid-template-columns:1.55fr 1fr; gap:18px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;">
+              <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:24px; letter-spacing:-0.02em; margin:0;">Catalog coverage</h2>
+              <span style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">readiness {{ readiness }}/100</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:15px;">
+              <sc-for list="{{ status }}" as="row" hint-placeholder-count="5">
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;"><span style="color:var(--ink-2);">{{ row.label }}</span><span style="font-family:'JetBrains Mono',monospace; color:var(--ink); font-weight:500;">{{ row.pct }}%</span></div>
+                  <div style="height:8px; background:var(--panel-2); border-radius:999px; overflow:hidden;"><div style="{{ row.barStyle }}"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px;">
+            <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:24px; letter-spacing:-0.02em; margin:0 0 16px;">Recent activity</h2>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+                <div style="display:flex; align-items:flex-start; gap:13px; padding:12px 0; border-bottom:1px solid var(--line);">
+                  <div style="width:30px; height:30px; flex-shrink:0; border-radius:8px; display:grid; place-items:center; font-size:14px; background:{{ a.dotBg }}; color:{{ a.dotColor }};">{{ a.glyph }}</div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:13.5px; color:var(--ink); font-weight:500;">{{ a.title }} <span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); font-weight:400;">{{ a.detail }}</span></div>
+                    <div style="font-size:11.5px; color:var(--muted); margin-top:2px;">{{ a.team }}</div>
+                  </div>
+                  <div style="font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; flex-shrink:0;">{{ a.time }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><h3 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:20px; margin:0;">Your services</h3><span style="font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;">Product Core</span></div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <sc-for list="{{ mine }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.open }}" style="display:flex; align-items:center; gap:10px; padding:10px 10px; border:none; background:transparent; border-radius:8px; width:100%; text-align:left; cursor:pointer; font-family:inherit;" style-hover="background:var(--panel-2);">
+                  <span style="width:7px; height:7px; border-radius:50%; flex-shrink:0; background:{{ m.stateColor }};"></span>
+                  <span style="flex:1; font-size:13.5px; color:var(--ink); font-weight:500;">{{ m.name }}</span>
+                  <span style="font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted);">{{ m.slo }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px;">
+            <h3 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:20px; margin:0 0 14px;">Needs attention</h3>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ attention }}" as="r" hint-placeholder-count="4">
+                <button onClick="{{ r.open }}" style="display:flex; align-items:center; gap:12px; padding:11px 12px; border:1px solid var(--line); background:var(--panel-2); border-radius:10px; width:100%; text-align:left; cursor:pointer; font-family:inherit;" style-hover="border-color:var(--line-strong);">
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:13px; color:var(--ink); font-weight:600;">{{ r.name }}</div>
+                    <div style="font-size:11.5px; color:var(--muted); margin-top:2px;">{{ r.tier }} · {{ r.gap }}</div>
+                  </div>
+                  <span style="font-size:10px; font-weight:600; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.05em; padding:3px 8px; border-radius:5px; color:{{ r.stateColor }}; background:{{ r.stateBg }};">{{ r.stateLabel }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px;">
+            <h3 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:20px; margin:0 0 14px;">Quick links</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <sc-for list="{{ quickLinks }}" as="q" hint-placeholder-count="4">
+                <button onClick="{{ q.onClick }}" style="display:flex; flex-direction:column; gap:6px; padding:13px 13px; border:1px solid var(--line); background:transparent; border-radius:10px; text-align:left; cursor:pointer; font-family:inherit;" style-hover="background:var(--panel-2); border-color:var(--line-strong);">
+                  <span style="width:26px; height:26px; border-radius:7px; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; font-size:14px;">{{ q.glyph }}</span>
+                  <span style="font-size:12.5px; font-weight:600; color:var(--ink);">{{ q.label }}</span>
+                  <span style="font-size:10.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">{{ q.sub }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    </sc-if>
+
+    <!-- ===================== CATALOG ===================== -->
+    <sc-if value="{{ isCatalog }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <section style="padding:32px 30px 24px; border-bottom:1px solid var(--line); position:relative; overflow:hidden;">
+        <div style="position:absolute; top:-60px; right:-60px; width:300px; height:300px; background:radial-gradient(circle, rgba(47,169,155,0.14), transparent 70%); pointer-events:none;"></div>
+        <div style="display:inline-flex; align-items:center; gap:9px; color:var(--accent); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;"><span style="width:28px; height:1px; background:var(--accent);"></span>Software catalogue</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:44px; letter-spacing:-0.025em; line-height:1.05; margin:10px 0 6px;">Every service you ship, <em style="font-style:italic; color:var(--accent);">in one place.</em></h1>
+        <p style="font-size:15px; color:var(--ink-2); max-width:580px; line-height:1.5; margin:0;">Browse, track, and own the systems that run your business. Ownership is clear, health is visible, and documentation stays one click away.</p>
+      </section>
+
+      <section style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:20px 30px;">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="{{ k.tileStyle }}">
+            <div style="{{ k.labelStyle }}">{{ k.label }}</div>
+            <div style="{{ k.valueStyle }}">{{ k.value }}</div>
+            <div style="{{ k.subStyle }}">{{ k.sub }}</div>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="position:sticky; top:69px; z-index:9; display:flex; align-items:center; gap:16px; padding:15px 30px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <span style="font-size:10.5px; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; font-weight:500; margin-right:4px;">Tier</span>
+          <sc-for list="{{ tierChips }}" as="c" hint-placeholder-count="4">
+            <button onClick="{{ c.onClick }}" style="padding:5px 13px; border:1px solid var(--line); border-radius:999px; font-size:12px; background:var(--panel); color:var(--ink-2); cursor:pointer; font-family:inherit;" style-hover="border-color:var(--line-strong); color:var(--ink);"><sc-if value="{{ c.active }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block; padding:0; margin:0; color:var(--panel);"></span></sc-if>{{ c.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:10.5px; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; font-weight:500; margin-right:4px;">Owner</span>
+          <select value="{{ owner }}" onChange="{{ setOwner }}" style="padding:6px 10px; background:var(--panel); border:1px solid var(--line); border-radius:999px; font-size:12px; font-family:inherit; color:var(--ink); cursor:pointer;">
+            <sc-for list="{{ owners }}" as="o" hint-placeholder-count="6"><option value="{{ o }}">{{ o }}</option></sc-for>
+          </select>
+        </div>
+        <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ resetFilters }}" style="padding:6px 12px; border:1px solid var(--line); border-radius:999px; background:transparent; color:var(--ink-2); font-size:12px; cursor:pointer; font-family:inherit;">Clear {{ activeFilters }}</button>
+        </sc-if>
+        <div style="margin-left:auto; font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">{{ countText }}</div>
+      </section>
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px; padding:22px 30px 40px;">
+        <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+          <article onClick="{{ c.open }}" tabindex="0" style="background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 22px; cursor:pointer; display:flex; flex-direction:column; position:relative; overflow:hidden; transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;" style-hover="transform:translateY(-2px); box-shadow:var(--shadow-lg); border-color:var(--accent);">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+              <div style="width:36px; height:36px; display:grid; place-items:center; border-radius:8px; background:{{ c.catBg }}; color:{{ c.catColor }};">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; letter-spacing:0.08em; padding:3px 8px; border-radius:5px; color:{{ c.catColor }}; background:{{ c.catBg }};">{{ c.typeLabel }}</span>
+              <span style="{{ c.tierStyle }}">{{ c.tierLabel }}</span>
+              <div style="display:flex; align-items:center; gap:5px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.05em; text-transform:uppercase; color:var(--muted); margin-left:auto;"><span style="width:7px; height:7px; border-radius:50%; background:{{ c.lifecycleColor }};"></span>{{ c.lifecycle }}</div>
+            </div>
+            <h3 style="font-family:'Instrument Serif',Georgia,serif; font-size:22px; font-weight:400; letter-spacing:-0.015em; margin:0; line-height:1.2;">{{ c.name }}</h3>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-top:4px;">{{ c.idText }}</div>
+            <p style="font-size:13px; color:var(--ink-2); line-height:1.55; margin:14px 0 16px; flex:1;">{{ c.desc }}</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; padding-top:14px; border-top:1px solid var(--line);">
+              <div><div style="font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Owner</div><div style="font-size:13px; color:var(--ink); font-weight:500;">{{ c.owner }}</div></div>
+              <div><div style="font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">SLO target</div><div style="font-size:13px; color:var(--ink); font-weight:500; font-family:'JetBrains Mono',monospace;">{{ c.slo }}</div></div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">
+              <sc-for list="{{ c.tags }}" as="t" hint-placeholder-count="2"><span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:3px 9px; border:1px solid var(--line); color:var(--ink-2); border-radius:999px; background:var(--panel-2);">{{ t }}</span></sc-for>
+            </div>
+          </article>
+        </sc-for>
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+          <div style="grid-column:1 / -1; display:grid; justify-items:center; gap:8px; padding:72px 20px; text-align:center; color:var(--muted); background:var(--panel); border:1px dashed var(--line); border-radius:16px;">
+            <strong style="color:var(--ink); font-size:16px;">No services match these filters.</strong>
+            <span>Try widening your search or clearing the active filters.</span>
+            <button onClick="{{ resetFilters }}" style="margin-top:8px; padding:8px 14px; border:none; border-radius:8px; background:var(--ink); color:var(--panel); font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;">Reset filters</button>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+    </sc-if>
+
+    <!-- ===================== HEALTH ===================== -->
+    <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:30px 30px 40px;">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:22px;">
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:9px; color:var(--accent); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;"><span style="width:28px; height:1px; background:var(--accent);"></span>Operations</div>
+          <h1 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:42px; letter-spacing:-0.025em; margin:10px 0 0;">Health &amp; SLO</h1>
+        </div>
+      </div>
+
+      <section style="display:grid; grid-template-columns:1.3fr 1fr; gap:18px; margin-bottom:18px;">
+        <div style="background:linear-gradient(135deg,#0A3743 0%,#0B2A47 100%); border-radius:16px; padding:26px 28px; color:#fff; display:flex; align-items:center; gap:26px; position:relative; overflow:hidden;">
+          <div style="position:absolute; right:-30px; bottom:-40px; width:200px; height:200px; background:radial-gradient(circle, rgba(47,169,155,0.34), transparent 70%);"></div>
+          <div style="position:relative; width:128px; height:128px; flex-shrink:0;">
+            <svg width="128" height="128" viewBox="0 0 128 128" style="transform:rotate(-90deg);">
+              <circle cx="64" cy="64" r="52" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="11"/>
+              <circle cx="64" cy="64" r="52" fill="none" stroke="#3EC9B8" stroke-width="11" stroke-linecap="round" stroke-dasharray="{{ ringDash }} 999"/>
+            </svg>
+            <div style="position:absolute; inset:0; display:grid; place-items:center; flex-direction:column;"><span style="font-family:'Instrument Serif',Georgia,serif; font-size:40px; line-height:1;">{{ ringScore }}</span></div>
+          </div>
+          <div style="position:relative; z-index:1;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.7);">Catalog readiness</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif; font-size:26px; margin:6px 0 8px;">{{ healthy }} of {{ total }} services healthy</div>
+            <p style="font-size:13px; line-height:1.5; color:rgba(255,255,255,0.74); margin:0; max-width:280px;">Derived from SLO coverage, ownership, runbooks, and dashboards across the catalog.</p>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <sc-for list="{{ hStats }}" as="k" hint-placeholder-count="4">
+            <div style="{{ k.tileStyle }}">
+              <div style="{{ k.labelStyle }}">{{ k.label }}</div>
+              <div style="{{ k.valueStyle }}">{{ k.value }}</div>
+              <div style="{{ k.subStyle }}">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; padding:20px 24px 14px;">
+          <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:24px; margin:0;">Service health</h2>
+          <span style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">{{ total }} services · 14-day uptime</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1.6fr 0.8fr 1fr 1.2fr 1.4fr 0.7fr; gap:14px; padding:10px 24px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; color:var(--muted);">
+          <div>Service</div><div>Status</div><div>SLO</div><div>Owner</div><div>14-day trend</div><div>Ops</div>
+        </div>
+        <sc-for list="{{ hRows }}" as="r" hint-placeholder-count="6">
+          <div onClick="{{ r.open }}" style="display:grid; grid-template-columns:1.6fr 0.8fr 1fr 1.2fr 1.4fr 0.7fr; gap:14px; align-items:center; padding:13px 24px; border-bottom:1px solid var(--line); cursor:pointer;" style-hover="background:var(--panel-2);">
+            <div style="min-width:0;"><div style="font-size:13.5px; font-weight:600; color:var(--ink);">{{ r.name }}</div><div style="font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px;">{{ r.id }} · {{ r.tier }}</div></div>
+            <div><span style="font-size:10px; font-weight:600; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.05em; padding:3px 8px; border-radius:5px; color:{{ r.stateColor }}; background:{{ r.stateBg }};">{{ r.stateLabel }}</span></div>
+            <div><div style="font-size:13px; font-weight:600; font-family:'JetBrains Mono',monospace; color:var(--ink);">{{ r.slo }}</div><div style="font-size:10.5px; color:var(--muted);">{{ r.sloWindow }}</div></div>
+            <div style="font-size:12.5px; color:var(--ink-2);">{{ r.owner }}</div>
+            <div style="display:flex; align-items:flex-end; gap:2px; height:30px;"><sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="14"><div style="{{ b.style }}"></div></sc-for></div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span title="Runbook" style="font-size:10px; font-family:'JetBrains Mono',monospace; color:{{ r.runbookColor }}; opacity:{{ r.runbookOpacity }};">RB</span>
+              <span title="Dashboard" style="font-size:10px; font-family:'JetBrains Mono',monospace; color:{{ r.dashColor }}; opacity:{{ r.dashOpacity }};">DB</span>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+    </sc-if>
+
+    <!-- ===================== TEAMS ===================== -->
+    <sc-if value="{{ isTeams }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:30px 30px 40px;">
+      <div style="display:inline-flex; align-items:center; gap:9px; color:var(--accent); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;"><span style="width:28px; height:1px; background:var(--accent);"></span>Workspace</div>
+      <h1 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:42px; letter-spacing:-0.025em; margin:10px 0 24px;">Teams</h1>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px;">
+        <sc-for list="{{ teamCards }}" as="t" hint-placeholder-count="6">
+          <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px;" style-hover="border-color:var(--line-strong);">
+            <div style="display:flex; align-items:center; gap:13px; margin-bottom:16px;">
+              <div style="width:44px; height:44px; border-radius:11px; background:linear-gradient(135deg,#2FA99B,#1F5FA5); color:#fff; display:grid; place-items:center; font-size:15px; font-weight:600;">{{ t.initials }}</div>
+              <div><div style="font-family:'Instrument Serif',Georgia,serif; font-size:21px; line-height:1.1;">{{ t.name }}</div><div style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px;">{{ t.slack }}</div></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding-top:14px; border-top:1px solid var(--line);">
+              <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Owns</div><div style="font-size:13px; color:var(--ink); font-weight:500;">{{ t.count }}</div></div>
+              <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Lead</div><div style="font-size:13px; color:var(--ink); font-weight:500;">{{ t.lead }}</div></div>
+              <div><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Readiness</div><div style="font-size:13px; font-weight:600; font-family:'JetBrains Mono',monospace; color:{{ t.avgColor }};">{{ t.avg }}</div></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== TECHDOCS ===================== -->
+    <sc-if value="{{ isDocs }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:30px 30px 40px; max-width:880px;">
+      <div style="display:inline-flex; align-items:center; gap:9px; color:var(--accent); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;"><span style="width:28px; height:1px; background:var(--accent);"></span>Knowledge</div>
+      <h1 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:42px; letter-spacing:-0.025em; margin:10px 0 24px;">TechDocs</h1>
+      <sc-if value="{{ hasDocReader }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:30px 34px;">
+          <button onClick="{{ docReader.back }}" style="display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--line); background:transparent; border-radius:8px; font-size:12px; color:var(--ink-2); cursor:pointer; font-family:inherit; margin-bottom:18px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"><polyline points="15 18 9 12 15 6"/></svg> All pages</button>
+          <div style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">{{ docReader.svc }} · {{ docReader.path }}</div>
+          <div style="margin-top:10px;">
+            <sc-for list="{{ docReader.blocks }}" as="b" hint-placeholder-count="6">
+              <sc-if value="{{ b.isH1 }}" hint-placeholder-val="{{ false }}"><h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:30px; letter-spacing:-0.02em; margin:8px 0 14px;">{{ b.text }}</h2></sc-if>
+              <sc-if value="{{ b.isH2 }}" hint-placeholder-val="{{ false }}"><h3 style="font-family:'Inter',sans-serif; font-weight:600; font-size:16px; margin:22px 0 8px; color:var(--ink);">{{ b.text }}</h3></sc-if>
+              <sc-if value="{{ b.isP }}" hint-placeholder-val="{{ false }}"><p style="font-size:14.5px; line-height:1.65; color:var(--ink-2); margin:0 0 12px;">{{ b.text }}</p></sc-if>
+              <sc-if value="{{ b.isLi }}" hint-placeholder-val="{{ false }}"><div style="display:flex; gap:10px; font-size:14px; line-height:1.6; color:var(--ink-2); margin:0 0 7px; padding-left:2px;"><span style="color:var(--accent); flex-shrink:0;">—</span><span>{{ b.text }}</span></div></sc-if>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasDocReader }}" hint-placeholder-val="{{ true }}"></sc-if>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <sc-for list="{{ docPages }}" as="d" hint-placeholder-count="4">
+          <button onClick="{{ d.open }}" style="display:flex; align-items:center; gap:14px; padding:16px 18px; background:var(--panel); border:1px solid var(--line); border-radius:12px; cursor:pointer; text-align:left; font-family:inherit;" style-hover="border-color:var(--accent); box-shadow:var(--shadow);">
+            <div style="width:34px; height:34px; border-radius:9px; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div style="flex:1;"><div style="font-size:14px; font-weight:600; color:var(--ink);">{{ d.title }}</div><div style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px;">{{ d.svc }} · {{ d.path }}</div></div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.25"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:30px 30px 40px; max-width:760px;">
+      <div style="display:inline-flex; align-items:center; gap:9px; color:var(--accent); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;"><span style="width:28px; height:1px; background:var(--accent);"></span>Operations</div>
+      <h1 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:42px; letter-spacing:-0.025em; margin:10px 0 24px;">Settings</h1>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px;">
+          <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:21px; margin:0 0 4px;">Appearance</h2>
+          <p style="font-size:13px; color:var(--muted); margin:0 0 16px;">Switch between light and dark. Your choice applies across the whole portal.</p>
+          <button onClick="{{ toggleTheme }}" style="display:inline-flex; align-items:center; gap:10px; padding:10px 16px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; font-size:13px; color:var(--ink); cursor:pointer; font-family:inherit; font-weight:500;"><span style="font-size:15px;">{{ themeGlyph }}</span> Switch to {{ themeLabel }}</button>
+        </div>
+        <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px;">
+          <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:21px; margin:0 0 16px;">Integrations</h2>
+          <div style="display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line);">
+            <div style="width:38px; height:38px; border-radius:9px; background:var(--panel-2); display:grid; place-items:center; font-size:16px;">⚙</div>
+            <div style="flex:1;"><div style="font-size:14px; font-weight:600; color:var(--ink);">Jenkins CI</div><div style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">http://localhost:8080</div></div>
+            <span style="display:inline-flex; align-items:center; gap:7px; font-size:11.5px; color:var(--ok); font-weight:600;"><span style="width:7px; height:7px; border-radius:50%; background:var(--ok);"></span>Connected</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px; padding:14px 0;">
+            <div style="width:38px; height:38px; border-radius:9px; background:var(--panel-2); display:grid; place-items:center; font-size:16px;">⎇</div>
+            <div style="flex:1;"><div style="font-size:14px; font-weight:600; color:var(--ink);">GitHub catalog scan</div><div style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">catalog-info.yaml ingestor</div></div>
+            <span style="display:inline-flex; align-items:center; gap:7px; font-size:11.5px; color:var(--ok); font-weight:600;"><span style="width:7px; height:7px; border-radius:50%; background:var(--ok);"></span>Active</span>
+          </div>
+        </div>
+        <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px;">
+          <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:21px; margin:0 0 16px;">Profile</h2>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:46px; height:46px; border-radius:12px; background:linear-gradient(135deg,#2FA99B,#1F5FA5); color:#fff; display:grid; place-items:center; font-size:15px; font-weight:600;">MN</div>
+            <div><div style="font-size:14.5px; font-weight:600; color:var(--ink);">Maya N.</div><div style="font-size:12px; color:var(--muted);">Product Core · Engineer</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </main>
+
+  <!-- ===================== DRAWER ===================== -->
+  <sc-if value="{{ hasDrawer }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDrawer }}" style="position:fixed; inset:0; z-index:40; background:rgba(11,42,71,0.34); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);"></div>
+    <aside style="position:fixed; top:0; right:0; z-index:41; width:540px; max-width:94vw; height:100vh; background:var(--panel); border-left:1px solid var(--line); box-shadow:var(--shadow-lg); display:flex; flex-direction:column; animation:drawerIn 260ms cubic-bezier(.2,.7,.2,1);">
+      <div style="display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--line);">
+        <button onClick="{{ closeDrawer }}" style="width:34px; height:34px; display:grid; place-items:center; background:var(--panel-2); border:1px solid var(--line); border-radius:9px; color:var(--ink-2); cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);">{{ drawer.id }}</span>
+        <div style="flex:1;"></div>
+        <button style="display:inline-flex; align-items:center; gap:7px; padding:7px 13px; background:transparent; border:1px solid var(--line); border-radius:8px; font-size:12.5px; color:var(--ink-2); cursor:pointer; font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Watch</button>
+      </div>
+
+      <div data-scroll="1" style="flex:1; overflow:auto; padding:24px 26px 40px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+          <div style="width:42px; height:42px; border-radius:10px; display:grid; place-items:center; background:{{ drawer.catBg }}; color:{{ drawer.catColor }};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; letter-spacing:0.08em; padding:3px 8px; border-radius:5px; color:{{ drawer.catColor }}; background:{{ drawer.catBg }};">{{ drawer.typeLabel }}</span>
+          <span style="{{ drawer.tierStyle }}">{{ drawer.tierLabel }}</span>
+          <span style="font-size:10px; font-weight:600; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.05em; padding:3px 8px; border-radius:5px; color:{{ drawer.stateColor }}; background:{{ drawer.stateBg }};">{{ drawer.stateLabel }}</span>
+        </div>
+        <h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:32px; letter-spacing:-0.02em; margin:0; line-height:1.1;">{{ drawer.name }}</h2>
+        <p style="font-size:14px; color:var(--ink-2); line-height:1.55; margin:12px 0 18px;">{{ drawer.desc }}</p>
+
+        <div style="display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:20px;">
+          <sc-for list="{{ drawer.tabs }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.onClick }}" style="padding:9px 14px; background:transparent; border:none; border-bottom:2px solid transparent; font-size:13px; text-transform:capitalize; color:var(--muted); cursor:pointer; font-family:inherit; margin-bottom:-1px;" style-hover="color:var(--ink);"><sc-if value="{{ t.active }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;"></span></sc-if>{{ t.name }}</button>
+          </sc-for>
+        </div>
+
+        <!-- OVERVIEW -->
+        <sc-if value="{{ drawer.isOverview }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:22px;">
+            <div style="background:var(--panel); padding:13px 16px;"><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Owner team</div><div style="font-size:13.5px; color:var(--ink); font-weight:500;">{{ drawer.owner }}</div></div>
+            <div style="background:var(--panel); padding:13px 16px;"><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Language</div><div style="font-size:13.5px; color:var(--ink); font-weight:500;">{{ drawer.language }}</div></div>
+            <div style="background:var(--panel); padding:13px 16px;"><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">SLO target</div><div style="font-size:13.5px; color:var(--ink); font-weight:500; font-family:'JetBrains Mono',monospace;">{{ drawer.slo }} / {{ drawer.sloWindow }}</div></div>
+            <div style="background:var(--panel); padding:13px 16px;"><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Tier</div><div style="font-size:13.5px; color:var(--ink); font-weight:500;">{{ drawer.tierText }}</div></div>
+            <div style="background:var(--panel); padding:13px 16px;"><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Lifecycle</div><div style="font-size:13.5px; color:var(--ink); font-weight:500;">{{ drawer.lifecycle }}</div></div>
+            <div style="background:var(--panel); padding:13px 16px;"><div style="font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:4px;">Repository</div><div style="font-size:13px; color:var(--ink); font-weight:500; font-family:'JetBrains Mono',monospace;">{{ drawer.repository }}</div></div>
+          </div>
+
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;"><h4 style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; color:var(--muted); margin:0;">Health signals · 30 days</h4><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);">16-day uptime</span></div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px;">
+            <sc-for list="{{ drawer.signals }}" as="s" hint-placeholder-count="4">
+              <div style="background:var(--panel-2); border-radius:10px; padding:12px 13px;"><div style="font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'JetBrains Mono',monospace;">{{ s.label }}</div><div style="font-size:18px; font-weight:600; margin-top:6px; color:{{ s.color }}; font-family:'JetBrains Mono',monospace;">{{ s.value }}</div></div>
+            </sc-for>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:3px; height:54px; padding:12px 14px; background:var(--panel-2); border-radius:10px; margin-bottom:22px;">
+            <sc-for list="{{ drawer.sparkBars }}" as="b" hint-placeholder-count="16"><div style="{{ b.style }}"></div></sc-for>
+          </div>
+
+          <h4 style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; color:var(--muted); margin:0 0 10px;">Tags</h4>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <sc-for list="{{ drawer.tags }}" as="t" hint-placeholder-count="3"><span style="font-family:'JetBrains Mono',monospace; font-size:11px; padding:4px 10px; border:1px solid var(--line); color:var(--ink-2); border-radius:999px; background:var(--panel-2);">{{ t }}</span></sc-for>
+          </div>
+        </sc-if>
+
+        <!-- SCORECARD -->
+        <sc-if value="{{ drawer.isScorecard }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:22px; background:linear-gradient(135deg,#0A3743 0%,#0B2A47 100%); border-radius:14px; padding:22px 24px; color:#fff; margin-bottom:22px; position:relative; overflow:hidden;">
+            <div style="position:absolute; right:-20px; bottom:-30px; width:160px; height:160px; background:radial-gradient(circle, rgba(47,169,155,0.34), transparent 70%);"></div>
+            <div style="position:relative; width:108px; height:108px; flex-shrink:0;">
+              <svg width="108" height="108" viewBox="0 0 108 108" style="transform:rotate(-90deg);"><circle cx="54" cy="54" r="46" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="9"/><circle cx="54" cy="54" r="46" fill="none" stroke="#3EC9B8" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ drawer.dDash }} 999"/></svg>
+              <div style="position:absolute; inset:0; display:grid; place-items:center;"><span style="font-family:'Instrument Serif',Georgia,serif; font-size:32px;">{{ drawer.score }}%</span></div>
+            </div>
+            <div style="position:relative; z-index:1;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.7);">Production readiness</div>
+              <div style="font-family:'Instrument Serif',Georgia,serif; font-size:24px; margin:5px 0 4px;">{{ drawer.passed }} / {{ drawer.total }} checks passing</div>
+              <div style="font-size:12px; color:rgba(255,255,255,0.66);">Last evaluated 2 hours ago · Policy standard-v3</div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column;">
+            <sc-for list="{{ drawer.checks }}" as="c" hint-placeholder-count="8">
+              <div style="display:flex; align-items:center; gap:11px; padding:12px 2px; border-bottom:1px solid var(--line);">
+                <sc-if value="{{ c.pass }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.25" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></sc-if>
+                <sc-if value="{{ c.pass }}" hint-placeholder-val="{{ false }}"></sc-if>
+                <span style="flex:1; font-size:13.5px; color:var(--ink);">{{ c.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- DEPENDENCIES -->
+        <sc-if value="{{ drawer.isDeps }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ drawer.graph.empty }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; justify-items:center; gap:10px; padding:50px 20px; text-align:center; color:var(--muted); background:var(--panel-2); border:1px dashed var(--line); border-radius:14px;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <strong style="color:var(--ink); font-size:15px;">No dependencies declared.</strong>
+              <span style="font-size:12.5px;">This service has no upstream or downstream links in the catalog.</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ drawer.graph.empty }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; justify-content:space-between; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-bottom:6px;"><span>Upstream ({{ drawer.graph.upCount }})</span><span>Downstream ({{ drawer.graph.downCount }})</span></div>
+            <div style="position:relative; width:100%; height:{{ drawer.graph.hpx }}; background:var(--panel-2); border:1px solid var(--line); border-radius:14px; overflow:hidden;">
+              <svg viewBox="0 0 420 {{ drawer.graph.H }}" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%;">
+                <sc-for list="{{ drawer.graph.edges }}" as="e" hint-placeholder-count="3"><line x1="{{ e.x1 }}" y1="{{ e.y1 }}" x2="{{ e.x2 }}" y2="{{ e.y2 }}" stroke="var(--line-strong)" stroke-width="1.5"></line></sc-for>
+              </svg>
+              <div style="position:absolute; inset:0;">
+                <sc-for list="{{ drawer.graph.nodes }}" as="n" hint-placeholder-count="4">
+                  <div style="left:{{ n.leftPx }}; top:{{ n.topPx }}; {{ n.style }}">
+                    <div style="display:flex; align-items:center; gap:6px;"><span style="width:7px; height:7px; border-radius:50%; flex-shrink:0; background:{{ n.dotColor }};"></span><span style="font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em;">{{ n.sub }}</span></div>
+                    <div style="font-size:11.5px; font-weight:600; color:var(--ink); line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ n.label }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <!-- DOCS -->
+        <sc-if value="{{ drawer.isDocs }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ drawer.docReader }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ drawer.docReader.back }}" style="display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--line); background:transparent; border-radius:8px; font-size:12px; color:var(--ink-2); cursor:pointer; font-family:inherit; margin-bottom:14px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"><polyline points="15 18 9 12 15 6"/></svg> All docs</button>
+            <div style="font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-bottom:6px;">{{ drawer.docReader.path }}</div>
+            <sc-for list="{{ drawer.docReader.blocks }}" as="b" hint-placeholder-count="6">
+              <sc-if value="{{ b.isH1 }}" hint-placeholder-val="{{ false }}"><h2 style="font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:27px; letter-spacing:-0.02em; margin:6px 0 12px;">{{ b.text }}</h2></sc-if>
+              <sc-if value="{{ b.isH2 }}" hint-placeholder-val="{{ false }}"><h3 style="font-weight:600; font-size:15px; margin:18px 0 7px; color:var(--ink);">{{ b.text }}</h3></sc-if>
+              <sc-if value="{{ b.isP }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.62; color:var(--ink-2); margin:0 0 11px;">{{ b.text }}</p></sc-if>
+              <sc-if value="{{ b.isLi }}" hint-placeholder-val="{{ false }}"><div style="display:flex; gap:9px; font-size:13.5px; line-height:1.55; color:var(--ink-2); margin:0 0 6px;"><span style="color:var(--accent);">—</span><span>{{ b.text }}</span></div></sc-if>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ drawer.docReader }}" hint-placeholder-val="{{ true }}">
+            <h4 style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; color:var(--muted); margin:0 0 12px;">Documentation</h4>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ drawer.docList }}" as="d" hint-placeholder-count="2">
+                <button onClick="{{ d.open }}" style="display:flex; align-items:center; gap:12px; padding:13px 15px; background:var(--panel-2); border:1px solid var(--line); border-radius:11px; cursor:pointer; text-align:left; font-family:inherit;" style-hover="border-color:var(--accent);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <div style="flex:1;"><div style="font-size:13.5px; font-weight:600; color:var(--ink);">{{ d.title }}</div><div style="font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px;">{{ d.path }}</div></div>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.25"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </sc-for>
+            </div>
+            <div style="margin-top:14px; padding:14px 16px; background:var(--panel-2); border:1px dashed var(--line); border-radius:11px; font-size:12.5px; color:var(--muted); line-height:1.5;">Docs are sourced from the service repo's <span style="font-family:'JetBrains Mono',monospace; color:var(--ink-2);">docs/</span> directory and refreshed on every catalog scan.</div>
+          </sc-if>
+        </sc-if>
+      </div>
+    </aside>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+const TYPE_META = {
+  api:  { label: 'API',  color: '#2FA99B', bg: 'rgba(47,169,155,0.16)' },
+  db:   { label: 'DB',   color: '#3F7FC4', bg: 'rgba(63,127,196,0.16)' },
+  web:  { label: 'WEB',  color: '#4E94A6', bg: 'rgba(78,148,166,0.16)' },
+  ml:   { label: 'ML',   color: '#8A6FCB', bg: 'rgba(138,111,203,0.16)' },
+  tool: { label: 'TOOL', color: '#D89510', bg: 'rgba(216,149,16,0.16)' },
+};
+const LIFE = { production: 'var(--ok)', beta: 'var(--warn)', deprecated: 'var(--muted)' };
+
+const LIGHT = {
+  '--bg': '#E8E6DF',
+  '--mesh': 'radial-gradient(1100px 560px at 0% -10%, rgba(47,169,155,0.13), transparent 60%), radial-gradient(760px 480px at 100% 0%, rgba(31,95,165,0.09), transparent 60%)',
+  '--panel': '#FFFFFF', '--panel-2': '#F4F2EB', '--panel-3': '#E9E6DD',
+  '--line': '#DCD8CC', '--line-strong': '#C3BDAC',
+  '--ink': '#0B2A47', '--ink-2': '#3F5465', '--muted': '#828D97',
+  '--accent': '#2FA99B', '--accent-fg': '#FFFFFF', '--accent-soft': 'rgba(47,169,155,0.13)',
+  '--accent-2': '#1F5FA5', '--accent-2-soft': 'rgba(31,95,165,0.12)',
+  '--ok': '#1FA971', '--warn': '#C98708', '--danger': '#D94A3D',
+  '--shadow-sm': '0 1px 2px rgba(11,42,71,0.06), 0 1px 3px rgba(11,42,71,0.04)',
+  '--shadow': '0 4px 14px rgba(11,42,71,0.08), 0 2px 4px rgba(11,42,71,0.04)',
+  '--shadow-lg': '0 24px 48px rgba(11,42,71,0.16), 0 8px 18px rgba(11,42,71,0.09)',
+};
+const DARK = {
+  '--bg': '#05141A',
+  '--mesh': 'radial-gradient(1100px 560px at 0% -10%, rgba(47,169,155,0.20), transparent 60%), radial-gradient(760px 480px at 100% 0%, rgba(31,95,165,0.16), transparent 60%)',
+  '--panel': '#0C1F27', '--panel-2': '#122D36', '--panel-3': '#1A3D48',
+  '--line': '#1F3F4A', '--line-strong': '#315A66',
+  '--ink': '#E8EEF2', '--ink-2': '#B5C5CE', '--muted': '#7A8F9A',
+  '--accent': '#3EC9B8', '--accent-fg': '#05141A', '--accent-soft': 'rgba(62,201,184,0.15)',
+  '--accent-2': '#5C9CE6', '--accent-2-soft': 'rgba(92,156,230,0.16)',
+  '--ok': '#3DCB8F', '--warn': '#F2BC4C', '--danger': '#FF8676',
+  '--shadow-sm': '0 1px 2px rgba(0,0,0,0.35)',
+  '--shadow': '0 4px 14px rgba(0,0,0,0.45)',
+  '--shadow-lg': '0 24px 48px rgba(0,0,0,0.55), 0 8px 18px rgba(0,0,0,0.4)',
+};
+
+const TEAMS = [
+  { id: 'platform-identity', name: 'Platform Identity', slack: '#platform-identity', lead: 'Dana K.' },
+  { id: 'platform-infra', name: 'Platform Infra', slack: '#platform-infra', lead: 'Omar R.' },
+  { id: 'platform-data', name: 'Platform Data', slack: '#platform-data', lead: 'Lina T.' },
+  { id: 'product-core', name: 'Product Core', slack: '#product-core', lead: 'Maya N.' },
+  { id: 'product-growth', name: 'Product Growth', slack: '#product-growth', lead: 'Sami A.' },
+  { id: 'product-ml', name: 'Product ML', slack: '#product-ml', lead: 'Yara H.' },
+];
+
+const SERVICES = [
+  { id:'svc-auth-001', name:'Authentication Gateway', description:'OAuth2 / OIDC gateway handling SSO, token issuance, and federated identity.', type:'api', tier:1, lifecycle:'production', ownerTeamId:'platform-identity', language:'Go', repository:'platform/auth-gateway', sloTarget:'99.95%', sloWindow:'30d', tags:['critical','security','public'], runbook:true, dashboard:true, deps:['svc-pg-main-006'], avail:99.96, p95:47, deploys:14, incidents:0 },
+  { id:'svc-gw-002', name:'API Gateway', description:'Edge proxy routing traffic to internal services. Rate limiting and auth verification.', type:'api', tier:1, lifecycle:'production', ownerTeamId:'platform-infra', language:'Go', repository:'platform/api-gateway', sloTarget:'99.99%', sloWindow:'30d', tags:['critical','public'], runbook:true, dashboard:false, deps:['svc-auth-001'], avail:99.99, p95:22, deploys:9, incidents:0 },
+  { id:'svc-users-003', name:'User Service', description:'User profiles, preferences, and account management.', type:'api', tier:1, lifecycle:'production', ownerTeamId:'product-core', language:'TypeScript', repository:'product/user-service', sloTarget:'99.9%', sloWindow:'30d', tags:['critical'], runbook:false, dashboard:false, deps:['svc-pg-main-006','svc-auth-001'], avail:99.92, p95:118, deploys:21, incidents:1 },
+  { id:'svc-notify-004', name:'Notification Service', description:'Email, push, and in-app notification delivery. Templates and scheduling.', type:'api', tier:2, lifecycle:'production', ownerTeamId:'product-core', language:'TypeScript', repository:'product/notification-service', sloTarget:'99.5%', sloWindow:'30d', tags:['transactional'], runbook:false, dashboard:false, deps:['svc-pg-main-006','svc-users-003'], avail:99.71, p95:240, deploys:18, incidents:1 },
+  { id:'svc-search-005', name:'Search Service', description:'Full-text and semantic search across platform content using Elasticsearch.', type:'api', tier:2, lifecycle:'production', ownerTeamId:'product-ml', language:'Python', repository:'product/search-service', sloTarget:'99.5%', sloWindow:'30d', tags:['search','ml'], runbook:false, dashboard:false, deps:[], avail:99.55, p95:310, deploys:11, incidents:2 },
+  { id:'svc-pg-main-006', name:'Primary Database', description:'Main Postgres cluster. Shared by user, notification, and billing services.', type:'db', tier:1, lifecycle:'production', ownerTeamId:'platform-infra', language:null, repository:'platform/db-config', sloTarget:'99.99%', sloWindow:'30d', tags:['critical','data'], runbook:true, dashboard:false, deps:[], avail:99.99, p95:8, deploys:3, incidents:0 },
+  { id:'svc-billing-007', name:'Billing Service', description:'Subscription management, invoicing, and Stripe integration.', type:'api', tier:1, lifecycle:'production', ownerTeamId:'product-core', language:'TypeScript', repository:'product/billing-service', sloTarget:'99.95%', sloWindow:'30d', tags:['critical','payments','pci'], runbook:true, dashboard:false, deps:['svc-pg-main-006','svc-users-003'], avail:99.97, p95:95, deploys:7, incidents:0 },
+  { id:'svc-analytics-008', name:'Analytics Pipeline', description:'Event ingestion and aggregation pipeline. Powers the growth dashboard.', type:'api', tier:2, lifecycle:'production', ownerTeamId:'product-growth', language:'Python', repository:'product/analytics-pipeline', sloTarget:'99%', sloWindow:'30d', tags:['analytics','data'], runbook:false, dashboard:false, deps:['svc-pg-main-006'], avail:99.20, p95:540, deploys:12, incidents:3 },
+  { id:'svc-web-009', name:'Web App', description:'Customer-facing React SPA. Deployed to CDN.', type:'web', tier:1, lifecycle:'production', ownerTeamId:'product-core', language:'TypeScript', repository:'product/web', sloTarget:'99.9%', sloWindow:'30d', tags:['public','frontend'], runbook:false, dashboard:false, deps:['svc-gw-002','svc-auth-001'], avail:99.94, p95:130, deploys:33, incidents:1 },
+  { id:'svc-recs-010', name:'Recommendations Engine', description:'ML model serving personalized content recommendations.', type:'ml', tier:2, lifecycle:'beta', ownerTeamId:'product-ml', language:'Python', repository:'product/recs-engine', sloTarget:'99%', sloWindow:'30d', tags:['ml','beta'], runbook:false, dashboard:false, deps:['svc-search-005'], avail:98.90, p95:410, deploys:8, incidents:4 },
+  { id:'svc-admin-011', name:'Admin Portal', description:'Internal ops tooling for support and trust-and-safety teams.', type:'web', tier:3, lifecycle:'production', ownerTeamId:'platform-infra', language:'TypeScript', repository:'platform/admin-portal', sloTarget:'99%', sloWindow:'30d', tags:['internal'], runbook:false, dashboard:false, deps:['svc-gw-002','svc-users-003'], avail:99.60, p95:160, deploys:5, incidents:0 },
+  { id:'svc-feature-flags-012', name:'Feature Flag Service', description:'Runtime feature flag evaluation. Used by all product services.', type:'tool', tier:2, lifecycle:'production', ownerTeamId:'platform-infra', language:'Go', repository:'platform/feature-flags', sloTarget:'99.9%', sloWindow:'30d', tags:['infrastructure','release'], runbook:false, dashboard:false, deps:[], avail:99.95, p95:12, deploys:6, incidents:0 },
+];
+
+const DOCS = {
+  'svc-auth-001': [
+    { title:'Overview', path:'docs/index.md', md:"# Authentication Gateway\nThe Authentication Gateway is the single entry point for all identity and access management across the platform. It handles OAuth2 authorization code flows, OIDC token issuance, and federated identity via third-party providers.\n## Responsibilities\n- Token issuance — short-lived access tokens and long-lived refresh tokens\n- SSO — brokers login via configured OIDC providers\n- Token validation — fast introspection used by the API Gateway on every request\n- Session management — tracks active sessions, supports force-logout\n## SLO\n99.95% availability over a 30-day window. Latency p99 below 50ms for introspection calls." },
+    { title:'Runbook', path:'docs/runbook.md', md:"# Auth Gateway Runbook\n## High error rate on /v1/token\nError rate above 1% for more than 5 minutes.\nLikely causes:\n- Upstream Postgres unreachable\n- Redis session store full\n- Misconfigured OIDC provider\n## Token validation latency spike\nIntrospection p99 above 100ms sustained pages on-call. Introspection is served from an in-memory cache with a 5s TTL; a cache miss hits Postgres.\nMitigation: scale the gateway horizontally — each replica keeps its own warm cache." },
+  ],
+  'svc-users-003': [
+    { title:'Overview', path:'docs/index.md', md:"# User Service\nManages user profiles, preferences, and account metadata. The source of record for identity data downstream of the Auth Gateway.\n## Key concepts\n- User — an authenticated human, created on first login\n- Profile — display name, avatar, locale, timezone\n- Preferences — per-feature settings stored as a JSON blob\n## SLO\n99.9% availability, p99 below 120ms." },
+    { title:'GDPR & Data Deletion', path:'docs/gdpr.md', md:"# GDPR & Data Deletion\nThe User Service coordinates right-to-erasure requests.\n## Flow\n- Request arrives via DELETE /v1/users/:id\n- User record is soft-deleted immediately\n- A deletion event is published to the event bus\n- Downstream services purge their own user data\n- After a 30-day hold, a job hard-deletes the row" },
+  ],
+};
+
+const ACTIVITY = [
+  { kind:'deploy', title:'Web App deployed', detail:'v2.14.0', team:'Product Core', time:'12m ago' },
+  { kind:'score', title:'Auth Gateway scorecard reached 100%', detail:'standard-v3', team:'Platform Identity', time:'1h ago' },
+  { kind:'incident', title:'Search Service incident resolved', detail:'INC-2291', team:'Product ML', time:'3h ago' },
+  { kind:'docs', title:'Billing Service runbook updated', detail:'docs/runbook.md', team:'Product Core', time:'5h ago' },
+  { kind:'lifecycle', title:'Recommendations Engine promoted to beta', detail:'lifecycle change', team:'Product ML', time:'1d ago' },
+  { kind:'deploy', title:'API Gateway deployed', detail:'v3.2.1', team:'Platform Infra', time:'1d ago' },
+];
+
+function svcScore(s){
+  return (s.sloTarget?30:0) + (s.ownerTeamId?25:0) + (s.runbook?20:0) + (s.dashboard?15:0) + (s.lifecycle==='production'?10:0);
+}
+function svcState(score){ return score>=85?'healthy':score>=60?'watch':'risk'; }
+function teamName(id){ const t = TEAMS.find(x=>x.id===id); return t?t.name:'—'; }
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
+function makeSpark(s){
+  const out=[]; let seed=hashStr(s.id);
+  for(let i=0;i<16;i++){ seed=(seed*1103515245+12345)>>>0; const r=(seed%1000)/1000; const drop=(100-s.avail)*(0.4+r*2.2); out.push(Math.max(s.avail-2.4, 100-drop)); }
+  return out;
+}
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = { theme:'light', page:'home', search:'', tier:0, owner:'All', selectedId:null, drawerTab:'overview', selectedDoc:null };
+    this.rootNode = null;
+    SERVICES.forEach(s=>{ s.score=svcScore(s); s.state=svcState(s.score); s.spark=makeSpark(s); });
+    this.dependents = {};
+    SERVICES.forEach(s=>{ s.deps.forEach(d=>{ (this.dependents[d]=this.dependents[d]||[]).push(s.id); }); });
+    this.setRoot = (n)=>{ this.rootNode=n; if(n) this.applyTheme(n, this.state.theme); };
+  }
+  componentDidMount(){ if(this.rootNode) this.applyTheme(this.rootNode, this.state.theme); }
+  applyTheme(node, theme){ const t = theme==='dark'?DARK:LIGHT; for(const k in t) node.style.setProperty(k, t[k]); }
+  toggleTheme(){ const next = this.state.theme==='light'?'dark':'light'; this.setState({theme:next}); if(this.rootNode) this.applyTheme(this.rootNode, next); }
+  go(page){ this.setState({ page, selectedId:null }); const m=this.rootNode&&this.rootNode.querySelector('[data-scroll]'); if(m) m.scrollTop=0; }
+  openService(id){ this.setState({ selectedId:id, drawerTab:'overview', selectedDoc:null }); }
+  closeDrawer(){ this.setState({ selectedId:null, selectedDoc:null }); }
+
+  navStyle(name){
+    const a = this.state.page===name;
+    return { display:'flex', alignItems:'center', gap:'11px', padding:'9px 11px', borderRadius:'8px', fontSize:'13.5px', marginBottom:'2px', border:'none', width:'100%', textAlign:'left', cursor:'pointer', background:a?'var(--accent-soft)':'transparent', color:a?'var(--accent)':'var(--ink-2)', fontWeight:a?600:500, transition:'background 120ms, color 120ms', fontFamily:'inherit' };
+  }
+  navCountStyle(name){
+    const a = this.state.page===name;
+    return { marginLeft:'auto', fontFamily:"'JetBrains Mono', monospace", fontSize:'10.5px', padding:'1px 7px', borderRadius:'999px', background:a?'var(--panel)':'var(--panel-2)', color:a?'var(--accent)':'var(--muted)' };
+  }
+  tierStyle(tier){
+    const map = { 1:['var(--accent)','var(--accent-soft)'], 2:['var(--accent-2)','var(--accent-2-soft)'], 3:['var(--muted)','var(--panel-2)'] };
+    const [c,b] = map[tier]||map[3];
+    return { fontFamily:"'JetBrains Mono', monospace", fontSize:'10px', fontWeight:600, letterSpacing:'0.06em', padding:'3px 8px', borderRadius:'5px', color:c, background:b };
+  }
+  stateMeta(st){
+    if(st==='healthy') return { label:'Healthy', color:'var(--ok)', bg:'color-mix(in srgb, var(--ok) 14%, transparent)' };
+    if(st==='watch') return { label:'Watch', color:'var(--warn)', bg:'color-mix(in srgb, var(--warn) 16%, transparent)' };
+    return { label:'At risk', color:'var(--danger)', bg:'color-mix(in srgb, var(--danger) 15%, transparent)' };
+  }
+
+  buildCard(s){
+    const tm = TYPE_META[s.type];
+    return { id:s.id, name:s.name, idText:s.id, desc:s.description, typeLabel:tm.label, catColor:tm.color, catBg:tm.bg,
+      tierLabel:'T'+s.tier, tierStyle:this.tierStyle(s.tier), lifecycle:s.lifecycle, lifecycleColor:LIFE[s.lifecycle]||'var(--muted)',
+      owner:teamName(s.ownerTeamId), language:s.language||'—', slo:s.sloTarget||'—',
+      tags:s.tags.slice(0,3), open:()=>this.openService(s.id) };
+  }
+
+  parseMd(md){
+    const lines = (md||'').split('\n'); const blocks=[]; let para=[];
+    const flush=()=>{ if(para.length){ blocks.push({isP:true, text:para.join(' ')}); para=[]; } };
+    for(const ln of lines){
+      if(ln.startsWith('# ')){ flush(); blocks.push({isH1:true, text:ln.slice(2)}); }
+      else if(ln.startsWith('## ')){ flush(); blocks.push({isH2:true, text:ln.slice(3)}); }
+      else if(ln.startsWith('- ')){ flush(); blocks.push({isLi:true, text:ln.slice(2)}); }
+      else if(ln.trim()===''){ flush(); }
+      else { para.push(ln.trim()); }
+    }
+    flush(); return blocks;
+  }
+
+  renderVals(){
+    const total = SERVICES.length;
+    const tier1 = SERVICES.filter(s=>s.tier===1).length;
+    const prod = SERVICES.filter(s=>s.lifecycle==='production').length;
+    const readiness = Math.round(SERVICES.reduce((a,s)=>a+s.score,0)/total);
+    const healthy = SERVICES.filter(s=>s.state==='healthy').length;
+
+    // ---- catalog filtering
+    const q = this.state.search.trim().toLowerCase();
+    const owners = ['All', ...TEAMS.map(t=>t.name)];
+    const filtered = SERVICES.filter(s=>{
+      const mq = !q || s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q) || (s.description||'').toLowerCase().includes(q) || s.tags.some(t=>t.includes(q));
+      const mt = this.state.tier===0 || s.tier===this.state.tier;
+      const mo = this.state.owner==='All' || teamName(s.ownerTeamId)===this.state.owner;
+      return mq && mt && mo;
+    });
+    const tierChips = [0,1,2,3].map(t=>({ label:t===0?'All':'Tier '+t, active:this.state.tier===t, onClick:()=>this.setState({tier:t}) }));
+    const activeFilters = [q?1:0, this.state.tier?1:0, this.state.owner!=='All'?1:0].reduce((a,b)=>a+b,0);
+
+    const kpis = [
+      { label:'Total services', value:String(total), sub:'across 6 teams', accent:false },
+      { label:'Tier-1 critical', value:String(tier1), sub:'SLO ≥ 99.9%', accent:false },
+      { label:'In production', value:String(prod), sub:Math.round(prod/total*100)+'% of catalog', accent:false },
+      { label:'Readiness', value:String(readiness), sub:'avg scorecard', accent:true },
+    ].map(k=>({ ...k, tileStyle:this.kpiTile(k.accent), labelStyle:this.kpiLabel(k.accent), valueStyle:this.kpiValue(k.accent), subStyle:this.kpiSub(k.accent) }));
+
+    // ---- home status bars
+    const cov = (f)=>Math.round(SERVICES.filter(f).length/total*100);
+    const status = [
+      { label:'SLO coverage', pct:cov(s=>s.sloTarget), color:'var(--ok)' },
+      { label:'Owners assigned', pct:cov(s=>s.ownerTeamId), color:'var(--ok)' },
+      { label:'In production', pct:cov(s=>s.lifecycle==='production'), color:'var(--accent)' },
+      { label:'Runbooks linked', pct:cov(s=>s.runbook), color:'var(--warn)' },
+      { label:'Dashboards linked', pct:cov(s=>s.dashboard), color:'var(--danger)' },
+    ].map(x=>({ ...x, barStyle:{ width:x.pct+'%', height:'100%', borderRadius:'999px', background:x.color, transition:'width 600ms cubic-bezier(.2,.7,.2,1)' } }));
+
+    const activity = ACTIVITY.map(a=>{ const m=this.activityMeta(a.kind); return { ...a, dotColor:m.color, dotBg:m.bg, glyph:m.glyph }; });
+
+    const myTeam = 'product-core';
+    const mine = SERVICES.filter(s=>s.ownerTeamId===myTeam).map(s=>({ name:s.name, slo:s.sloTarget, stateColor:this.stateMeta(s.state).color, stateLabel:this.stateMeta(s.state).label, open:()=>this.openService(s.id) }));
+    const attention = SERVICES.filter(s=>s.state!=='healthy').sort((a,b)=>a.score-b.score).slice(0,4).map(s=>{
+      const gaps=[]; if(!s.runbook) gaps.push('No runbook'); if(!s.dashboard) gaps.push('No dashboard'); if(s.lifecycle!=='production') gaps.push('Pre-production');
+      const sm=this.stateMeta(s.state);
+      return { name:s.name, tier:'Tier '+s.tier, gap:gaps[0]||'Review', stateColor:sm.color, stateBg:sm.bg, stateLabel:sm.label, open:()=>this.openService(s.id) };
+    });
+    const quickLinks = [
+      { label:'Register a service', sub:'catalog-info.yaml', onClick:()=>this.go('catalog'), glyph:'+' },
+      { label:'Browse catalog', sub:total+' services', onClick:()=>this.go('catalog'), glyph:'▦' },
+      { label:'Health & SLO board', sub:readiness+' readiness', onClick:()=>this.go('health'), glyph:'❤' },
+      { label:'TechDocs', sub:'4 published pages', onClick:()=>this.go('docs'), glyph:'❏' },
+    ];
+
+    // ---- health page
+    const hRows = SERVICES.slice().sort((a,b)=>a.score-b.score).map(s=>this.buildHealthRow(s));
+    const hStats = [
+      { label:'SLO coverage', value:cov(s=>s.sloTarget)+'%', sub:total+' of '+total+' services', accent:false },
+      { label:'Tier-1 ready', value:SERVICES.filter(s=>s.tier===1&&s.state==='healthy').length+'/'+tier1, sub:'SLO · owner · runbook', accent:false },
+      { label:'Runbooks', value:cov(s=>s.runbook)+'%', sub:SERVICES.filter(s=>s.runbook).length+' linked', accent:false },
+      { label:'Healthy', value:healthy+'/'+total, sub:'meet the bar', accent:true },
+    ].map(k=>({ ...k, tileStyle:this.kpiTile(k.accent), labelStyle:this.kpiLabel(k.accent), valueStyle:this.kpiValue(k.accent), subStyle:this.kpiSub(k.accent) }));
+    const ringScore = readiness;
+    const ringDash = (ringScore/100)*Math.PI*2*52;
+
+    // ---- teams
+    const teamCards = TEAMS.map(t=>{
+      const svcs = SERVICES.filter(s=>s.ownerTeamId===t.id);
+      const avg = svcs.length?Math.round(svcs.reduce((a,s)=>a+s.score,0)/svcs.length):0;
+      return { name:t.name, slack:t.slack, lead:t.lead, count:svcs.length+' service'+(svcs.length===1?'':'s'), avg:avg, avgColor:avg>=85?'var(--ok)':avg>=60?'var(--warn)':'var(--danger)', initials:t.name.split(' ').map(w=>w[0]).join('').slice(0,2) };
+    });
+
+    // ---- techdocs
+    const docPages=[];
+    Object.keys(DOCS).forEach(sid=>{ const s=SERVICES.find(x=>x.id===sid); DOCS[sid].forEach((d,i)=>docPages.push({ svc:s.name, title:d.title, path:d.path, open:()=>this.setState({page:'docs', selectedId:null, selectedDoc:{sid,i}}) })); });
+    let docReader=null;
+    if(this.state.selectedDoc){ const d=DOCS[this.state.selectedDoc.sid][this.state.selectedDoc.i]; const s=SERVICES.find(x=>x.id===this.state.selectedDoc.sid); docReader={ svc:s.name, title:d.title, path:d.path, blocks:this.parseMd(d.md), back:()=>this.setState({selectedDoc:null}) }; }
+
+    // ---- drawer
+    let drawer=null;
+    const sel = this.state.selectedId && SERVICES.find(s=>s.id===this.state.selectedId);
+    if(sel){
+      const tm=TYPE_META[sel.type]; const sm=this.stateMeta(sel.state);
+      const checks=[
+        {label:'README present', pass:true},
+        {label:'Owner assigned', pass:!!sel.ownerTeamId},
+        {label:'SLO defined', pass:!!sel.sloTarget},
+        {label:'Runbook linked', pass:sel.runbook},
+        {label:'Dashboard linked', pass:sel.dashboard},
+        {label:'Vulnerability scan clean (7d)', pass:true},
+        {label:'Tracing instrumented', pass:sel.tier===1},
+        {label:'Chaos test passed (30d)', pass:false},
+      ];
+      const passed=checks.filter(c=>c.pass).length;
+      const score=Math.round(passed/checks.length*100);
+      const dDash=(score/100)*Math.PI*2*46;
+      const graph=this.buildGraph(sel);
+      const signals=[
+        {label:'Availability', value:sel.avail.toFixed(2)+'%', color:'var(--ok)'},
+        {label:'Incidents (30d)', value:String(sel.incidents), color: sel.incidents? 'var(--warn)':'var(--ok)'},
+        {label:'Deploys (30d)', value:String(sel.deploys), color:'var(--accent)'},
+        {label:'p95 latency', value:sel.p95+' ms', color: sel.p95<200?'var(--ok)':'var(--warn)'},
+      ];
+      const docList = (DOCS[sel.id]||[]).map((d,i)=>({ title:d.title, path:d.path, open:()=>this.setState({drawerTab:'docs', selectedDoc:{sid:sel.id,i}}) }));
+      const sparkBars = sel.spark.map(v=>({ style:{ flex:1, height:Math.max(8, Math.round((v-(sel.avail-2.5))/(100-(sel.avail-2.5))*100))+'%', minHeight:'4px', borderRadius:'2px', background: v<sel.avail-0.5?'var(--warn)':'var(--accent)', alignSelf:'flex-end', opacity:0.85 } }));
+      drawer={ id:sel.id, name:sel.name, desc:sel.description, typeLabel:tm.label, catColor:tm.color, catBg:tm.bg,
+        tierLabel:'T'+sel.tier, tierStyle:this.tierStyle(sel.tier), lifecycle:sel.lifecycle, lifecycleColor:LIFE[sel.lifecycle],
+        stateLabel:sm.label, stateColor:sm.color, stateBg:sm.bg,
+        owner:teamName(sel.ownerTeamId), language:sel.language||'—', slo:sel.sloTarget||'—', sloWindow:sel.sloWindow, repository:sel.repository||'—', tierText:'Tier '+sel.tier,
+        tags:sel.tags, checks, passed, total:checks.length, score, dDash, signals, graph, docList, sparkBars,
+        tabs:['overview','scorecard','dependencies','docs'].map(t=>({ name:t, active:this.state.drawerTab===t, onClick:()=>this.setState({drawerTab:t, selectedDoc:null}) })),
+        tab:this.state.drawerTab,
+        isOverview:this.state.drawerTab==='overview', isScorecard:this.state.drawerTab==='scorecard', isDeps:this.state.drawerTab==='dependencies', isDocs:this.state.drawerTab==='docs',
+      };
+      if(this.state.selectedDoc && this.state.selectedDoc.sid===sel.id){ const d=DOCS[sel.id][this.state.selectedDoc.i]; drawer.docReader={ title:d.title, path:d.path, blocks:this.parseMd(d.md), back:()=>this.setState({selectedDoc:null}) }; }
+    }
+
+    const titles={ home:'Home', catalog:'Catalog', teams:'Teams', docs:'TechDocs', health:'Health & SLO', settings:'Settings' };
+    const hr=new Date().getHours();
+    const greeting = hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';
+
+    return {
+      setRoot:this.setRoot,
+      theme:this.state.theme, isDark:this.state.theme==='dark', themeLabel:this.state.theme==='dark'?'Light mode':'Dark mode', themeGlyph:this.state.theme==='dark'?'☀':'☾',
+      toggleTheme:()=>this.toggleTheme(),
+      page:this.state.page, pageTitle:titles[this.state.page]||'',
+      isHome:this.state.page==='home', isCatalog:this.state.page==='catalog', isTeams:this.state.page==='teams', isDocs:this.state.page==='docs', isHealth:this.state.page==='health', isSettings:this.state.page==='settings',
+      goHome:()=>this.go('home'), goCatalog:()=>this.go('catalog'), goTeams:()=>this.go('teams'), goDocs:()=>this.go('docs'), goHealth:()=>this.go('health'), goSettings:()=>this.go('settings'),
+      homeNav:this.navStyle('home'), catalogNav:this.navStyle('catalog'), teamsNav:this.navStyle('teams'), docsNav:this.navStyle('docs'), healthNav:this.navStyle('health'), settingsNav:this.navStyle('settings'),
+      catalogCount:this.navCountStyle('catalog'), teamsCount:this.navCountStyle('teams'), docsCount:this.navCountStyle('docs'),
+      search:this.state.search, setSearch:(e)=>this.setState({search:e.target.value}), focusSearch:()=>{ if(this.state.page!=='catalog') this.go('catalog'); },
+      greeting, kpis,
+      // home
+      status, activity, mine, attention, quickLinks, readiness, healthy, total,
+      // catalog
+      cards:filtered.map(s=>this.buildCard(s)), tierChips, owners, owner:this.state.owner, setOwner:(e)=>this.setState({owner:e.target.value}),
+      countText: filtered.length+' of '+total+' services', activeFilters, hasFilters:activeFilters>0, resetFilters:()=>this.setState({search:'',tier:0,owner:'All'}), noResults:filtered.length===0,
+      // health
+      hRows, hStats, ringScore, ringDash,
+      // teams / docs / settings
+      teamCards, docPages, docReader, hasDocReader:!!docReader,
+      // drawer
+      drawer, hasDrawer:!!drawer, closeDrawer:()=>this.closeDrawer(),
+    };
+  }
+
+  kpiTile(accent){
+    if(accent) return { background:'linear-gradient(135deg, #0A3743 0%, #0B2A47 100%)', border:'1px solid transparent', borderRadius:'12px', padding:'18px 20px', position:'relative', overflow:'hidden', boxShadow:'var(--shadow-sm)' };
+    return { background:'var(--panel)', border:'1px solid var(--line)', borderRadius:'12px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'transform 160ms, box-shadow 160ms, border-color 160ms' };
+  }
+  kpiLabel(accent){ return { fontSize:'10.5px', letterSpacing:'0.12em', textTransform:'uppercase', fontFamily:"'JetBrains Mono', monospace", fontWeight:500, color:accent?'rgba(255,255,255,0.72)':'var(--muted)' }; }
+  kpiValue(accent){ return { fontFamily:"'Instrument Serif', Georgia, serif", fontWeight:400, fontSize:'42px', letterSpacing:'-0.03em', lineHeight:1, marginTop:'8px', color:accent?'#fff':'var(--ink)' }; }
+  kpiSub(accent){ return { fontSize:'11.5px', marginTop:'6px', color:accent?'rgba(255,255,255,0.6)':'var(--muted)' }; }
+
+  activityMeta(kind){
+    const map={ deploy:{color:'var(--accent)',glyph:'⤴'}, score:{color:'var(--ok)',glyph:'✓'}, incident:{color:'var(--danger)',glyph:'!'}, docs:{color:'var(--accent-2)',glyph:'❏'}, lifecycle:{color:'var(--warn)',glyph:'◐'} };
+    const m=map[kind]||map.deploy; return { color:m.color, bg:'color-mix(in srgb, '+m.color+' 16%, transparent)', glyph:m.glyph };
+  }
+
+  buildHealthRow(s){
+    const sm=this.stateMeta(s.state);
+    const bars=s.spark.slice(0,14).map(v=>({ style:{ flex:1, height:Math.max(20, Math.round((v-(s.avail-2.5))/(100-(s.avail-2.5))*100))+'%', minHeight:'3px', borderRadius:'1.5px', background: v<s.avail-0.6?'var(--warn)':'var(--accent)', alignSelf:'flex-end', opacity:0.9 } }));
+    return { name:s.name, id:s.id, tier:'Tier '+s.tier, stateLabel:sm.label, stateColor:sm.color, stateBg:sm.bg,
+      slo:s.sloTarget||'—', sloWindow:s.sloWindow||'', owner:teamName(s.ownerTeamId), avail:s.avail.toFixed(2)+'%',
+      runbookColor:s.runbook?'var(--ok)':'var(--muted)', runbookOpacity:s.runbook?1:0.45, dashColor:s.dashboard?'var(--ok)':'var(--muted)', dashOpacity:s.dashboard?1:0.45,
+      bars, open:()=>this.openService(s.id) };
+  }
+
+  buildGraph(sel){
+    const ups=sel.deps.map(id=>SERVICES.find(s=>s.id===id)).filter(Boolean).slice(0,4);
+    const downs=(this.dependents[sel.id]||[]).map(id=>SERVICES.find(s=>s.id===id)).filter(Boolean).slice(0,4);
+    if(!ups.length && !downs.length) return { empty:true, nodes:[], edges:[] };
+    const W=420, cx=210, padTop=34;
+    const rows=Math.max(ups.length, downs.length, 1);
+    const H=Math.max(220, rows*64+padTop*2-24);
+    const cy=H/2;
+    const colY=(n,i)=> n<=1? cy : padTop + i*((H-2*padTop)/(n-1));
+    const nodes=[]; const edges=[];
+    const mk=(s,x,y,role)=>{ const tm=TYPE_META[s.type]; nodes.push({ label:s.name, sub:tm.label, leftPx:(x-62)+'px', topPx:(y-20)+'px', dotColor:tm.color, role, isCenter:role==='center', style:this.graphNodeStyle(role,tm) }); };
+    const tmC=TYPE_META[sel.type];
+    nodes.push({ label:sel.name, sub:tmC.label, leftPx:(cx-70)+'px', topPx:(cy-22)+'px', dotColor:tmC.color, role:'center', isCenter:true, style:this.graphNodeStyle('center',tmC) });
+    ups.forEach((s,i)=>{ const y=colY(ups.length,i); mk(s,70,y,'up'); edges.push({x1:70,y1:y,x2:cx-70,y2:cy}); });
+    downs.forEach((s,i)=>{ const y=colY(downs.length,i); mk(s,350,y,'down'); edges.push({x1:cx+70,y1:cy,x2:350,y2:y}); });
+    return { empty:false, W, H, hpx:H+'px', nodes, edges, upCount:ups.length, downCount:downs.length };
+  }
+  graphNodeStyle(role, tm){
+    const center=role==='center';
+    return { position:'absolute', width: center?'140px':'124px', boxSizing:'border-box', padding:'8px 10px', borderRadius:'9px',
+      background: center?'var(--accent-soft)':'var(--panel)', border:'1px solid '+(center?'var(--accent)':'var(--line)'),
+      boxShadow:'var(--shadow-sm)', display:'flex', flexDirection:'column', gap:'2px', zIndex:2 };
+  }
+}
+</script>
+</body>
+</html>

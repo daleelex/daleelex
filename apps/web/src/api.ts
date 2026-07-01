@@ -1,4 +1,4 @@
-import type { ServiceListResponse, TeamListResponse, HealthResponse, ServiceDocListResponse, ServiceDoc, TechDocsIndexResponse, JenkinsHealthResponse, JenkinsConfigResponse, JenkinsConfigRequest, JenkinsTestResponse } from '@daleelex/shared';
+import type { ServiceListResponse, TeamListResponse, HealthResponse, ServiceDocListResponse, ServiceDoc, TechDocsIndexResponse, JenkinsHealthResponse, JenkinsConfigResponse, JenkinsConfigRequest, JenkinsTestResponse, CreateServiceRequest, Service } from '@daleelex/shared';
 
 const BASE = '/api/v1';
 
@@ -45,4 +45,5 @@ export const api = {
   jenkinsConfig: () => get<JenkinsConfigResponse>('/integrations/jenkins'),
   saveJenkinsConfig: (body: JenkinsConfigRequest) => put<JenkinsConfigResponse>('/integrations/jenkins', body),
   testJenkinsConnection: (body: JenkinsConfigRequest) => post<JenkinsTestResponse>('/integrations/jenkins/test', body),
+  createService: (body: CreateServiceRequest) => post<Service>('/services', body),
 };
