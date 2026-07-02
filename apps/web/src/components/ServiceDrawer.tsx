@@ -17,6 +17,7 @@ const LIFECYCLE_COLOR: Record<string, string> = {
 interface Props {
   service: Service | null;
   onClose: () => void;
+  onDeleteSuccess?: (service: Service) => void;
 }
 
 function deriveChecks(service: Service) {
@@ -32,15 +33,16 @@ function deriveChecks(service: Service) {
   ];
 }
 
-export function ServiceDrawer({ service, onClose }: Props) {
+export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [confirming, setConfirming] = useState(false);
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteService(service!.id),
-    onSuccess: () => {
+    mutationFn: (target: Service) => api.deleteService(target.id),
+    onSuccess: (_data, deletedService) => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
+      onDeleteSuccess?.(deletedService);
       onClose();
     },
   });
@@ -61,6 +63,7 @@ export function ServiceDrawer({ service, onClose }: Props) {
   const checks = deriveChecks(service);
   const passed = checks.filter((c) => c.pass).length;
   const score = Math.round((passed / checks.length) * 100);
+  const deleteError = deleteMutation.error instanceof Error ? deleteMutation.error.message : null;
 
   return (
     <>
@@ -76,7 +79,7 @@ export function ServiceDrawer({ service, onClose }: Props) {
               <span className="delete-confirm-label">Delete this service?</span>
               <button
                 className="ghost-btn delete-confirm-yes"
-                onClick={() => deleteMutation.mutate()}
+                onClick={() => deleteMutation.mutate(service)}
                 disabled={deleteMutation.isPending}
               >
                 {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
@@ -96,6 +99,12 @@ export function ServiceDrawer({ service, onClose }: Props) {
             </>
           )}
         </div>
+
+        {deleteError && (
+          <div className="drawer-alert error" role="alert">
+            {deleteError}
+          </div>
+        )}
 
         <div className="drawer-body">
           <div className="drawer-top-row">

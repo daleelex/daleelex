@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ServiceListResponse, Service, CreateServiceRequest } from '@daleelex/shared';
 import { prisma } from '../db.js';
+import { requireAdmin } from '../auth.js';
 
 function toServiceShape(row: Awaited<ReturnType<typeof prisma.service.findFirstOrThrow>>): Service {
   return {
@@ -39,6 +40,7 @@ export async function servicesRoute(app: FastifyInstance) {
   app.post<{ Body: CreateServiceRequest }>(
     '/services',
     {
+      preHandler: requireAdmin,
       schema: {
         body: {
           type: 'object',
@@ -94,6 +96,7 @@ export async function servicesRoute(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     '/services/:id',
     {
+      preHandler: requireAdmin,
       schema: {
         params: {
           type: 'object',

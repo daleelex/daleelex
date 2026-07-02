@@ -10,10 +10,16 @@ import './ServicesPage.css';
 
 const TIERS = ['All', 'Tier 1', 'Tier 2', 'Tier 3'] as const;
 
+type CatalogNotice = {
+  kind: 'success' | 'error';
+  message: string;
+};
+
 export function ServicesPage() {
   const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState<Service | null>(null);
   const [registering, setRegistering] = useState(false);
+  const [notice, setNotice] = useState<CatalogNotice | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useQuery({
@@ -135,6 +141,15 @@ export function ServicesPage() {
         </p>
       </section>
 
+      {notice && (
+        <div className={`catalog-notice ${notice.kind}`} role="status">
+          <span>{notice.message}</span>
+          <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">
+            <CloseIcon />
+          </button>
+        </div>
+      )}
+
       <section className="stats">
         {stats.map((cell, i) => (
           <div key={i} className={`stat-cell${cell.accent ? ' accent' : ''}`}>
@@ -208,7 +223,13 @@ export function ServicesPage() {
         <span>Built on <code>catalog-info.yaml</code></span>
       </footer>
 
-      <ServiceDrawer service={selected} onClose={() => setSelected(null)} />
+      <ServiceDrawer
+        service={selected}
+        onClose={() => setSelected(null)}
+        onDeleteSuccess={(service) => {
+          setNotice({ kind: 'success', message: `${service.name} was removed from the catalog.` });
+        }}
+      />
       {registering && <RegisterServiceModal onClose={() => setRegistering(false)} />}
     </>
   );
@@ -256,6 +277,15 @@ function ChevronRight() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
