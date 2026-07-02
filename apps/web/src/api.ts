@@ -21,6 +21,14 @@ async function put<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function del(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error ?? `${res.status} ${res.statusText}`);
+  }
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
@@ -46,4 +54,5 @@ export const api = {
   saveJenkinsConfig: (body: JenkinsConfigRequest) => put<JenkinsConfigResponse>('/integrations/jenkins', body),
   testJenkinsConnection: (body: JenkinsConfigRequest) => post<JenkinsTestResponse>('/integrations/jenkins/test', body),
   createService: (body: CreateServiceRequest) => post<Service>('/services', body),
+  deleteService: (id: string) => del(`/services/${id}`),
 };

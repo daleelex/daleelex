@@ -91,6 +91,34 @@ export async function servicesRoute(app: FastifyInstance) {
     },
   );
 
+  app.delete<{ Params: { id: string } }>(
+    '/services/:id',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string' } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const existing = await prisma.service.findFirst({
+        where: { id: req.params.id, deletedAt: null },
+        select: { id: true },
+      });
+      if (!existing) {
+        reply.code(404);
+        throw new Error(`Service "${req.params.id}" not found.`);
+      }
+      await prisma.service.update({
+        where: { id: req.params.id },
+        data: { deletedAt: new Date() },
+      });
+      reply.code(204).send();
+    },
+  );
+
   app.get('/services', async (): Promise<ServiceListResponse> => {
     const rows = await prisma.service.findMany({
       where: { deletedAt: null },
