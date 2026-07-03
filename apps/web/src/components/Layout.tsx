@@ -31,6 +31,10 @@ export function Layout() {
     catch { return {}; }
   });
 
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    return localStorage.getItem('daleelex-sidebar-open') !== 'false';
+  });
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
@@ -50,11 +54,22 @@ export function Layout() {
     });
   }
 
+  function toggleSidebar() {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('daleelex-sidebar-open', String(next));
+      return next;
+    });
+  }
+
   return (
     <div className="root">
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? '' : ' closed'}`}>
         <div className="brand">
           <span className="brand-wordmark">DaleelEx</span>
+          <button className="brand-close" onClick={toggleSidebar} title="Close sidebar">
+            <CloseIcon />
+          </button>
         </div>
         <div className="sidebar-sep" />
         <nav className="nav">
@@ -102,7 +117,13 @@ export function Layout() {
         </div>
       </aside>
 
-      <main className="main">
+      {!sidebarOpen && (
+        <button className="hamburger-fab" onClick={toggleSidebar} title="Open sidebar">
+          <HamburgerIcon />
+        </button>
+      )}
+
+      <main className={`main${sidebarOpen ? '' : ' sidebar-closed'}`}>
         <Outlet />
       </main>
     </div>
@@ -141,6 +162,23 @@ function ChevronDownIcon({ open }: { open: boolean }) {
       style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 200ms ease', flexShrink: 0 }}
     >
       <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+function HamburgerIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
