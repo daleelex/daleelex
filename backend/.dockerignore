@@ -1,0 +1,58 @@
+# ---- Dependencies (reinstalled inside the image) ----
+node_modules
+.pnpm-store
+.pnpm-debug.log*
+
+# ---- Build output (recompiled inside the image) ----
+dist
+build
+*.tsbuildinfo
+
+# ---- Env & secrets (never bake into an image) ----
+.env
+.env.*
+!.env.example
+
+# ---- Tests, coverage, CI ----
+coverage
+.nyc_output
+test
+**/*.spec.ts
+**/*.e2e-spec.ts
+jest.config.*
+.github
+
+# ---- Prisma generated client (regenerated via `prisma generate` in build) ----
+# NOTE: keep the schema itself — only ignore generated artifacts if they sit outside node_modules
+**/generated
+src/**/prisma/generated
+
+# ---- Version control & meta ----
+.git
+.gitignore
+.gitattributes
+
+# ---- Editor / IDE / OS ----
+.vscode
+.idea
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+logs
+*.log
+npm-debug.log*
+
+# ---- Docker & local infra (avoid recursive context bloat) ----
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+.docker
+
+# ---- Misc dev config not needed at build time ----
+.eslintcache
+.prettierrc*
+.editorconfig
+README.md
+*.md
