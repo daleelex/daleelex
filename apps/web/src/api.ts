@@ -2,9 +2,14 @@ import type { ServiceListResponse, TeamListResponse, HealthResponse, ServiceDocL
 
 const BASE = '/api/v1';
 
+type ApiErrorPayload = {
+  error?: string | { message?: string };
+  message?: string;
+};
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) throw await toApiError(res);
   return res.json() as Promise<T>;
 }
 
@@ -15,10 +20,16 @@ async function put<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(err.error ?? `${res.status} ${res.statusText}`);
+    throw await toApiError(res);
   }
   return res.json() as Promise<T>;
+}
+
+async function del(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' });
+  if (!res.ok) {
+    throw await toApiError(res);
+  }
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -28,10 +39,19 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(err.error ?? `${res.status} ${res.statusText}`);
+    throw await toApiError(res);
   }
   return res.json() as Promise<T>;
+}
+
+async function toApiError(res: Response) {
+  const body = await res.json().catch(() => ({})) as ApiErrorPayload;
+  const message =
+    typeof body.error === 'string'
+      ? body.error
+      : body.error?.message ?? body.message ?? `${res.status} ${res.statusText}`;
+
+  return new Error(message);
 }
 
 export const api = {
@@ -46,4 +66,5 @@ export const api = {
   saveJenkinsConfig: (body: JenkinsConfigRequest) => put<JenkinsConfigResponse>('/integrations/jenkins', body),
   testJenkinsConnection: (body: JenkinsConfigRequest) => post<JenkinsTestResponse>('/integrations/jenkins/test', body),
   createService: (body: CreateServiceRequest) => post<Service>('/services', body),
+  deleteService: (id: string) => del(`/services/${id}`),
 };

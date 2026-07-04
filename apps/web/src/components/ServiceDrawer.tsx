@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
 import { api } from '../api';
@@ -17,6 +17,7 @@ const LIFECYCLE_COLOR: Record<string, string> = {
 interface Props {
   service: Service | null;
   onClose: () => void;
+  onDeleteSuccess?: (service: Service) => void;
 }
 
 function deriveChecks(service: Service) {
@@ -32,10 +33,24 @@ function deriveChecks(service: Service) {
   ];
 }
 
-export function ServiceDrawer({ service, onClose }: Props) {
+export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
+  const [confirming, setConfirming] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => { setTab('overview'); }, [service?.id]);
+  const deleteMutation = useMutation({
+    mutationFn: (target: Service) => api.deleteService(target.id),
+    onSuccess: (_data, deletedService) => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      onDeleteSuccess?.(deletedService);
+      onClose();
+    },
+  });
+
+  useEffect(() => {
+    setTab('overview');
+    setConfirming(false);
+  }, [service?.id]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -48,6 +63,7 @@ export function ServiceDrawer({ service, onClose }: Props) {
   const checks = deriveChecks(service);
   const passed = checks.filter((c) => c.pass).length;
   const score = Math.round((passed / checks.length) * 100);
+  const deleteError = deleteMutation.error instanceof Error ? deleteMutation.error.message : null;
 
   return (
     <>
@@ -58,10 +74,37 @@ export function ServiceDrawer({ service, onClose }: Props) {
             <CloseIcon />
           </button>
           <div style={{ flex: 1 }} />
-          <button className="ghost-btn">
-            <StarIcon /> Watch
-          </button>
+          {confirming ? (
+            <div className="delete-confirm">
+              <span className="delete-confirm-label">Delete this service?</span>
+              <button
+                className="ghost-btn delete-confirm-yes"
+                onClick={() => deleteMutation.mutate(service)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+              </button>
+              <button className="ghost-btn" onClick={() => setConfirming(false)} disabled={deleteMutation.isPending}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <button className="ghost-btn" onClick={() => setConfirming(true)}>
+                <TrashIcon /> Delete
+              </button>
+              <button className="ghost-btn">
+                <StarIcon /> Watch
+              </button>
+            </>
+          )}
         </div>
+
+        {deleteError && (
+          <div className="drawer-alert error" role="alert">
+            {deleteError}
+          </div>
+        )}
 
         <div className="drawer-body">
           <div className="drawer-top-row">
@@ -327,6 +370,10 @@ function CloseIcon() {
 
 function StarIcon() {
   return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+}
+
+function TrashIcon() {
+  return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
 }
 
 function CheckIcon() {
