@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/logo.svg" alt="DaleelEx" height="80" />
-</p>
-
 # DaleelEx
 
 Internal developer portal and service catalogue. Engineers use it to find every service the company runs, see who owns it, check its health score, read its docs, and understand its dependencies.

@@ -66,8 +66,7 @@ export function Layout() {
     <div className="root">
       <aside className={`sidebar${sidebarOpen ? '' : ' closed'}`}>
         <div className="brand">
-          <img src="/logo.svg" alt="DaleelEx" className="brand-logo" />
-          <span className="brand-wordmark">DaleelEx</span>
+<span className="brand-wordmark">DaleelEx</span>
           <button className="brand-close" onClick={toggleSidebar} title="Close sidebar">
             <CloseIcon />
           </button>
