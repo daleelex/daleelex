@@ -3,7 +3,6 @@ export default () => {
     NODE_ENV = 'development',
     APP_PORT = 5021,
     APP_NAME = 'daleelex-backend',
-    SWAGGER_PORT = 5022,
     LOG_LEVEL = 'info',
     LOG_ENABLE_CONSOLE = '',
     LOG_FILE = '',
@@ -21,9 +20,6 @@ export default () => {
       nodeEnv: NODE_ENV,
       port: Number(APP_PORT),
       name: APP_NAME,
-    },
-    swagger: {
-      port: Number(SWAGGER_PORT),
     },
     database: {
       url: DATABASE_URL,
