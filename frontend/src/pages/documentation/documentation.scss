@@ -1,0 +1,21 @@
+.techdocs-page { padding: 28px 32px 60px; }
+.techdocs-page__topbar { margin-bottom: 24px; }
+.techdocs-page__title { font-family: var(--font-display); font-size: 32px; color: var(--ink); margin: 0; }
+.techdocs-page__subtitle { color: var(--muted); font-size: 13.5px; margin: 6px 0 0; }
+
+.techdocs-list { display: flex; flex-direction: column; gap: 8px; }
+
+.techdocs-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px;
+  transition: all 120ms ease;
+  &:hover { border-color: var(--accent); transform: translateX(2px); }
+}
+
+.techdocs-row__main { display: flex; flex-direction: column; gap: 2px; }
+.techdocs-row__name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.techdocs-row__type { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; }
+.techdocs-row__count { font-size: 12px; color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+.techdocs-skeleton { height: 58px; background: var(--panel-2); border-radius: var(--radius); animation: pulse 1.4s ease-in-out infinite; }
+.empty-note { color: var(--muted); font-size: 13px; }
+@keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }

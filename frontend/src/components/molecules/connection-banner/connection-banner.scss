@@ -1,0 +1,108 @@
+// ─── Connection Banner ────────────────────────────────────────────────────────
+
+@keyframes cb-slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.cb {
+  background: color-mix(in srgb, var(--warn) 12%, var(--panel));
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+  animation: cb-slide-down 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cb__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  max-width: 100%;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+.cb__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cb__icon {
+  color: var(--warn);
+  flex-shrink: 0;
+}
+
+.cb__text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.cb__count {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.cb__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cb__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: var(--panel);
+    border-color: var(--warn);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.cb__spin {
+  animation: spin 800ms linear infinite;
+}
+
+.cb__dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 120ms ease;
+
+  &:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+}

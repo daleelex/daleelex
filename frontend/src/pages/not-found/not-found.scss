@@ -1,0 +1,270 @@
+// ─── Not Found (404) ──────────────────────────────────────────────────────────
+
+$brand:       #5C6BC0;
+$brand-dark:  #4a58b0;
+$c-bg:        #f8fafc;
+$c-surface:   #ffffff;
+$c-border:    #e2e8f0;
+$c-text:      #0f172a;
+$c-text-sec:  #475569;
+$c-text-muted:#94a3b8;
+$c-indigo:    #6366f1;
+$c-indigo-soft: rgba(99, 102, 241, 0.08);
+
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+// ─── Animations ───────────────────────────────────────────────────────────────
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(12px, -18px) rotate(3deg); }
+  50% { transform: translate(-8px, -10px) rotate(-2deg); }
+  75% { transform: translate(6px, 8px) rotate(1deg); }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.15); opacity: 0.25; }
+}
+
+@keyframes digit-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-8px); }
+  60% { transform: translateY(-4px); }
+}
+
+@keyframes icon-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(8deg); }
+}
+
+// ─── Shell ────────────────────────────────────────────────────────────────────
+.nf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  background: $c-bg;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow: hidden;
+  padding: 40px 24px;
+}
+
+// ─── Floating Shapes ──────────────────────────────────────────────────────────
+.nf__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.nf__shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.5;
+
+  &--1 {
+    width: 200px;
+    height: 200px;
+    top: 10%;
+    left: 8%;
+    background: $c-indigo-soft;
+    animation: float 14s ease-in-out infinite;
+  }
+
+  &--2 {
+    width: 140px;
+    height: 140px;
+    top: 60%;
+    right: 12%;
+    background: rgba(139, 92, 246, 0.06);
+    animation: float 18s ease-in-out infinite 2s;
+  }
+
+  &--3 {
+    width: 100px;
+    height: 100px;
+    bottom: 15%;
+    left: 20%;
+    background: rgba(16, 185, 129, 0.05);
+    animation: float 16s ease-in-out infinite 4s;
+  }
+
+  &--4 {
+    width: 80px;
+    height: 80px;
+    top: 20%;
+    right: 25%;
+    background: rgba(245, 158, 11, 0.05);
+    animation: float 20s ease-in-out infinite 1s;
+  }
+}
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+.nf__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 440px;
+  animation: fade-up 600ms $ease both;
+}
+
+// ─── Logo Icon ────────────────────────────────────────────────────────────────
+.nf__icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $brand;
+  border-radius: 14px;
+  color: #fff;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 16px rgba(92, 107, 192, 0.25);
+  animation: icon-bob 4s ease-in-out infinite;
+}
+
+// ─── 404 Code ─────────────────────────────────────────────────────────────────
+.nf__code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: $c-text;
+  line-height: 1;
+
+  @media (max-width: 480px) {
+    font-size: 3.5rem;
+  }
+}
+
+.nf__digit {
+  display: inline-block;
+  animation: digit-bounce 2.5s ease-in-out infinite;
+
+  &:first-child { animation-delay: 0s; }
+  &:last-child  { animation-delay: 0.3s; }
+}
+
+.nf__zero {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  color: $brand;
+}
+
+.nf__zero-ring {
+  position: absolute;
+  inset: 5%;
+  border: 4px solid $brand;
+  border-radius: 50%;
+  animation: pulse-ring 3s ease-in-out infinite;
+}
+
+// ─── Text ─────────────────────────────────────────────────────────────────────
+.nf__title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: $c-text;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  animation: fade-up 600ms $ease 100ms both;
+}
+
+.nf__message {
+  font-size: 0.92rem;
+  color: $c-text-muted;
+  line-height: 1.6;
+  margin: 0 0 32px;
+  max-width: 360px;
+  animation: fade-up 600ms $ease 200ms both;
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+.nf__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fade-up 600ms $ease 300ms both;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+.nf__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 150ms $ease;
+
+  &--primary {
+    background: $brand;
+    color: #fff;
+
+    &:hover {
+      background: $brand-dark;
+      box-shadow: 0 4px 14px rgba(92, 107, 192, 0.3);
+      transform: translateY(-1px);
+    }
+
+    &:active { transform: translateY(0); }
+  }
+
+  &--ghost {
+    background: $c-surface;
+    color: $c-text-sec;
+    border: 1px solid $c-border;
+
+    &:hover {
+      border-color: $brand;
+      color: $brand;
+      background: $c-indigo-soft;
+      transform: translateY(-1px);
+    }
+
+    &:active { transform: translateY(0); }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $c-indigo;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+}
+
+// ─── Reduced motion ───────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

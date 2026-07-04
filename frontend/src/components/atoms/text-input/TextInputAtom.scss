@@ -1,0 +1,63 @@
+$brand-primary: #5C6BC0;
+$border-color: #ced4da;
+$text-color: #495057;
+$error-color: #dc3545;
+$input-height: 3.125rem; 
+$input-radius: 8px;
+$bg-color: #ffffff;
+
+.text-atom-container {
+  width: 100%;
+  margin-bottom: 1rem;
+
+  .text-atom-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #343a40;
+  }
+
+  .text-atom-field {
+    width: 100%;
+    height: $input-height;
+    border-radius: $input-radius;
+    border: 1px solid $border-color;
+    background-color: $bg-color;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    color: $text-color;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    outline: none;
+
+    &:hover {
+      border-color: $brand-primary;
+    }
+
+    &:focus {
+      border-color: $brand-primary;
+      box-shadow: 0 0 0 3px rgba($brand-primary, 0.25);
+    }
+
+    &::placeholder {
+      color: #adb5bd;
+    }
+
+    &.has-error {
+      border-color: $error-color;
+      
+      &:focus {
+        box-shadow: 0 0 0 3px rgba($error-color, 0.25);
+      }
+    }
+  }
+
+  .text-atom-error {
+    color: $error-color;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+  }
+}

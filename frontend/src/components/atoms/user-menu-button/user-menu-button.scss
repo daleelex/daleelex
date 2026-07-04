@@ -1,0 +1,55 @@
+@use 'sass:color'; 
+
+$primary-color: #5C6BC0;         
+$highlight-color: rgba($primary-color, 0.1); 
+$shadow-color: rgba(0, 0, 0, 0.1);
+
+.nav-user-menu {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;  
+  padding: 0; 
+  height: 40px; 
+  width: 40px;  
+  
+  display: flex; 
+  justify-content: center; 
+  align-items: center;     
+  
+  border-radius: 50%; 
+  
+  transition: background-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    background-color: $highlight-color; 
+    
+    box-shadow: 0 1px 3px $shadow-color; 
+    
+    transform: none; 
+    outline: none;
+  }
+  
+  &:focus-visible {
+    outline: 2px solid $primary-color;
+    outline-offset: 1px;
+    background-color: $highlight-color;
+  }
+
+
+  & > .user-profile-image {
+    width: 55px;   
+    height: 55px;  
+    
+    border: 2px solid $primary-color; 
+    
+    border-radius: 50%; 
+    object-fit: cover; 
+    
+    box-shadow: 0 0 0 1px white;
+  }
+}
+
+.username-text, .username-arrow {
+    display: none !important;
+}
