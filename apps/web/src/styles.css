@@ -111,6 +111,13 @@ select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1p
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* FAB is fixed at left:16px, width:36px → right edge 52px; add 8px gap = 60px */
+.sidebar-closed .topbar,
+.sidebar-closed .health-topbar,
+.sidebar-closed .settings-topbar {
+  padding-left: 60px;
+}
+
 .crumb {
   display: flex;
   align-items: center;
