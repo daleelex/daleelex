@@ -1,15 +1,21 @@
 // ─── Not Found (404) ──────────────────────────────────────────────────────────
 
-$brand:       #5C6BC0;
-$brand-dark:  #4a58b0;
-$c-bg:        #f8fafc;
-$c-surface:   #ffffff;
-$c-border:    #e2e8f0;
-$c-text:      #0f172a;
-$c-text-sec:  #475569;
-$c-text-muted:#94a3b8;
-$c-indigo:    #6366f1;
-$c-indigo-soft: rgba(99, 102, 241, 0.08);
+// DaleelEx Brand Palette
+$c-navy:          #021E49;
+$c-ocean-blue:    #025794;
+$c-teal:          #048E9D;
+$c-teal-bright:   #05B6B7;
+$c-teal-light:    #D7F2F6;
+$c-bg:            #FDFDFD;
+$c-surface:       #ffffff;
+
+$grad-icon:       linear-gradient(160deg, #021E49 0%, #025794 55%, #0040A1 100%);
+
+// Semantic Mapping
+$c-border:        $c-teal-light;
+$c-text:          $c-navy;
+$c-text-sec:      $c-ocean-blue;
+$c-text-muted:    rgba(2, 30, 73, 0.6); // Muted navy
 
 $ease: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -75,7 +81,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
     height: 200px;
     top: 10%;
     left: 8%;
-    background: $c-indigo-soft;
+    background: $c-teal-light;
     animation: float 14s ease-in-out infinite;
   }
 
@@ -84,7 +90,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
     height: 140px;
     top: 60%;
     right: 12%;
-    background: rgba(139, 92, 246, 0.06);
+    background: rgba(0, 64, 161, 0.06); // Royal Blue
     animation: float 18s ease-in-out infinite 2s;
   }
 
@@ -93,7 +99,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
     height: 100px;
     bottom: 15%;
     left: 20%;
-    background: rgba(16, 185, 129, 0.05);
+    background: rgba(5, 182, 183, 0.05); // Teal Bright
     animation: float 16s ease-in-out infinite 4s;
   }
 
@@ -102,7 +108,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
     height: 80px;
     top: 20%;
     right: 25%;
-    background: rgba(245, 158, 11, 0.05);
+    background: rgba(4, 142, 157, 0.05); // Teal
     animation: float 20s ease-in-out infinite 1s;
   }
 }
@@ -126,11 +132,11 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $brand;
+  background: $grad-icon;
   border-radius: 14px;
   color: #fff;
   margin-bottom: 32px;
-  box-shadow: 0 4px 16px rgba(92, 107, 192, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 64, 161, 0.25); // Royal Blue shadow
   animation: icon-bob 4s ease-in-out infinite;
 }
 
@@ -166,13 +172,13 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
   justify-content: center;
   width: 1em;
   height: 1em;
-  color: $brand;
+  color: $c-teal-bright;
 }
 
 .nf__zero-ring {
   position: absolute;
   inset: 5%;
-  border: 4px solid $brand;
+  border: 4px solid $c-teal-bright;
   border-radius: 50%;
   animation: pulse-ring 3s ease-in-out infinite;
 }
@@ -224,12 +230,12 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
   transition: all 150ms $ease;
 
   &--primary {
-    background: $brand;
+    background: $c-teal-bright;
     color: #fff;
 
     &:hover {
-      background: $brand-dark;
-      box-shadow: 0 4px 14px rgba(92, 107, 192, 0.3);
+      background: $c-teal;
+      box-shadow: 0 4px 14px rgba(5, 182, 183, 0.3); // Teal Bright shadow
       transform: translateY(-1px);
     }
 
@@ -238,13 +244,13 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   &--ghost {
     background: $c-surface;
-    color: $c-text-sec;
+    color: $c-navy;
     border: 1px solid $c-border;
 
     &:hover {
-      border-color: $brand;
-      color: $brand;
-      background: $c-indigo-soft;
+      border-color: $c-teal-bright;
+      color: $c-teal-bright;
+      background: $c-teal-light;
       transform: translateY(-1px);
     }
 
@@ -252,7 +258,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   &:focus-visible {
-    outline: 2px solid $c-indigo;
+    outline: 2px solid $c-teal-bright;
     outline-offset: 2px;
   }
 

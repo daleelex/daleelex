@@ -1,0 +1,223 @@
+// ─── Service Unavailable ──────────────────────────────────────────────────────
+
+// DaleelEx Brand Palette
+$c-navy:          #021E49;
+$c-ocean-blue:    #025794;
+$c-royal-blue:    #0040A1;
+$c-teal-bright:   #05B6B7;
+$c-teal-light:    #D7F2F6;
+$c-bg:            #FDFDFD;
+
+$grad-icon:       linear-gradient(160deg, #021E49 0%, #025794 55%, #0040A1 100%);
+
+// Semantic Mapping
+$c-text:          $c-navy;
+$c-text-muted:    $c-ocean-blue; 
+$c-accent:        $c-teal-bright; 
+$c-accent-soft:   $c-teal-light;
+
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+@keyframes su-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes su-float {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(15px, -20px); }
+  50% { transform: translate(-10px, -8px); }
+  75% { transform: translate(8px, 10px); }
+}
+
+@keyframes su-pulse-out {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes su-icon-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(6deg); }
+}
+
+@keyframes su-wifi-breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes su-status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+// ─── Shell — full viewport, always ───────────────────────────────────────────
+.su {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $c-bg;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  z-index: 300;
+  overflow: hidden;
+}
+
+// ─── Background shapes ───────────────────────────────────────────────────────
+.su__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.su__shape {
+  position: absolute;
+  border-radius: 50%;
+
+  &--1 {
+    width: 280px;
+    height: 280px;
+    top: 5%;
+    left: 8%;
+    background: $c-accent-soft;
+    animation: su-float 16s ease-in-out infinite;
+  }
+
+  &--2 {
+    width: 200px;
+    height: 200px;
+    bottom: 10%;
+    right: 12%;
+    background: rgba(0, 64, 161, 0.08); // Royal Blue soft
+    animation: su-float 20s ease-in-out infinite 3s;
+  }
+
+  &--3 {
+    width: 150px;
+    height: 150px;
+    top: 50%;
+    left: 55%;
+    background: rgba(5, 182, 183, 0.06); // Teal Bright soft
+    animation: su-float 18s ease-in-out infinite 6s;
+  }
+}
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+.su__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 460px;
+  padding: 40px 24px;
+  animation: su-fade-up 600ms $ease both;
+}
+
+// ─── Logo ─────────────────────────────────────────────────────────────────────
+.su__icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $grad-icon;
+  border-radius: 16px;
+  color: #fff;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 64, 161, 0.3); // Royal Blue shadow
+  animation: su-icon-bob 5s ease-in-out infinite;
+}
+
+// ─── Signal animation ─────────────────────────────────────────────────────────
+.su__signal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 32px;
+}
+
+.su__wifi-off {
+  color: $c-accent;
+  animation: su-wifi-breathe 3s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.su__pulse-ring {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 2px solid $c-accent;
+  border-radius: 50%;
+  animation: su-pulse-out 3s ease-out infinite;
+
+  &--1 { animation-delay: 0s; }
+  &--2 { animation-delay: 1s; }
+  &--3 { animation-delay: 2s; }
+}
+
+// ─── Text ─────────────────────────────────────────────────────────────────────
+.su__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $c-text;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+  animation: su-fade-up 600ms $ease 100ms both;
+}
+
+.su__message {
+  font-size: 0.92rem;
+  color: $c-text-muted;
+  line-height: 1.65;
+  margin: 0 0 28px;
+  max-width: 380px;
+  animation: su-fade-up 600ms $ease 200ms both;
+}
+
+// ─── Status pill ──────────────────────────────────────────────────────────────
+.su__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: $c-accent-soft;
+  border: 1px solid rgba(5, 182, 183, 0.15); // Teal Bright border
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $c-accent;
+  margin-bottom: 24px;
+  animation: su-fade-up 600ms $ease 300ms both;
+}
+
+.su__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $c-accent;
+  animation: su-status-blink 1.5s ease-in-out infinite;
+}
+
+// ─── Footnote ─────────────────────────────────────────────────────────────────
+.su__footnote {
+  font-size: 0.73rem;
+  color: $c-text-muted;
+  margin: 0;
+  animation: su-fade-up 600ms $ease 400ms both;
+}
+
+// ─── Reduced motion ───────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

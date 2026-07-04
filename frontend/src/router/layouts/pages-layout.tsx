@@ -5,6 +5,7 @@ import { TopNavBar } from '../../components/molecules/top-bar/top-bar';
 import { ConnectionBanner } from '../../components/molecules/connection-banner/connection-banner';
 import { useConnection } from '../../providers/connection-provider';
 import { Route } from '../../configs/enums';
+import { ServiceUnavailable } from '../../pages/service-unavailable/service-unavailable';
 import './pages-layout.scss';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -25,8 +26,10 @@ const getPageTitle = (pathname: string): string => {
 export const PagesLayout: React.FC = () => {
   const location = useLocation();
   const pageTitle = useMemo(() => getPageTitle(location.pathname), [location.pathname]);
-  useConnection(); // keeps the connection tracker mounted; banner below reacts to it
-
+  const { status } = useConnection();
+  if (status === 'disconnected') {
+    return <ServiceUnavailable />;
+  }
   return (
     <div className="app-layout">
       <Sidebar />

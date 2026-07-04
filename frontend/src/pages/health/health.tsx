@@ -21,12 +21,21 @@ export const HealthPage: React.FC = () => {
                     <div className="health-card__head">
                         <span className="health-card__name">API &amp; Database</span>
                         {!appLoading && appHealth && (
-                            <StatusPill ok={appHealth.status === 'up'} label={appHealth.status === 'up' ? 'Operational' : 'Down'} />
+                            <StatusPill
+                                ok={appHealth.status === 'up'}
+                                label={appHealth.status === 'up' ? 'Operational' : 'Down'}
+                            />
                         )}
                     </div>
                     <div className="health-card__body">
-                        <div className="health-kv"><span>Version</span><span>{appHealth?.version ?? '—'}</span></div>
-                        <div className="health-kv"><span>Checked at</span><span>{appHealth ? new Date(appHealth.dateTime).toLocaleTimeString() : '—'}</span></div>
+                        <div className="health-kv">
+                            <span>Version</span>
+                            <span>{appHealth?.version ?? '—'}</span>
+                        </div>
+                        <div className="health-kv">
+                            <span>Checked at</span>
+                            <span>{appHealth ? new Date(appHealth.dateTime).toLocaleTimeString() : '—'}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -34,13 +43,25 @@ export const HealthPage: React.FC = () => {
                     <div className="health-card__head">
                         <span className="health-card__name">Jenkins</span>
                         {!jenkinsLoading && jenkinsHealth && (
-                            <StatusPill ok={jenkinsHealth.status === 'ok'} label={jenkinsHealth.status.replace('_', ' ')} />
+                            <StatusPill
+                                ok={jenkinsHealth.status === 'ok'}
+                                label={jenkinsHealth.status?.replace('_', ' ') ?? 'Unknown'}
+                            />
                         )}
                     </div>
                     <div className="health-card__body">
-                        <div className="health-kv"><span>Base URL</span><span>{jenkinsHealth?.baseUrl ?? 'Not configured'}</span></div>
-                        <div className="health-kv"><span>Mode</span><span>{jenkinsHealth?.mode ?? '—'}</span></div>
-                        <div className="health-kv"><span>Message</span><span>{jenkinsHealth?.message ?? '—'}</span></div>
+                        <div className="health-kv">
+                            <span>Base URL</span>
+                            <span>{jenkinsHealth?.baseUrl ?? 'Not configured'}</span>
+                        </div>
+                        <div className="health-kv">
+                            <span>Mode</span>
+                            <span>{jenkinsHealth?.mode ?? '—'}</span>
+                        </div>
+                        <div className="health-kv">
+                            <span>Message</span>
+                            <span>{jenkinsHealth?.message ?? '—'}</span>
+                        </div>
                     </div>
                 </div>
             </div>
