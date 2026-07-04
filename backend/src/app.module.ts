@@ -10,6 +10,7 @@ import { HealthModule } from './lib/health/health.module';
 import { PrismaService } from './lib/prisma/prisma.service';
 import { LoggerModule } from './global/logger/logger.module';
 import { GlobalMiddleware } from './global/global.middleware';
+import { IntegrationsModule } from './integrations/integrations.module';
 
 @Module({
   providers: [Logger, PrismaService],
@@ -27,6 +28,7 @@ import { GlobalMiddleware } from './global/global.middleware';
     LoggerModule,
     PrismaModule,
     HealthModule,
+    IntegrationsModule,
   ],
 })
 export class AppModule implements NestModule {
