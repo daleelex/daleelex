@@ -1,24 +1,23 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-
-interface HealthStatus {
-  status: 'up' | 'down';
-  dateTime: string;
-}
+import { HealthStatus } from './health.types';
 
 @Injectable()
 export class HealthService {
-  public constructor(private readonly prismaService: PrismaService) {}
+  public constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  async getHealth(): Promise<HealthStatus> {
+  public async getHealth(): Promise<HealthStatus> {
+    const version = this.configService.get<string>('app.version') ?? '0.0.0';
+
     try {
       await this.prismaService.checkDatabaseConnection();
-      return { status: 'up', dateTime: new Date().toISOString() };
+      return { status: 'up', version, dateTime: new Date().toISOString() };
     } catch {
-      throw new ServiceUnavailableException({
-        status: 'down',
-        dateTime: new Date().toISOString(),
-      });
+      return { status: 'down', version, dateTime: new Date().toISOString() };
     }
   }
 }

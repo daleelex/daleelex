@@ -28,8 +28,5 @@ COPY --from=builder --chown=daleel:daleel /app/src/lib/prisma  ./src/lib/prisma
 COPY --chown=daleel:daleel entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 USER daleel
-EXPOSE 5021 5022
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:5021/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]

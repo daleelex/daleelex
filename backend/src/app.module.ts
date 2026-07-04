@@ -11,6 +11,9 @@ import { PrismaService } from './lib/prisma/prisma.service';
 import { LoggerModule } from './global/logger/logger.module';
 import { GlobalMiddleware } from './global/global.middleware';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { TeamsModule } from './teams/teams.module';
+import { DocsModule } from './docs/docs.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   providers: [Logger, PrismaService],
@@ -28,6 +31,10 @@ import { IntegrationsModule } from './integrations/integrations.module';
     LoggerModule,
     PrismaModule,
     HealthModule,
+    IntegrationsModule,
+    ServicesModule,
+    DocsModule,
+    TeamsModule,
     IntegrationsModule,
   ],
 })

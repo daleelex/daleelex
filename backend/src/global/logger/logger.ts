@@ -49,7 +49,16 @@ export class Logger {
 
   private static getFormat() {
     const lokiFormat = format.printf(({ level, message, label, ...meta }) => {
-      const logEntry = { timestamp: new Date(), level, message, label: { ...(label as object), ...meta } };
+      const safeMeta = { ...(label as object), ...meta };
+
+      if (safeMeta.error && typeof safeMeta.error === 'object') {
+        const err = (safeMeta.error as { err?: unknown }).err;
+        if (err instanceof Error) {
+          safeMeta.error = { ...safeMeta.error, err: { message: err.message, stack: err.stack, name: err.name } };
+        }
+      }
+
+      const logEntry = { timestamp: new Date(), level, message, label: safeMeta };
       return JSON.stringify(logEntry);
     });
     return lokiFormat;

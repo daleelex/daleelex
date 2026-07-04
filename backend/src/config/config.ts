@@ -11,6 +11,7 @@ export default () => {
     JENKINS_BASE_URL = '',
     JENKINS_USERNAME = '',
     JENKINS_API_TOKEN = '',
+    DALEELEX_ENCRYPTION_KEY = '',
   } = process.env;
 
   const isConsoleEnabled = LOG_ENABLE_CONSOLE !== 'false';
@@ -36,6 +37,9 @@ export default () => {
       level: LOG_LEVEL,
       console: isConsoleEnabled,
       file: LOG_FILE,
+    },
+    crypto: {
+      encryptionKey: DALEELEX_ENCRYPTION_KEY,
     },
   };
 };
