@@ -1,20 +1,30 @@
 // ─── Login ────────────────────────────────────────────────────────────────────
 
-$brand:         #5C6BC0;
-$brand-dark:    #4a58b0;
-$brand-darker:  #3d4a9a;
+$c-navy-darkest: #01193A;
+$c-navy:         #021E49;
+$c-ocean-blue:   #025794;
+$c-royal-blue:   #0040A1;
+$c-teal:         #048E9D;
+$c-teal-bright:  #05B6B7;
+$c-teal-light:   #D7F2F6;
 
-$c-bg:          #ffffff;
-$c-surface:     #f8fafc;
-$c-border:      #e2e8f0;
-$c-border-hover:#cbd5e1;
-$c-text:        #0f172a;
-$c-text-sec:    #475569;
-$c-text-muted:  #94a3b8;
-$c-placeholder: #94a3b8;
-$c-red:         #ef4444;
-$c-red-soft:    #fef2f2;
-$c-indigo:      #6366f1;
+$grad-brand:     linear-gradient(160deg, #021E49 0%, #025794 55%, #0040A1 100%);
+
+$c-bg:           #FDFDFD;
+$c-surface:      #ffffff;
+$c-border:       $c-teal-light;
+$c-border-hover: rgba(4, 142, 157, 0.4); // Muted teal for borders
+$c-text:         $c-navy;
+$c-text-sec:     $c-ocean-blue;
+$c-text-muted:   rgba(2, 30, 73, 0.55); // Muted navy
+$c-placeholder:  rgba(2, 30, 73, 0.35);
+
+$c-btn-bg:       $c-teal-bright;
+$c-btn-hover:    $c-teal;
+$c-focus-ring:   $c-teal-bright;
+
+$c-red:          #ef4444;
+$c-red-soft:     #fef2f2;
 
 $ease: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -53,7 +63,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
 
 .login__brand {
   flex: 1;
-  background: linear-gradient(160deg, $brand 0%, $brand-dark 50%, $brand-darker 100%);
+  background: $grad-brand;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -194,7 +204,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
   width: 44px; height: 44px;
   align-items: center;
   justify-content: center;
-  background: $brand;
+  background: $grad-brand;
   border-radius: 12px;
   color: #fff;
   margin-bottom: 20px;
@@ -266,9 +276,9 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
     &:hover:not(:focus) { border-color: $c-border-hover; }
 
     &:focus {
-      border-color: $brand;
+      border-color: $c-focus-ring;
       background: $c-bg;
-      box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.12);
+      box-shadow: 0 0 0 3px rgba(5, 182, 183, 0.12); // Teal Bright shadow
     }
 
     &[type='password'],
@@ -293,7 +303,7 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
     justify-content: center;
     border: none;
     background: transparent;
-    color: $c-text-muted;
+    color: $c-placeholder;
     cursor: pointer;
     padding: 0;
     transition: color 120ms $ease;
@@ -332,21 +342,21 @@ $ease: cubic-bezier(0.16, 1, 0.3, 1);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  background: $brand;
+  background: $c-btn-bg;
   color: #fff;
   letter-spacing: 0.01em;
   transition: background 150ms $ease, box-shadow 150ms $ease, transform 100ms $ease;
 
   &:hover:not(:disabled) {
-    background: $brand-dark;
-    box-shadow: 0 4px 16px rgba(92, 107, 192, 0.35);
+    background: $c-btn-hover;
+    box-shadow: 0 4px 16px rgba(5, 182, 183, 0.35); // Teal Bright shadow
   }
 
   &:active:not(:disabled) { transform: scale(0.99); }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 
   &:focus-visible {
-    outline: 2px solid $c-indigo;
+    outline: 2px solid $c-focus-ring;
     outline-offset: 2px;
   }
 }

@@ -15,11 +15,15 @@ import { SettingsPage } from '../pages/settings/settings';
 import { NotFound } from '../pages/not-found/not-found';
 
 import { Route as AppRoute } from '../configs/enums';
+import { Login } from '../pages/login/login';
 
 export const AppRouter: React.FC = () => (
   <Router>
     <ToastContainer position="top-right" />
     <Routes>
+      {/* <Route element={<AuthLayout />}> */}
+      <Route path="/login" element={<Login />} />
+      {/* </Route> */}
       <Route element={<PagesLayout />}>
         <Route path={AppRoute.HOME} element={<HomePage />} />
         <Route path={AppRoute.SERVICES} element={<ServicesPage />} />

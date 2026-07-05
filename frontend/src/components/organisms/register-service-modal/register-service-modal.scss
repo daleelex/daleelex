@@ -1,7 +1,30 @@
-@use '../../../styles/tokens' as t;
+@use 'styles/tokens' as t;
 
 .modal {
-  @include t.daleelex-tokens;
+  --bg: #FDFDFD;
+  --panel: #FFFFFF;
+  --panel-2: #F3F7F8;
+  --panel-3: #E7EEF0;
+  --line: #DCE6E8;
+  --line-strong: #BFD2D6;
+  --ink: #021E49;
+  --ink-2: #3F5465;
+  --muted: #7A8D97;
+  --accent: #05B6B7;
+  --accent-2: #0040A1;
+  --accent-fg: #FFFFFF;
+  --accent-soft: rgba(5, 182, 183, 0.13);
+  --ok: #1FA971;
+  --warn: #C98708;
+  --danger: #D94A3D;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 4px 14px rgba(1, 25, 58, 0.08);
+  --shadow-lg: 0 24px 48px rgba(1, 25, 58, 0.16);
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 .modal-backdrop {

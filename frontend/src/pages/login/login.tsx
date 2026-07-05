@@ -5,7 +5,7 @@ import * as Yup from 'yup';
 import { Eye, EyeOff, Loader2, Hexagon } from 'lucide-react';
 import { handleLogin } from './login.service';
 import { useConnection } from '../../providers/connection-provider';
-import { ServiceUnavailable } from '../services/services';
+import { ServiceUnavailable } from '../service-unavailable/service-unavailable';
 import './login.scss';
 
 const loginSchema = Yup.object({
@@ -116,7 +116,7 @@ export const Login: React.FC = () => {
         <form className="login__form" onSubmit={formik.handleSubmit} noValidate>
           <div className="login__form-head">
             <div className="login__form-logo"><Hexagon size={20} /></div>
-            <h2 className="login__form-title">Welcome back</h2>
+            <h2 className="login__form-title">Welcome Back!</h2>
             <p className="login__form-sub">Sign in to your DaleelEx account</p>
           </div>
 

@@ -14,7 +14,7 @@ export enum Color {
 export enum Route {
   HOME = '/',
   LOGIN = '/login',
-  FORGOT_PASSWORD = '/forgot-password',
+  // FORGOT_PASSWORD = '/forgot-password',
   JENKINS = '/jenkins',
   SERVICES = '/services',
   TEAMS = '/teams',

@@ -121,9 +121,9 @@ const UserMenu = memo(() => {
   }, [dispatch, nav]);
 
   const menuItems = [
-    { label: 'Profile', sub: 'View your profile', icon: <User size={14} />, action: () => { nav(`/users/${user?.id || 'me'}/profile`); setOpen(false); } },
-    { label: 'Settings', sub: 'Integrations & preferences', icon: <Settings size={14} />, action: () => { nav(AppRoute.SETTINGS); setOpen(false); } },
-    { label: 'Billing', sub: 'Subscription & usage', icon: <CreditCard size={14} />, action: () => { nav(AppRoute.BILLING); setOpen(false); } },
+    { label: 'Profile', icon: <User size={14} />, action: () => { nav(`/users/${user?.id || 'me'}/profile`); setOpen(false); } },
+    { label: 'Billing', icon: <CreditCard size={14} />, action: () => { nav(AppRoute.BILLING); setOpen(false); } },
+    { label: 'Settings', icon: <Settings size={14} />, action: () => { nav(AppRoute.SETTINGS); setOpen(false); } },
   ];
 
   return (
