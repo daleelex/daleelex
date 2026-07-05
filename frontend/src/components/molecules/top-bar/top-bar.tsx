@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, User, Settings, CreditCard, LogOut, ChevronDown } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/store';
+import { Route as AppRoute } from '../../../configs/enums';
 import { clearUser, selectUser, selectInitials } from '../../../store/authSlice';
 import { logout } from '../../../pages/login/login.service';
 import './top-bar.scss';
@@ -121,8 +122,8 @@ const UserMenu = memo(() => {
 
   const menuItems = [
     { label: 'Profile', sub: 'View your profile', icon: <User size={14} />, action: () => { nav(`/users/${user?.id || 'me'}/profile`); setOpen(false); } },
-    { label: 'Settings', sub: 'Preferences', icon: <Settings size={14} />, action: () => { nav(`/users/${user?.id || 'me'}/settings`); setOpen(false); } },
-    { label: 'Billing', sub: 'Subscription & usage', icon: <CreditCard size={14} />, action: () => { nav('/billing'); setOpen(false); } },
+    { label: 'Settings', sub: 'Integrations & preferences', icon: <Settings size={14} />, action: () => { nav(AppRoute.SETTINGS); setOpen(false); } },
+    { label: 'Billing', sub: 'Subscription & usage', icon: <CreditCard size={14} />, action: () => { nav(AppRoute.BILLING); setOpen(false); } },
   ];
 
   return (

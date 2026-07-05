@@ -21,4 +21,5 @@ export enum Route {
   DOCS = '/docs',
   HEALTH = '/health',
   SETTINGS = '/settings',
+  BILLING = '/billing',
 }
