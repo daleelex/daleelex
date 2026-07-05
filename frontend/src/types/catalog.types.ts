@@ -101,3 +101,12 @@ export interface TechDocsIndexResponse {
     docs: ServiceDocSummary[];
   }>;
 }
+
+export interface TechDocsIndexEntry {
+  service: { id: string; name: string; type: ServiceType; tier: ServiceTier };
+  docs: ServiceDocSummary[];
+}
+
+export interface TechDocsIndexResponse {
+  data: TechDocsIndexEntry[];
+}

@@ -1,30 +1,203 @@
-.teams-page { padding: 28px 32px 60px; }
-.teams-page__topbar { margin-bottom: 24px; }
-.teams-page__title { font-family: var(--font-display); font-size: 32px; color: var(--ink); margin: 0; }
-.teams-page__subtitle { color: var(--muted); font-size: 13.5px; margin: 6px 0 0; }
+@use '../../styles/tokens' as t;
+
+.teams-body {
+  @include t.daleelex-tokens;
+  padding: 30px 30px 40px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+/* ── Original TeamsPage styles (brand-swapped, light-only) ──────────────── */
+/* Reuse topbar, hero, stats, foot from ServicesPage — same structure */
 
 .teams-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-  @media (max-width: 1100px) { grid-template-columns: repeat(3, 1fr); }
-  @media (max-width: 800px)  { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 500px)  { grid-template-columns: 1fr; }
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  padding: 20px 28px;
 }
 
+/* Team card */
 .team-card {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; text-align: left;
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  &:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--line-strong); }
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.team-card__avatar {
-  width: 40px; height: 40px; border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--brand-teal-bright), var(--brand-royal));
-  color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600;
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 180ms;
 }
 
-.team-card__name { font-size: 14.5px; font-weight: 600; color: var(--ink); }
-.team-card__meta { font-size: 11.5px; color: var(--muted); font-family: var(--font-mono); }
-.team-card-skeleton { height: 116px; background: var(--panel-2); border-radius: var(--radius); animation: pulse 1.4s ease-in-out infinite; }
-.empty-note { color: var(--muted); font-size: 13px; }
-@keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+}
+
+.team-card:hover::before {
+  opacity: 1;
+}
+
+.team-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.team-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #05B6B7, #0040A1);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.team-head-text {
+  min-width: 0;
+}
+
+.team-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* Meta rows (Slack / on-call) */
+.team-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+}
+
+.team-meta-row.muted {
+  color: var(--muted);
+}
+
+/* Tier pills */
+.team-tier-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tier-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.tier-pill.tier-1 { color: #021E49; background: rgba(5,182,183,0.15); }
+.tier-pill.tier-2 { color: #0040A1; background: rgba(0,64,161,0.12); }
+.tier-pill.tier-3 { color: var(--muted); background: var(--panel-2); }
+
+/* Service list */
+.team-services {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.team-services-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.team-service-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.service-tier-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.service-tier-dot.tier-dot-1 { background: var(--accent); }
+.service-tier-dot.tier-dot-2 { background: var(--accent-2); }
+.service-tier-dot.tier-dot-3 { background: var(--muted); }
+
+.service-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-service-more {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  margin-top: 6px;
+}
+
+/* Reuse shared layout classes from ServicesPage */
+.empty {
+  grid-column: 1 / -1;
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 900px) {
+  .teams-grid { grid-template-columns: 1fr; }
+}

@@ -1,23 +1,107 @@
+@use '../../../styles/tokens' as t;
 
-.team-drawer-hero { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-.team-drawer-avatar {
-  width: 56px; height: 56px; background: linear-gradient(135deg, var(--brand-teal-bright), var(--brand-royal));
-  color: white; display: grid; place-items: center; font-size: 18px; font-weight: 600; border-radius: var(--radius); flex-shrink: 0;
+// TeamDrawer renders inside the shared .drawer shell (service-drawer.scss).
+// Tokens are included here as well so this file resolves standalone.
+.drawer {
+  @include t.daleelex-tokens;
 }
 
-.tier-breakdown { display: flex; flex-direction: column; gap: 8px; }
-.tier-bar-row { display: flex; align-items: center; gap: 10px; }
-.tier-bar-label { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; width: 28px; text-align: center; }
-.tier-bar-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden; }
-.tier-bar-fill { height: 100%; border-radius: 999px; transition: width 400ms ease; }
-.tier-fill-1 { background: var(--brand-teal-bright); }
-.tier-fill-2 { background: var(--brand-royal); }
-.tier-fill-3 { background: var(--muted); }
-.tier-bar-count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); width: 20px; text-align: right; }
+/* ── Original TeamDrawer styles (brand-swapped, light-only) ─────────────── */
+.team-drawer-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
 
-.team-svc-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--panel-2); border-radius: var(--radius); }
-.service-tier-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.tier-dot-1 { background: var(--brand-teal-bright); }
-.tier-dot-2 { background: var(--brand-royal); }
+.team-drawer-avatar {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #05B6B7, #0040A1);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+/* Tier breakdown bars */
+.tier-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tier-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tier-bar-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  width: 28px;
+  text-align: center;
+}
+
+.tier-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tier-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 400ms ease;
+}
+
+.tier-fill-1 { background: #05B6B7; }
+.tier-fill-2 { background: #0040A1; }
+.tier-fill-3 { background: var(--muted); }
+
+.tier-bar-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  width: 20px;
+  text-align: right;
+}
+
+/* Team service rows */
+.team-svc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+}
+
+.service-tier-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tier-dot-1 { background: #05B6B7; }
+.tier-dot-2 { background: #0040A1; }
 .tier-dot-3 { background: var(--muted); }
-.team-svc-more { padding: 10px 16px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); text-align: center; }
+
+.team-svc-more {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  text-align: center;
+}
