@@ -26,7 +26,6 @@ export class LocalizedString {
 /**
  * @class PaginationQueryDto
  * @description Standardized DTO for handling pagination, sorting, and global search
- * compatible with the Aeon handleAggregationOptions utility.
  */
 export class PaginationQueryDto {
   @ApiPropertyOptional({

@@ -15,7 +15,7 @@
 export enum AuthRoute {
   LOGIN = 'login',
   REGISTER = 'register',
-  FORGOT_PASSWORD = 'forgot-password',
+  // FORGOT_PASSWORD = 'forgot-password',
   LOGOUT = 'logout',
   VERIFY_ACCOUNT = 'verify-account/:token',
   RESET_PASSWORD = 'reset-password/:token',
