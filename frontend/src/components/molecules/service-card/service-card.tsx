@@ -1,12 +1,19 @@
 import type { CSSProperties, KeyboardEvent } from 'react';
 import type { Service, ServiceType } from '../../../types/catalog.types';
-import { CAT_COLORS } from './service-card.config';
 import './service-card.scss';
 
 interface Props {
     service: Service;
     onClick?: () => void;
 }
+
+const CAT_COLORS: Record<ServiceType, { color: string; bg: string }> = {
+    api: { color: '#05B6B7', bg: 'rgba(5,182,183,0.14)' },
+    db: { color: '#0040A1', bg: 'rgba(0,64,161,0.12)' },
+    web: { color: '#021E49', bg: 'rgba(2,30,73,0.10)' },
+    ml: { color: '#025794', bg: 'rgba(2,87,148,0.12)' },
+    tool: { color: '#048E9D', bg: 'rgba(4,142,157,0.14)' },
+};
 
 const LIFECYCLE_COLOR: Record<string, string> = {
     production: 'var(--ok)',
@@ -20,7 +27,10 @@ export function ServiceCard({ service, onClick }: Props) {
     const hiddenTagCount = Math.max(service.tags.length - visibleTags.length, 0);
 
     function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
-        if (!onClick) return;
+        if (!onClick) {
+            return;
+        }
+
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             onClick();
@@ -52,7 +62,9 @@ export function ServiceCard({ service, onClick }: Props) {
             <h3 className="card-title">{service.name}</h3>
             <div className="card-id">{service.id}</div>
 
-            {service.description && <p className="card-desc">{service.description}</p>}
+            {service.description && (
+                <p className="card-desc">{service.description}</p>
+            )}
 
             <div className="card-meta">
                 <div>
@@ -73,7 +85,9 @@ export function ServiceCard({ service, onClick }: Props) {
                     </div>
                 </div>
                 <div className="card-foot-item">
-                    {visibleTags.map((tag) => <span key={tag} className="tag">{tag}</span>)}
+                    {visibleTags.map((tag) => (
+                        <span key={tag} className="tag">{tag}</span>
+                    ))}
                     {hiddenTagCount > 0 && <span className="tag muted">+{hiddenTagCount}</span>}
                 </div>
             </div>
@@ -82,7 +96,11 @@ export function ServiceCard({ service, onClick }: Props) {
 }
 
 function CircleDot({ color }: { color: string }) {
-    return <svg width="7" height="7" viewBox="0 0 7 7"><circle cx="3.5" cy="3.5" r="3.5" fill={color} /></svg>;
+    return (
+        <svg width="7" height="7" viewBox="0 0 7 7">
+            <circle cx="3.5" cy="3.5" r="3.5" fill={color} />
+        </svg>
+    );
 }
 
 function TypeIcon({ type }: { type: ServiceType }) {

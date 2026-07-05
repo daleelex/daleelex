@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import type { CreateServiceRequest, ServiceLifecycle, ServiceTier, ServiceType } from '../../../types/catalog.types';
 import { ServicesApi } from '../../../services/services.service';
 import { TeamsApi } from '../../../services/teams.service';
-import type { CreateServiceRequest, ServiceLifecycle, ServiceTier, ServiceType } from '../../../types/catalog.types';
 import './register-service-modal.scss';
 
 interface Props {
@@ -28,7 +27,10 @@ export function RegisterServiceModal({ onClose }: Props) {
     const [form, setForm] = useState<CreateServiceRequest>(EMPTY);
     const [fieldError, setFieldError] = useState<string | null>(null);
 
-    const { data: teamsData } = useQuery({ queryKey: ['teams'], queryFn: TeamsApi.getAll });
+    const { data: teamsData } = useQuery({
+        queryKey: ['teams'],
+        queryFn: TeamsApi.getAll,
+    });
     const teams = teamsData?.data ?? [];
 
     useEffect(() => {
@@ -39,7 +41,7 @@ export function RegisterServiceModal({ onClose }: Props) {
     }, [onClose]);
 
     const { mutate, isPending, error } = useMutation({
-        mutationFn: ServicesApi.create,
+        mutationFn: (body: CreateServiceRequest) => ServicesApi.create(body),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['services'] });
             onClose();
@@ -75,8 +77,8 @@ export function RegisterServiceModal({ onClose }: Props) {
                         <div className="modal-kicker">New service</div>
                         <h2 className="modal-title">Register a service</h2>
                     </div>
-                    <button className="modal-close" onClick={onClose} aria-label="Close" type="button">
-                        <X size={16} />
+                    <button className="modal-close" onClick={onClose} aria-label="Close">
+                        <CloseIcon />
                     </button>
                 </div>
 
@@ -115,7 +117,9 @@ export function RegisterServiceModal({ onClose }: Props) {
                         <label className="form-field">
                             <span className="field-label">Type <abbr title="required">*</abbr></span>
                             <select className="field-select" value={form.type} onChange={(e) => set('type', e.target.value as ServiceType)}>
-                                {(['api', 'db', 'web', 'ml', 'tool'] as ServiceType[]).map((t) => <option key={t} value={t}>{t}</option>)}
+                                {(['api', 'db', 'web', 'ml', 'tool'] as ServiceType[]).map((t) => (
+                                    <option key={t} value={t}>{t}</option>
+                                ))}
                             </select>
                         </label>
 
@@ -142,9 +146,13 @@ export function RegisterServiceModal({ onClose }: Props) {
                         <span className="field-label">Owner team</span>
                         <select className="field-select" value={form.ownerTeamId ?? ''} onChange={(e) => set('ownerTeamId', e.target.value)}>
                             <option value="">— Unowned —</option>
-                            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            {teams.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
                         </select>
-                        {teams.length === 0 && <span className="field-hint">No teams yet — you can assign ownership later.</span>}
+                        {teams.length === 0 && (
+                            <span className="field-hint">No teams yet — you can assign ownership later.</span>
+                        )}
                     </label>
 
                     <label className="form-field">
@@ -161,21 +169,45 @@ export function RegisterServiceModal({ onClose }: Props) {
                     <div className="form-row two-col">
                         <label className="form-field">
                             <span className="field-label">Language</span>
-                            <input className="field-input" type="text" placeholder="Go, TypeScript, Python…" value={form.language} onChange={(e) => set('language', e.target.value)} />
+                            <input
+                                className="field-input"
+                                type="text"
+                                placeholder="Go, TypeScript, Python…"
+                                value={form.language}
+                                onChange={(e) => set('language', e.target.value)}
+                            />
                         </label>
 
                         <label className="form-field">
                             <span className="field-label">Repository</span>
-                            <input className="field-input mono" type="text" placeholder="org/repo-name" value={form.repository} onChange={(e) => set('repository', e.target.value)} />
+                            <input
+                                className="field-input mono"
+                                type="text"
+                                placeholder="org/repo-name"
+                                value={form.repository}
+                                onChange={(e) => set('repository', e.target.value)}
+                            />
                         </label>
                     </div>
 
                     <div className="modal-foot">
-                        <button type="button" className="btn-ghost" onClick={onClose} disabled={isPending}>Cancel</button>
-                        <button type="submit" className="btn-primary" disabled={isPending}>{isPending ? 'Registering…' : 'Register service'}</button>
+                        <button type="button" className="btn-ghost" onClick={onClose} disabled={isPending}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn-primary" disabled={isPending}>
+                            {isPending ? 'Registering…' : 'Register service'}
+                        </button>
                     </div>
                 </form>
             </dialog>
         </>
+    );
+}
+
+function CloseIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
     );
 }
