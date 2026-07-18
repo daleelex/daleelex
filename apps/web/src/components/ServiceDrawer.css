@@ -1,6 +1,12 @@
 @keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .drawer-backdrop {
@@ -13,8 +19,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .drawer {
@@ -194,7 +204,9 @@
   font-family: var(--font-body);
 }
 
-.tab:hover { color: var(--ink); }
+.tab:hover {
+  color: var(--ink);
+}
 
 .tab.active {
   background: var(--panel);
@@ -342,8 +354,12 @@
   text-transform: uppercase;
 }
 
-.check-status.pass { color: var(--ok); }
-.check-status.fail { color: var(--warn); }
+.check-status.pass {
+  color: var(--ok);
+}
+.check-status.fail {
+  color: var(--warn);
+}
 
 /* Dependencies empty state */
 .dep-empty {
@@ -446,7 +462,9 @@
   margin-bottom: 16px;
 }
 
-.docs-back-btn:hover { color: var(--ink); }
+.docs-back-btn:hover {
+  color: var(--ink);
+}
 
 .techdocs-title {
   font-family: var(--font-display);
@@ -492,14 +510,33 @@
   line-height: 1.25;
 }
 
-.techdocs-body h1 { font-size: 28px; margin-top: 0; }
-.techdocs-body h2 { font-size: 22px; }
-.techdocs-body h3 { font-size: 17px; }
-.techdocs-body h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-mono); color: var(--muted); }
+.techdocs-body h1 {
+  font-size: 28px;
+  margin-top: 0;
+}
+.techdocs-body h2 {
+  font-size: 22px;
+}
+.techdocs-body h3 {
+  font-size: 17px;
+}
+.techdocs-body h4 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
 
-.techdocs-body p { margin: 0 0 14px; }
+.techdocs-body p {
+  margin: 0 0 14px;
+}
 
-.techdocs-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.techdocs-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 .techdocs-body code {
   font-family: var(--font-mono);
@@ -533,7 +570,9 @@
   margin: 0 0 14px;
 }
 
-.techdocs-body li { margin-bottom: 4px; }
+.techdocs-body li {
+  margin-bottom: 4px;
+}
 
 .techdocs-body blockquote {
   border-left: 3px solid var(--accent);
@@ -569,7 +608,9 @@
   color: var(--ink-2);
 }
 
-.techdocs-body tr:last-child td { border-bottom: none; }
+.techdocs-body tr:last-child td {
+  border-bottom: none;
+}
 
 .techdocs-body hr {
   border: none;

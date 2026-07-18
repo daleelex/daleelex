@@ -8,7 +8,7 @@ function getKey(): Buffer {
   if (buf.length !== 32) {
     throw new Error(
       'DALEELEX_ENCRYPTION_KEY must be set to a 64-character hex string (32 bytes). ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+        "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
     );
   }
   return buf;

@@ -48,8 +48,13 @@
   transition: border-color 120ms;
 }
 
-.techdocs-search::placeholder { color: var(--muted); }
-.techdocs-search:focus { outline: none; border-color: var(--accent); }
+.techdocs-search::placeholder {
+  color: var(--muted);
+}
+.techdocs-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
 .techdocs-nav-list {
   flex: 1;
@@ -95,9 +100,18 @@
   flex-shrink: 0;
 }
 
-.doc-group-tier.tier-1 { background: rgba(209,59,49,0.12); color: #D13B31; }
-.doc-group-tier.tier-2 { background: rgba(216,149,16,0.14); color: #B87C0A; }
-.doc-group-tier.tier-3 { background: var(--panel-2); color: var(--muted); }
+.doc-group-tier.tier-1 {
+  background: rgba(209, 59, 49, 0.12);
+  color: #d13b31;
+}
+.doc-group-tier.tier-2 {
+  background: rgba(216, 149, 16, 0.14);
+  color: #b87c0a;
+}
+.doc-group-tier.tier-3 {
+  background: var(--panel-2);
+  color: var(--muted);
+}
 
 .doc-group-count {
   font-family: var(--font-mono);
@@ -128,13 +142,18 @@
   text-align: left;
   cursor: pointer;
   font-family: var(--font-body);
-  transition: background 100ms, color 100ms;
+  transition:
+    background 100ms,
+    color 100ms;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.doc-page-item:hover { background: var(--panel-2); color: var(--ink); }
+.doc-page-item:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
 
 .doc-page-item.active {
   background: var(--accent-soft);
@@ -194,8 +213,12 @@
   font-weight: 500;
 }
 
-.techdocs-bc-service { color: var(--muted); }
-.techdocs-bc-sep { color: var(--line-strong); }
+.techdocs-bc-service {
+  color: var(--muted);
+}
+.techdocs-bc-sep {
+  color: var(--line-strong);
+}
 
 .techdocs-content-path {
   font-family: var(--font-mono);
@@ -237,9 +260,18 @@
   line-height: 1.25;
 }
 
-.techdocs-prose h1 { font-size: 36px; margin-top: 0; }
-.techdocs-prose h2 { font-size: 26px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-.techdocs-prose h3 { font-size: 19px; }
+.techdocs-prose h1 {
+  font-size: 36px;
+  margin-top: 0;
+}
+.techdocs-prose h2 {
+  font-size: 26px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.techdocs-prose h3 {
+  font-size: 19px;
+}
 .techdocs-prose h4 {
   font-size: 11px;
   font-family: var(--font-mono);
@@ -249,12 +281,22 @@
   font-weight: 500;
 }
 
-.techdocs-prose p { margin: 0 0 16px; }
+.techdocs-prose p {
+  margin: 0 0 16px;
+}
 
-.techdocs-prose a { color: var(--accent); text-underline-offset: 2px; }
-.techdocs-prose a:hover { color: var(--brand-teal-hi); }
+.techdocs-prose a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+.techdocs-prose a:hover {
+  color: var(--brand-teal-hi);
+}
 
-.techdocs-prose strong { color: var(--ink); font-weight: 600; }
+.techdocs-prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
 
 .techdocs-prose code {
   font-family: var(--font-mono);
@@ -291,7 +333,9 @@
   margin: 0 0 16px;
 }
 
-.techdocs-prose li { margin-bottom: 6px; }
+.techdocs-prose li {
+  margin-bottom: 6px;
+}
 
 .techdocs-prose blockquote {
   border-left: 3px solid var(--accent);
@@ -333,7 +377,9 @@
   color: var(--ink-2);
 }
 
-.techdocs-prose tr:last-child td { border-bottom: none; }
+.techdocs-prose tr:last-child td {
+  border-bottom: none;
+}
 
 .techdocs-prose hr {
   border: none;

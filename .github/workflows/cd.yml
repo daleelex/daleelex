@@ -1,0 +1,101 @@
+name: CD
+
+# Manual-only: nothing deploys until someone clicks "Run workflow" in the Actions tab
+# and picks a branch/ref there. Unlike the previous workflow_run trigger, this does NOT
+# guarantee the chosen ref passed CI — check the CI status for that commit yourself
+# before dispatching. The environment gate below is a second, independent checkpoint.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Whatever ref was picked in the "Run workflow" dispatch UI.
+          ref: ${{ github.sha }}
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # @prisma/client's postinstall doesn't reliably fire under pnpm --frozen-lockfile
+      # (confirmed by reproducing it with a from-scratch install) — without this, `api
+      # build` below fails on missing/ungenerated Prisma types, and the deploy step
+      # after it would carry that same stale/absent client into the release artifact.
+      - run: pnpm --filter @daleelex/api exec prisma generate
+
+      - run: pnpm --filter @daleelex/api build
+      - run: pnpm --filter @daleelex/ingestor build
+      - run: pnpm --filter @daleelex/web build
+
+      # pnpm's own workspace-deploy command: resolves @daleelex/shared and prunes to
+      # production-only node_modules per app. Hand-rolling this with rsync-of-source
+      # would mean re-solving pnpm's workspace linking ourselves for no reason.
+      - run: pnpm --filter @daleelex/api deploy --prod out/api
+      - run: pnpm --filter @daleelex/ingestor deploy --prod out/ingestor
+
+      # `pnpm deploy` builds out/api's node_modules as its own independent tree, separate
+      # from the one `prisma generate` ran against above — the generated client doesn't
+      # carry over. Without this, the deployed artifact's @prisma/client can't even be
+      # imported (confirmed: `Cannot find module '.prisma/client/default'`), which would
+      # crash daleelex-api on boot on the VM. Uses the artifact's own bundled prisma CLI
+      # (see the earlier commit moving prisma to a production dependency) so it generates
+      # against its own copy of schema.prisma.
+      - run: cd out/api && ./node_modules/.bin/prisma generate
+
+      - name: Assemble the web + pm2 config into the same release bundle
+        run: |
+          mkdir -p out/web
+          cp -r apps/web/dist/. out/web/
+          cp ecosystem.config.cjs out/ecosystem.config.cjs
+
+      - run: tar -czf release.tar.gz -C out .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.tar.gz
+          retention-days: 14
+
+  # Gated by the "production" GitHub Environment (Settings → Environments → production
+  # → required reviewers). This is the manual approval step — there's one production VM
+  # with no blue/green setup, so nothing here should run unattended. GitHub's own
+  # environment protection does this; no third-party gate action needed.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+      - run: mkdir -p out && tar -xzf release.tar.gz -C out
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Rsync release to the VM
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o UserKnownHostsFile=~/.ssh/known_hosts" \
+            out/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/daleelex/releases/${{ github.sha }}/"
+
+      - name: Migrate, flip symlink, reload pm2
+        run: |
+          ssh -i ~/.ssh/deploy_key -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" 'bash -s' \
+            -- "${{ github.sha }}" < scripts/deploy-remote.sh

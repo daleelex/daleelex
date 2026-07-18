@@ -56,9 +56,15 @@
   transition: width 400ms ease;
 }
 
-.tier-fill-1 { background: var(--brand-teal); }
-.tier-fill-2 { background: var(--brand-blue); }
-.tier-fill-3 { background: var(--muted); }
+.tier-fill-1 {
+  background: var(--brand-teal);
+}
+.tier-fill-2 {
+  background: var(--brand-blue);
+}
+.tier-fill-3 {
+  background: var(--muted);
+}
 
 .tier-bar-count {
   font-family: var(--font-mono);
@@ -85,9 +91,15 @@
   flex-shrink: 0;
 }
 
-.tier-dot-1 { background: var(--brand-teal); }
-.tier-dot-2 { background: var(--brand-blue); }
-.tier-dot-3 { background: var(--muted); }
+.tier-dot-1 {
+  background: var(--brand-teal);
+}
+.tier-dot-2 {
+  background: var(--brand-blue);
+}
+.tier-dot-3 {
+  background: var(--muted);
+}
 
 .team-svc-more {
   padding: 10px 16px;
