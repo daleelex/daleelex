@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "files": ["dist", "prisma/schema.prisma", "prisma/migrations"],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -16,11 +17,11 @@
     "@daleelex/shared": "workspace:*",
     "@fastify/cors": "^9.0.1",
     "@prisma/client": "^5.13.0",
-    "fastify": "^4.27.0"
+    "fastify": "^4.27.0",
+    "prisma": "^5.13.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",
-    "prisma": "^5.13.0",
     "tsx": "^4.7.2",
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
