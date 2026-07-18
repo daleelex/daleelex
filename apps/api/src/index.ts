@@ -9,7 +9,9 @@ import { integrationsRoute } from './routes/integrations.js';
 
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: 'http://localhost:5173' });
+// || not ?? — an empty CORS_ORIGIN="" (e.g. copied verbatim from .env.example) should
+// still fall back to the default, not resolve to an empty, CORS-breaking origin.
+await app.register(cors, { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' });
 
 app.register(healthRoute, { prefix: '/api/v1' });
 app.register(servicesRoute, { prefix: '/api/v1' });
