@@ -44,21 +44,22 @@ export async function servicesRoute(app: FastifyInstance) {
           type: 'object',
           required: ['id', 'name', 'type', 'tier', 'lifecycle'],
           properties: {
-            id:          { type: 'string', minLength: 1 },
-            name:        { type: 'string', minLength: 1 },
-            type:        { type: 'string', enum: ['api', 'db', 'web', 'ml', 'tool'] },
-            tier:        { type: 'number', enum: [1, 2, 3] },
-            lifecycle:   { type: 'string', enum: ['production', 'beta', 'deprecated'] },
+            id: { type: 'string', minLength: 1 },
+            name: { type: 'string', minLength: 1 },
+            type: { type: 'string', enum: ['api', 'db', 'web', 'ml', 'tool'] },
+            tier: { type: 'number', enum: [1, 2, 3] },
+            lifecycle: { type: 'string', enum: ['production', 'beta', 'deprecated'] },
             ownerTeamId: { type: 'string' },
             description: { type: 'string' },
-            language:    { type: 'string' },
-            repository:  { type: 'string' },
+            language: { type: 'string' },
+            repository: { type: 'string' },
           },
         },
       },
     },
     async (req, reply): Promise<Service> => {
-      const { id, name, type, tier, lifecycle, ownerTeamId, description, language, repository } = req.body;
+      const { id, name, type, tier, lifecycle, ownerTeamId, description, language, repository } =
+        req.body;
       try {
         const row = await prisma.service.create({
           data: {

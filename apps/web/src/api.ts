@@ -1,4 +1,17 @@
-import type { ServiceListResponse, TeamListResponse, HealthResponse, ServiceDocListResponse, ServiceDoc, TechDocsIndexResponse, JenkinsHealthResponse, JenkinsConfigResponse, JenkinsConfigRequest, JenkinsTestResponse, CreateServiceRequest, Service } from '@daleelex/shared';
+import type {
+  ServiceListResponse,
+  TeamListResponse,
+  HealthResponse,
+  ServiceDocListResponse,
+  ServiceDoc,
+  TechDocsIndexResponse,
+  JenkinsHealthResponse,
+  JenkinsConfigResponse,
+  JenkinsConfigRequest,
+  JenkinsTestResponse,
+  CreateServiceRequest,
+  Service,
+} from '@daleelex/shared';
 
 const BASE = '/api/v1';
 
@@ -45,11 +58,11 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function toApiError(res: Response) {
-  const body = await res.json().catch(() => ({})) as ApiErrorPayload;
+  const body = (await res.json().catch(() => ({}))) as ApiErrorPayload;
   const message =
     typeof body.error === 'string'
       ? body.error
-      : body.error?.message ?? body.message ?? `${res.status} ${res.statusText}`;
+      : (body.error?.message ?? body.message ?? `${res.status} ${res.statusText}`);
 
   return new Error(message);
 }
@@ -60,11 +73,14 @@ export const api = {
   teams: () => get<TeamListResponse>('/teams'),
   techDocsIndex: () => get<TechDocsIndexResponse>('/docs'),
   serviceDocs: (serviceId: string) => get<ServiceDocListResponse>(`/services/${serviceId}/docs`),
-  serviceDoc: (serviceId: string, docId: number) => get<ServiceDoc>(`/services/${serviceId}/docs/${docId}`),
+  serviceDoc: (serviceId: string, docId: number) =>
+    get<ServiceDoc>(`/services/${serviceId}/docs/${docId}`),
   jenkinsHealth: () => get<JenkinsHealthResponse>('/integrations/jenkins/health'),
   jenkinsConfig: () => get<JenkinsConfigResponse>('/integrations/jenkins'),
-  saveJenkinsConfig: (body: JenkinsConfigRequest) => put<JenkinsConfigResponse>('/integrations/jenkins', body),
-  testJenkinsConnection: (body: JenkinsConfigRequest) => post<JenkinsTestResponse>('/integrations/jenkins/test', body),
+  saveJenkinsConfig: (body: JenkinsConfigRequest) =>
+    put<JenkinsConfigResponse>('/integrations/jenkins', body),
+  testJenkinsConnection: (body: JenkinsConfigRequest) =>
+    post<JenkinsTestResponse>('/integrations/jenkins/test', body),
   createService: (body: CreateServiceRequest) => post<Service>('/services', body),
   deleteService: (id: string) => del(`/services/${id}`),
 };

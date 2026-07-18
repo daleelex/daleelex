@@ -27,7 +27,6 @@ export async function docsRoute(app: FastifyInstance) {
     };
   });
 
-
   app.get<{ Params: { id: string } }>(
     '/services/:id/docs',
     async (req, reply): Promise<ServiceDocListResponse> => {
@@ -38,7 +37,9 @@ export async function docsRoute(app: FastifyInstance) {
       });
 
       if (docs.length === 0) {
-        const exists = await prisma.service.count({ where: { id: req.params.id, deletedAt: null } });
+        const exists = await prisma.service.count({
+          where: { id: req.params.id, deletedAt: null },
+        });
         if (!exists) {
           reply.code(404);
           return { data: [] };
@@ -46,7 +47,7 @@ export async function docsRoute(app: FastifyInstance) {
       }
 
       return { data: docs };
-    }
+    },
   );
 
   app.get<{ Params: { id: string; docId: string } }>(
@@ -68,6 +69,6 @@ export async function docsRoute(app: FastifyInstance) {
         contentMd: doc.contentMd,
         fetchedAt: doc.fetchedAt.toISOString(),
       };
-    }
+    },
   );
 }

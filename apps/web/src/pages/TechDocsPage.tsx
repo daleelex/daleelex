@@ -25,9 +25,10 @@ export function TechDocsPage() {
 
   const entries = index?.data ?? [];
   const filtered = search.trim()
-    ? entries.filter((e) =>
-        e.service.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.docs.some((d) => d.title.toLowerCase().includes(search.toLowerCase()))
+    ? entries.filter(
+        (e) =>
+          e.service.name.toLowerCase().includes(search.toLowerCase()) ||
+          e.docs.some((d) => d.title.toLowerCase().includes(search.toLowerCase())),
       )
     : entries;
 
@@ -86,12 +87,17 @@ export function TechDocsPage() {
           <>
             <div className="techdocs-content-head">
               <div className="techdocs-breadcrumb">
-                <span className="techdocs-bc-service">{selectedEntry?.service.name ?? selectedServiceId}</span>
-                {selectedDoc && <><span className="techdocs-bc-sep">/</span><span>{selectedDoc.title}</span></>}
+                <span className="techdocs-bc-service">
+                  {selectedEntry?.service.name ?? selectedServiceId}
+                </span>
+                {selectedDoc && (
+                  <>
+                    <span className="techdocs-bc-sep">/</span>
+                    <span>{selectedDoc.title}</span>
+                  </>
+                )}
               </div>
-              {selectedDoc && (
-                <div className="techdocs-content-path">{selectedDoc.path}</div>
-              )}
+              {selectedDoc && <div className="techdocs-content-path">{selectedDoc.path}</div>}
             </div>
 
             <div className="techdocs-content-body">
@@ -143,7 +149,15 @@ function ServiceDocGroup({
   );
 }
 
-function DocPageItem({ doc, active, onClick }: { doc: ServiceDocSummary; active: boolean; onClick: () => void }) {
+function DocPageItem({
+  doc,
+  active,
+  onClick,
+}: {
+  doc: ServiceDocSummary;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       className={`doc-page-item${active ? ' active' : ''}`}
@@ -158,21 +172,36 @@ function DocPageItem({ doc, active, onClick }: { doc: ServiceDocSummary; active:
 
 function WelcomeIcon() {
   return (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" strokeWidth="1.25">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10 9 9 9 8 9"/>
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--line-strong)"
+      strokeWidth="1.25"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
     </svg>
   );
 }
 
 function PageIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{ flexShrink: 0 }}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      style={{ flexShrink: 0 }}
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
     </svg>
   );
 }

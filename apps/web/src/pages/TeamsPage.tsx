@@ -37,25 +37,31 @@ export function TeamsPage() {
           The people behind <em>every service.</em>
         </h1>
         <p className="page-sub">
-          Every service has an owner. Every owner has a team. Find who to page,
-          which Slack channel to ping, and what each team is responsible for.
+          Every service has an owner. Every owner has a team. Find who to page, which Slack channel
+          to ping, and what each team is responsible for.
         </p>
       </section>
 
       <section className="stats">
         <div className="stat-cell">
           <div className="stat-label">Total teams</div>
-          <div className="stat-inner"><div className="stat-value">{isLoading ? '—' : teams.length}</div></div>
+          <div className="stat-inner">
+            <div className="stat-value">{isLoading ? '—' : teams.length}</div>
+          </div>
           <div className="stat-sub">across the org</div>
         </div>
         <div className="stat-cell">
           <div className="stat-label">Services owned</div>
-          <div className="stat-inner"><div className="stat-value">{isLoading ? '—' : totalServices}</div></div>
+          <div className="stat-inner">
+            <div className="stat-value">{isLoading ? '—' : totalServices}</div>
+          </div>
           <div className="stat-sub">active services</div>
         </div>
         <div className="stat-cell">
           <div className="stat-label">Own tier 1</div>
-          <div className="stat-inner"><div className="stat-value">{isLoading ? '—' : tier1Teams}</div></div>
+          <div className="stat-inner">
+            <div className="stat-value">{isLoading ? '—' : tier1Teams}</div>
+          </div>
           <div className="stat-sub">teams with critical services</div>
         </div>
         <div className="stat-cell accent">
@@ -72,14 +78,18 @@ export function TeamsPage() {
       <section className="teams-grid">
         {isLoading && <div className="empty">Loading teams…</div>}
         {isError && <div className="empty">Failed to load teams. Check the API.</div>}
-        {!isLoading && !isError && teams.map((team) => (
-          <TeamCard key={team.id} team={team} onClick={() => setSelected(team)} />
-        ))}
+        {!isLoading &&
+          !isError &&
+          teams.map((team) => (
+            <TeamCard key={team.id} team={team} onClick={() => setSelected(team)} />
+          ))}
       </section>
 
       <footer className="foot">
         <span className="mono">DALEELEX v0.5 {new Date().getFullYear()}</span>
-        <span>Teams sourced from <code>catalog-info.yaml</code></span>
+        <span>
+          Teams sourced from <code>catalog-info.yaml</code>
+        </span>
       </footer>
 
       <TeamDrawer team={selected} onClose={() => setSelected(null)} />
@@ -119,18 +129,10 @@ function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void
       </div>
 
       <div className="team-tier-row">
-        {team.tier1Count > 0 && (
-          <span className="tier-pill tier-1">T1 · {team.tier1Count}</span>
-        )}
-        {team.tier2Count > 0 && (
-          <span className="tier-pill tier-2">T2 · {team.tier2Count}</span>
-        )}
-        {team.tier3Count > 0 && (
-          <span className="tier-pill tier-3">T3 · {team.tier3Count}</span>
-        )}
-        {team.serviceCount === 0 && (
-          <span className="tier-pill tier-3">No services</span>
-        )}
+        {team.tier1Count > 0 && <span className="tier-pill tier-1">T1 · {team.tier1Count}</span>}
+        {team.tier2Count > 0 && <span className="tier-pill tier-2">T2 · {team.tier2Count}</span>}
+        {team.tier3Count > 0 && <span className="tier-pill tier-3">T3 · {team.tier3Count}</span>}
+        {team.serviceCount === 0 && <span className="tier-pill tier-3">No services</span>}
       </div>
 
       {team.topServices.length > 0 && (
@@ -164,31 +166,52 @@ function initials(name: string) {
 
 function ChevronRight() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="9 18 15 12 9 6"/>
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }
 
 function SlackIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/>
-      <path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-      <path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/>
-      <path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/>
-      <path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/>
-      <path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/>
-      <path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/>
-      <path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z" />
+      <path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+      <path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z" />
+      <path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z" />
+      <path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z" />
+      <path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z" />
+      <path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z" />
+      <path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z" />
     </svg>
   );
 }
 
 function PagerIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.45 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1-1a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.45 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1-1a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
     </svg>
   );
 }

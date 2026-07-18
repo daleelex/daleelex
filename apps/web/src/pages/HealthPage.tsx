@@ -35,12 +35,15 @@ export function HealthPage() {
         <div>
           <h2>Catalog-derived service readiness</h2>
           <p>
-            Track SLO coverage, ownership, and operational links from the service catalog.
-            This page reflects the metadata DaleelEx already collects.
+            Track SLO coverage, ownership, and operational links from the service catalog. This page
+            reflects the metadata DaleelEx already collects.
           </p>
         </div>
         <div className="hero-meter" aria-label={`${health.readinessScore}% readiness`}>
-          <div className="meter-ring" style={{ '--meter': `${health.readinessScore}%` } as React.CSSProperties}>
+          <div
+            className="meter-ring"
+            style={{ '--meter': `${health.readinessScore}%` } as React.CSSProperties}
+          >
             <span>{health.readinessScore}</span>
           </div>
           <div>
@@ -51,10 +54,27 @@ export function HealthPage() {
       </section>
 
       <section className="health-stats">
-        <Stat label="SLO coverage" value={`${health.sloCoverage}%`} sub={`${health.withSlo} of ${health.total} services`} />
-        <Stat label="Tier 1 ready" value={`${health.tier1Ready}/${health.tier1Total}`} sub="SLO, owner, runbook" />
-        <Stat label="Runbooks" value={`${health.runbookCoverage}%`} sub={`${health.withRunbook} linked`} />
-        <Stat label="Owners" value={`${health.ownerCoverage}%`} sub={`${health.withOwner} assigned`} accent />
+        <Stat
+          label="SLO coverage"
+          value={`${health.sloCoverage}%`}
+          sub={`${health.withSlo} of ${health.total} services`}
+        />
+        <Stat
+          label="Tier 1 ready"
+          value={`${health.tier1Ready}/${health.tier1Total}`}
+          sub="SLO, owner, runbook"
+        />
+        <Stat
+          label="Runbooks"
+          value={`${health.runbookCoverage}%`}
+          sub={`${health.withRunbook} linked`}
+        />
+        <Stat
+          label="Owners"
+          value={`${health.ownerCoverage}%`}
+          sub={`${health.withOwner} assigned`}
+          accent
+        />
       </section>
 
       <section className="health-grid">
@@ -62,12 +82,18 @@ export function HealthPage() {
           <div className="panel-head">
             <div>
               <h2>Service health</h2>
-              <p>{isLoading ? 'Loading catalog signals...' : `${health.rows.length} services evaluated`}</p>
+              <p>
+                {isLoading
+                  ? 'Loading catalog signals...'
+                  : `${health.rows.length} services evaluated`}
+              </p>
             </div>
           </div>
 
           {isLoading && <div className="health-empty">Loading health signals...</div>}
-          {isError && <div className="health-empty">Failed to load health signals. Check the API.</div>}
+          {isError && (
+            <div className="health-empty">Failed to load health signals. Check the API.</div>
+          )}
           {!isLoading && !isError && (
             <div className="health-table-wrap">
               <table className="health-table">
@@ -86,7 +112,9 @@ export function HealthPage() {
                       <td>
                         <div className="service-cell">
                           <strong>{row.service.name}</strong>
-                          <span>{row.service.id} · Tier {row.service.tier}</span>
+                          <span>
+                            {row.service.id} · Tier {row.service.tier}
+                          </span>
                         </div>
                       </td>
                       <td>
@@ -98,7 +126,9 @@ export function HealthPage() {
                           <span>{row.service.sloWindow ?? 'No window'}</span>
                         </div>
                       </td>
-                      <td>{row.service.owner?.name ?? <span className="muted">Unassigned</span>}</td>
+                      <td>
+                        {row.service.owner?.name ?? <span className="muted">Unassigned</span>}
+                      </td>
                       <td>
                         <div className="ops-links">
                           <span className={row.hasRunbook ? 'ok' : 'missing'}>Runbook</span>
@@ -122,11 +152,15 @@ export function HealthPage() {
           </div>
           <div className="integration-card">
             {jenkins.isLoading && <div className="health-empty compact">Checking Jenkins...</div>}
-            {jenkins.isError && <div className="health-empty compact">Failed to check Jenkins.</div>}
+            {jenkins.isError && (
+              <div className="health-empty compact">Failed to check Jenkins.</div>
+            )}
             {jenkins.data && (
               <>
                 <div className="integration-status">
-                  <span className={`summary-dot ${jenkins.data.status === 'ok' ? 'healthy' : jenkins.data.status === 'auth_required' ? 'watch' : 'risk'}`} />
+                  <span
+                    className={`summary-dot ${jenkins.data.status === 'ok' ? 'healthy' : jenkins.data.status === 'auth_required' ? 'watch' : 'risk'}`}
+                  />
                   <strong>{formatJenkinsStatus(jenkins.data.status)}</strong>
                 </div>
                 <dl>
@@ -162,10 +196,14 @@ export function HealthPage() {
               <article key={row.service.id} className="risk-item">
                 <div>
                   <strong>{row.service.name}</strong>
-                  <span>Tier {row.service.tier} · {row.service.owner?.name ?? 'No owner'}</span>
+                  <span>
+                    Tier {row.service.tier} · {row.service.owner?.name ?? 'No owner'}
+                  </span>
                 </div>
                 <ul>
-                  {row.gaps.map((gap) => <li key={gap}>{gap}</li>)}
+                  {row.gaps.map((gap) => (
+                    <li key={gap}>{gap}</li>
+                  ))}
                 </ul>
               </article>
             ))}
@@ -176,7 +214,17 @@ export function HealthPage() {
   );
 }
 
-function Stat({ label, value, sub, accent = false }: { label: string; value: string; sub: string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  sub,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  accent?: boolean;
+}) {
   return (
     <article className={`health-stat${accent ? ' accent' : ''}`}>
       <span>{label}</span>
@@ -185,7 +233,6 @@ function Stat({ label, value, sub, accent = false }: { label: string; value: str
     </article>
   );
 }
-
 
 function formatJenkinsStatus(status: string) {
   switch (status) {

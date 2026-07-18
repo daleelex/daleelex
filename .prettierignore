@@ -1,0 +1,15 @@
+dist
+node_modules
+pnpm-lock.yaml
+coverage
+playwright-report
+test-results
+
+# Prose/config directories with their own authoring conventions, not code
+.claude
+.agents
+design_handoff_daleelex_enhancement
+AGENTS.md
+ARCHITECTURE.md
+CLAUDE.md
+README.md

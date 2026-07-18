@@ -1,4 +1,8 @@
-import type { JenkinsHealthResponse, JenkinsConfigResponse, JenkinsTestResponse } from '@daleelex/shared';
+import type {
+  JenkinsHealthResponse,
+  JenkinsConfigResponse,
+  JenkinsTestResponse,
+} from '@daleelex/shared';
 import { prisma } from '../db.js';
 import { encrypt, decrypt } from '../crypto.js';
 
@@ -85,8 +89,10 @@ export async function testJenkinsConnection(
   const existing = await resolveConfig();
   const existingMatchesBaseUrl = normalizedBaseUrl === existing.baseUrl;
   const normalizedUsername = normalizeOptional(username);
-  const effectiveUsername = normalizedUsername ?? (existingMatchesBaseUrl ? existing.username : null);
-  const effectiveToken = normalizeOptional(token) ?? (existingMatchesBaseUrl ? existing.apiToken : null);
+  const effectiveUsername =
+    normalizedUsername ?? (existingMatchesBaseUrl ? existing.username : null);
+  const effectiveToken =
+    normalizeOptional(token) ?? (existingMatchesBaseUrl ? existing.apiToken : null);
   const url = buildApiUrl(normalizedBaseUrl);
   if (!url) return { ok: false, message: 'Invalid URL.', version: null };
 

@@ -1,5 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import type { JenkinsHealthResponse, JenkinsConfigResponse, JenkinsConfigRequest, JenkinsTestResponse } from '@daleelex/shared';
+import type {
+  JenkinsHealthResponse,
+  JenkinsConfigResponse,
+  JenkinsConfigRequest,
+  JenkinsTestResponse,
+} from '@daleelex/shared';
 import {
   JenkinsConfigError,
   checkJenkinsHealth,

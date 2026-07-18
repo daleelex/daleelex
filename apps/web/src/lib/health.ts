@@ -62,9 +62,8 @@ export function computeHealth(services: Service[]) {
   const tier1 = rows.filter((r) => r.service.tier === 1);
   const tier1Ready = tier1.filter((r) => r.state === 'healthy').length;
   const healthyServices = rows.filter((r) => r.state === 'healthy').length;
-  const readinessScore = total > 0
-    ? Math.round(rows.reduce((sum, r) => sum + r.score, 0) / total)
-    : 0;
+  const readinessScore =
+    total > 0 ? Math.round(rows.reduce((sum, r) => sum + r.score, 0) / total) : 0;
 
   return {
     total,
@@ -85,8 +84,14 @@ export function computeHealth(services: Service[]) {
     dashboardCoverage: percent(withDashboard, total),
     productionCoverage: percent(withProduction, total),
     readinessScore,
-    overallState: readinessScore >= 85 ? 'healthy' : readinessScore >= 65 ? 'watch' : ('risk' as HealthState),
-    overallLabel: readinessScore >= 85 ? 'Catalog healthy' : readinessScore >= 65 ? 'Watch gaps' : 'Action needed',
+    overallState:
+      readinessScore >= 85 ? 'healthy' : readinessScore >= 65 ? 'watch' : ('risk' as HealthState),
+    overallLabel:
+      readinessScore >= 85
+        ? 'Catalog healthy'
+        : readinessScore >= 65
+          ? 'Watch gaps'
+          : 'Action needed',
   };
 }
 
@@ -103,12 +108,13 @@ export function stateWeight(state: HealthState) {
 // Deterministic per serviceId so values don't flicker between renders.
 export function mockMetrics(serviceId: string) {
   const seed = [...serviceId].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) & 0xffff, 0);
-  const rand = (n: number, max: number, min = 0) => min + ((seed * (n + 1) * 6271) & 0xffff) % (max - min);
+  const rand = (n: number, max: number, min = 0) =>
+    min + (((seed * (n + 1) * 6271) & 0xffff) % (max - min));
 
-  const avail = 99.0 + rand(0, 10) / 10;           // 99.0–99.9
-  const p95ms = 80 + rand(1, 300);                  // 80–380 ms
-  const incidents = rand(2, 4);                     // 0–3
-  const deploys = 4 + rand(3, 20);                  // 4–23
+  const avail = 99.0 + rand(0, 10) / 10; // 99.0–99.9
+  const p95ms = 80 + rand(1, 300); // 80–380 ms
+  const incidents = rand(2, 4); // 0–3
+  const deploys = 4 + rand(3, 20); // 4–23
 
   const sparkline = Array.from({ length: 14 }, (_, i) => {
     const base = avail - 0.05;

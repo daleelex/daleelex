@@ -34,9 +34,7 @@ export function ServicesPage() {
   const activeFilters = [search.trim(), tier !== 'All', owner !== 'All'].filter(Boolean).length;
 
   const owners = useMemo(() => {
-    const names = services
-      .map((s) => s.owner?.name)
-      .filter((n): n is string => !!n);
+    const names = services.map((s) => s.owner?.name).filter((n): n is string => !!n);
     return ['All', ...Array.from(new Set(names)).sort()];
   }, [services]);
 
@@ -62,10 +60,8 @@ export function ServicesPage() {
         s.id.toLowerCase().includes(normalizedSearch) ||
         s.description?.toLowerCase().includes(normalizedSearch) ||
         s.tags.some((t) => t.toLowerCase().includes(normalizedSearch));
-      const matchTier =
-        tier === 'All' || s.tier === Number(tier.split(' ')[1]);
-      const matchOwner =
-        owner === 'All' || s.owner?.name === owner;
+      const matchTier = tier === 'All' || s.tier === Number(tier.split(' ')[1]);
+      const matchOwner = owner === 'All' || s.owner?.name === owner;
       return matchSearch && matchTier && matchOwner;
     });
   }, [services, search, tier, owner]);
@@ -104,7 +100,9 @@ export function ServicesPage() {
         </div>
         <div className="top-right">
           <div className="search">
-            <label className="sr-only" htmlFor="service-search">Search services</label>
+            <label className="sr-only" htmlFor="service-search">
+              Search services
+            </label>
             <SearchIcon />
             <input
               ref={searchRef}
@@ -135,9 +133,8 @@ export function ServicesPage() {
           Every service you ship, <em>in one place.</em>
         </h1>
         <p className="page-sub">
-          Browse, track, and own the systems that run your business. From authentication
-          to payments, ownership is clear, health is visible, and documentation stays
-          one click away.
+          Browse, track, and own the systems that run your business. From authentication to
+          payments, ownership is clear, health is visible, and documentation stays one click away.
         </p>
       </section>
 
@@ -185,7 +182,9 @@ export function ServicesPage() {
             aria-label="Filter by owner"
           >
             {owners.map((o) => (
-              <option key={o} value={o}>{o}</option>
+              <option key={o} value={o}>
+                {o}
+              </option>
             ))}
           </select>
         </div>
@@ -200,27 +199,29 @@ export function ServicesPage() {
       </section>
 
       <section className="grid">
-        {isLoading && (
-          <div className="empty">Loading services…</div>
-        )}
-        {isError && (
-          <div className="empty">Failed to load services. Check the API.</div>
-        )}
+        {isLoading && <div className="empty">Loading services…</div>}
+        {isError && <div className="empty">Failed to load services. Check the API.</div>}
         {!isLoading && !isError && filtered.length === 0 && (
           <div className="empty">
             <strong>No services match these filters.</strong>
             <span>Try widening your search or clearing the active filters.</span>
-            <button className="empty-action" onClick={resetFilters}>Reset filters</button>
+            <button className="empty-action" onClick={resetFilters}>
+              Reset filters
+            </button>
           </div>
         )}
-        {!isLoading && !isError && filtered.map((service) => (
-          <ServiceCard key={service.id} service={service} onClick={() => setSelected(service)} />
-        ))}
+        {!isLoading &&
+          !isError &&
+          filtered.map((service) => (
+            <ServiceCard key={service.id} service={service} onClick={() => setSelected(service)} />
+          ))}
       </section>
 
       <footer className="foot">
         <span className="mono">DALEELEX v0.5 {new Date().getFullYear()}</span>
-        <span>Built on <code>catalog-info.yaml</code></span>
+        <span>
+          Built on <code>catalog-info.yaml</code>
+        </span>
       </footer>
 
       <ServiceDrawer
@@ -251,39 +252,78 @@ function computeStats(services: Service[]) {
 
 function PlusIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
 }
 
 function SearchIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--muted)', flexShrink: 0 }}>
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      style={{ color: 'var(--muted)', flexShrink: 0 }}
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   );
 }
 
 function BellIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </svg>
   );
 }
 
 function ChevronRight() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="9 18 15 12 9 6"/>
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }
 
 function CloseIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>

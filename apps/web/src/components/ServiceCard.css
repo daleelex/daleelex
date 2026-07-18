@@ -6,7 +6,10 @@
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
   position: relative;
   overflow: hidden;
 }
@@ -81,11 +84,26 @@
   border-radius: 4px;
 }
 
-.tier-1 { color: var(--brand-deep); background: rgba(47,169,155,0.15); }
-[data-theme="dark"] .tier-1 { color: var(--brand-teal); background: rgba(47,169,155,0.18); }
-.tier-2 { color: var(--brand-blue); background: rgba(31,95,165,0.12); }
-[data-theme="dark"] .tier-2 { color: #4B8FDB; background: rgba(75,143,219,0.18); }
-.tier-3 { color: var(--muted); background: var(--panel-2); }
+.tier-1 {
+  color: var(--brand-deep);
+  background: rgba(47, 169, 155, 0.15);
+}
+[data-theme='dark'] .tier-1 {
+  color: var(--brand-teal);
+  background: rgba(47, 169, 155, 0.18);
+}
+.tier-2 {
+  color: var(--brand-blue);
+  background: rgba(31, 95, 165, 0.12);
+}
+[data-theme='dark'] .tier-2 {
+  color: #4b8fdb;
+  background: rgba(75, 143, 219, 0.18);
+}
+.tier-3 {
+  color: var(--muted);
+  background: var(--panel-2);
+}
 
 .lifecycle {
   display: flex;

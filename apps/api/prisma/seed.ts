@@ -33,7 +33,8 @@ const services = [
   {
     id: 'svc-gw-002',
     name: 'API Gateway',
-    description: 'Edge proxy routing traffic to internal services. Handles rate limiting and auth verification.',
+    description:
+      'Edge proxy routing traffic to internal services. Handles rate limiting and auth verification.',
     type: 'api',
     tier: 1,
     lifecycle: 'production',
@@ -43,9 +44,7 @@ const services = [
     sloTarget: '99.99%',
     sloWindow: '30d',
     tags: ['critical', 'public'],
-    links: [
-      { url: 'https://runbook.internal/gateway', title: 'Runbook', type: 'runbook' },
-    ],
+    links: [{ url: 'https://runbook.internal/gateway', title: 'Runbook', type: 'runbook' }],
   },
   {
     id: 'svc-users-003',
@@ -60,14 +59,13 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['critical'],
-    links: [
-      { url: 'https://docs.internal/user-service', title: 'API Docs', type: 'docs' },
-    ],
+    links: [{ url: 'https://docs.internal/user-service', title: 'API Docs', type: 'docs' }],
   },
   {
     id: 'svc-notify-004',
     name: 'Notification Service',
-    description: 'Email, push, and in-app notification delivery. Supports templates and scheduling.',
+    description:
+      'Email, push, and in-app notification delivery. Supports templates and scheduling.',
     type: 'api',
     tier: 2,
     lifecycle: 'production',
@@ -107,9 +105,7 @@ const services = [
     sloTarget: '99.99%',
     sloWindow: '30d',
     tags: ['critical', 'data'],
-    links: [
-      { url: 'https://runbook.internal/postgres', title: 'Runbook', type: 'runbook' },
-    ],
+    links: [{ url: 'https://runbook.internal/postgres', title: 'Runbook', type: 'runbook' }],
   },
   {
     id: 'svc-billing-007',
@@ -124,9 +120,7 @@ const services = [
     sloTarget: '99.95%',
     sloWindow: '30d',
     tags: ['critical', 'payments', 'pci'],
-    links: [
-      { url: 'https://runbook.internal/billing', title: 'Runbook', type: 'runbook' },
-    ],
+    links: [{ url: 'https://runbook.internal/billing', title: 'Runbook', type: 'runbook' }],
   },
   {
     id: 'svc-analytics-008',
@@ -201,9 +195,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['infrastructure', 'release'],
-    links: [
-      { url: 'https://docs.internal/feature-flags', title: 'Docs', type: 'docs' },
-    ],
+    links: [{ url: 'https://docs.internal/feature-flags', title: 'Docs', type: 'docs' }],
   },
 ];
 

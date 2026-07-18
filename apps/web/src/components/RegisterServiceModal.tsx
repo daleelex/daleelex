@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CreateServiceRequest, ServiceLifecycle, ServiceTier, ServiceType } from '@daleelex/shared';
+import type {
+  CreateServiceRequest,
+  ServiceLifecycle,
+  ServiceTier,
+  ServiceType,
+} from '@daleelex/shared';
 import { api } from '../api';
 import './RegisterServiceModal.css';
 
@@ -34,7 +39,9 @@ export function RegisterServiceModal({ onClose }: Props) {
 
   useEffect(() => {
     firstRef.current?.focus();
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
@@ -54,8 +61,14 @@ export function RegisterServiceModal({ onClose }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.id.trim()) { setFieldError('id'); return; }
-    if (!form.name.trim()) { setFieldError('name'); return; }
+    if (!form.id.trim()) {
+      setFieldError('id');
+      return;
+    }
+    if (!form.name.trim()) {
+      setFieldError('name');
+      return;
+    }
     mutate({
       ...form,
       ownerTeamId: form.ownerTeamId || undefined,
@@ -82,11 +95,17 @@ export function RegisterServiceModal({ onClose }: Props) {
         </div>
 
         <form className="modal-body" onSubmit={handleSubmit} noValidate>
-          {errMsg && <div className="modal-error" role="alert">{errMsg}</div>}
+          {errMsg && (
+            <div className="modal-error" role="alert">
+              {errMsg}
+            </div>
+          )}
 
           <div className="form-row two-col">
             <label className="form-field">
-              <span className="field-label">Service ID <abbr title="required">*</abbr></span>
+              <span className="field-label">
+                Service ID <abbr title="required">*</abbr>
+              </span>
               <input
                 ref={firstRef}
                 className={`field-input mono${fieldError === 'id' ? ' invalid' : ''}`}
@@ -96,11 +115,15 @@ export function RegisterServiceModal({ onClose }: Props) {
                 onChange={(e) => set('id', e.target.value)}
               />
               {fieldError === 'id' && <span className="field-hint error">Required</span>}
-              <span className="field-hint">Stable, never changes. Use svc-&lt;slug&gt;-&lt;n&gt;.</span>
+              <span className="field-hint">
+                Stable, never changes. Use svc-&lt;slug&gt;-&lt;n&gt;.
+              </span>
             </label>
 
             <label className="form-field">
-              <span className="field-label">Name <abbr title="required">*</abbr></span>
+              <span className="field-label">
+                Name <abbr title="required">*</abbr>
+              </span>
               <input
                 className={`field-input${fieldError === 'name' ? ' invalid' : ''}`}
                 type="text"
@@ -114,17 +137,31 @@ export function RegisterServiceModal({ onClose }: Props) {
 
           <div className="form-row three-col">
             <label className="form-field">
-              <span className="field-label">Type <abbr title="required">*</abbr></span>
-              <select className="field-select" value={form.type} onChange={(e) => set('type', e.target.value as ServiceType)}>
+              <span className="field-label">
+                Type <abbr title="required">*</abbr>
+              </span>
+              <select
+                className="field-select"
+                value={form.type}
+                onChange={(e) => set('type', e.target.value as ServiceType)}
+              >
                 {(['api', 'db', 'web', 'ml', 'tool'] as ServiceType[]).map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </select>
             </label>
 
             <label className="form-field">
-              <span className="field-label">Tier <abbr title="required">*</abbr></span>
-              <select className="field-select" value={form.tier} onChange={(e) => set('tier', Number(e.target.value) as ServiceTier)}>
+              <span className="field-label">
+                Tier <abbr title="required">*</abbr>
+              </span>
+              <select
+                className="field-select"
+                value={form.tier}
+                onChange={(e) => set('tier', Number(e.target.value) as ServiceTier)}
+              >
                 <option value={1}>Tier 1 — Critical</option>
                 <option value={2}>Tier 2 — Important</option>
                 <option value={3}>Tier 3 — Internal</option>
@@ -132,8 +169,14 @@ export function RegisterServiceModal({ onClose }: Props) {
             </label>
 
             <label className="form-field">
-              <span className="field-label">Lifecycle <abbr title="required">*</abbr></span>
-              <select className="field-select" value={form.lifecycle} onChange={(e) => set('lifecycle', e.target.value as ServiceLifecycle)}>
+              <span className="field-label">
+                Lifecycle <abbr title="required">*</abbr>
+              </span>
+              <select
+                className="field-select"
+                value={form.lifecycle}
+                onChange={(e) => set('lifecycle', e.target.value as ServiceLifecycle)}
+              >
                 <option value="beta">Beta</option>
                 <option value="production">Production</option>
                 <option value="deprecated">Deprecated</option>
@@ -143,10 +186,16 @@ export function RegisterServiceModal({ onClose }: Props) {
 
           <label className="form-field">
             <span className="field-label">Owner team</span>
-            <select className="field-select" value={form.ownerTeamId ?? ''} onChange={(e) => set('ownerTeamId', e.target.value)}>
+            <select
+              className="field-select"
+              value={form.ownerTeamId ?? ''}
+              onChange={(e) => set('ownerTeamId', e.target.value)}
+            >
               <option value="">— Unowned —</option>
               {teams.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
             {teams.length === 0 && (
@@ -205,8 +254,16 @@ export function RegisterServiceModal({ onClose }: Props) {
 
 function CloseIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }

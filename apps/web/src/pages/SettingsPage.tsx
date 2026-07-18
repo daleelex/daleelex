@@ -17,7 +17,9 @@ export function SettingsPage() {
       <div className="settings-body">
         <nav className="settings-nav">
           <div className="settings-nav-section">Integrations</div>
-          <a className="settings-nav-item active" href="#jenkins">Jenkins</a>
+          <a className="settings-nav-item active" href="#jenkins">
+            Jenkins
+          </a>
         </nav>
 
         <div className="settings-content">
@@ -50,7 +52,12 @@ function JenkinsSection() {
   }, [config, initialized]);
 
   const testMutation = useMutation({
-    mutationFn: () => api.testJenkinsConnection({ baseUrl, username: username || undefined, token: token || undefined }),
+    mutationFn: () =>
+      api.testJenkinsConnection({
+        baseUrl,
+        username: username || undefined,
+        token: token || undefined,
+      }),
     onSuccess: (result) => {
       setTestResult(result);
       setTestError(null);
@@ -62,14 +69,20 @@ function JenkinsSection() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: () => api.saveJenkinsConfig({ baseUrl, username: username || undefined, token: token || undefined }),
+    mutationFn: () =>
+      api.saveJenkinsConfig({
+        baseUrl,
+        username: username || undefined,
+        token: token || undefined,
+      }),
     onSuccess: () => {
       setToken('');
       queryClient.invalidateQueries({ queryKey: ['integrations', 'jenkins'] });
     },
   });
 
-  const dirty = baseUrl !== (config?.baseUrl ?? '') || username !== (config?.username ?? '') || token !== '';
+  const dirty =
+    baseUrl !== (config?.baseUrl ?? '') || username !== (config?.username ?? '') || token !== '';
   const missingRequiredCredentials = !username.trim() || (!config?.tokenSet && !token.trim());
 
   if (isLoading) {
@@ -103,9 +116,14 @@ function JenkinsSection() {
             type="url"
             placeholder="http://jenkins.internal:8080"
             value={baseUrl}
-            onChange={(e) => { setBaseUrl(e.target.value); setTestResult(null); }}
+            onChange={(e) => {
+              setBaseUrl(e.target.value);
+              setTestResult(null);
+            }}
           />
-          <p className="form-hint">The root URL of your Jenkins instance, without a trailing slash.</p>
+          <p className="form-hint">
+            The root URL of your Jenkins instance, without a trailing slash.
+          </p>
         </div>
 
         <div className="form-row">
@@ -115,7 +133,10 @@ function JenkinsSection() {
             type="text"
             placeholder="your-jenkins-username"
             value={username}
-            onChange={(e) => { setUsername(e.target.value); setTestResult(null); }}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setTestResult(null);
+            }}
           />
         </div>
 
@@ -123,7 +144,9 @@ function JenkinsSection() {
           <label htmlFor="jenkins-token">
             API Token
             {config?.tokenSet && token === '' && (
-              <span className="token-set-indicator">Token saved — enter a new one to replace it</span>
+              <span className="token-set-indicator">
+                Token saved — enter a new one to replace it
+              </span>
             )}
           </label>
           <input
@@ -131,7 +154,10 @@ function JenkinsSection() {
             type="password"
             placeholder={config?.tokenSet ? '••••••••' : 'Paste your Jenkins API token'}
             value={token}
-            onChange={(e) => { setToken(e.target.value); setTestResult(null); }}
+            onChange={(e) => {
+              setToken(e.target.value);
+              setTestResult(null);
+            }}
             autoComplete="new-password"
           />
           <p className="form-hint">
@@ -143,7 +169,9 @@ function JenkinsSection() {
           <div className={`test-result ${testResult.ok ? 'ok' : 'fail'}`}>
             <strong>{testResult.ok ? 'Connection successful' : 'Connection failed'}</strong>
             <span>{testResult.message}</span>
-            {testResult.version && <span className="test-version">Jenkins {testResult.version}</span>}
+            {testResult.version && (
+              <span className="test-version">Jenkins {testResult.version}</span>
+            )}
           </div>
         )}
         {testError && (
@@ -176,7 +204,9 @@ function JenkinsSection() {
           <button
             className="btn-primary"
             onClick={() => saveMutation.mutate()}
-            disabled={!baseUrl.trim() || missingRequiredCredentials || !dirty || saveMutation.isPending}
+            disabled={
+              !baseUrl.trim() || missingRequiredCredentials || !dirty || saveMutation.isPending
+            }
           >
             {saveMutation.isPending ? 'Saving...' : 'Save'}
           </button>
@@ -190,7 +220,10 @@ function JenkinsLogo() {
   return (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <rect width="32" height="32" rx="8" fill="#335061" />
-      <path d="M16 6C10.477 6 6 10.477 6 16s4.477 10 10 10 10-4.477 10-10S21.523 6 16 6zm0 2a8 8 0 1 1 0 16A8 8 0 0 1 16 8zm-1 3v6l5 3-1 1.732-6-3.464V11h2z" fill="#D9E8EE" />
+      <path
+        d="M16 6C10.477 6 6 10.477 6 16s4.477 10 10 10 10-4.477 10-10S21.523 6 16 6zm0 2a8 8 0 1 1 0 16A8 8 0 0 1 16 8zm-1 3v6l5 3-1 1.732-6-3.464V11h2z"
+        fill="#D9E8EE"
+      />
     </svg>
   );
 }

@@ -13,10 +13,14 @@ interface Props {
 export function TeamDrawer({ team, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
 
-  useEffect(() => { setTab('overview'); }, [team?.id]);
+  useEffect(() => {
+    setTab('overview');
+  }, [team?.id]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
@@ -49,14 +53,20 @@ export function TeamDrawer({ team, onClose }: Props) {
           <div className="team-drawer-hero">
             <div className="team-drawer-avatar">{initials(team.name)}</div>
             <div>
-              <h2 className="drawer-title" style={{ fontSize: 28, marginTop: 0 }}>{team.name}</h2>
+              <h2 className="drawer-title" style={{ fontSize: 28, marginTop: 0 }}>
+                {team.name}
+              </h2>
               <div className="drawer-id">{team.id}</div>
             </div>
           </div>
 
           <div className="tabs">
             {TABS.map((t) => (
-              <button key={t} className={`tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
+              <button
+                key={t}
+                className={`tab${tab === t ? ' active' : ''}`}
+                onClick={() => setTab(t)}
+              >
                 {t}
               </button>
             ))}
@@ -65,7 +75,9 @@ export function TeamDrawer({ team, onClose }: Props) {
           <div className="tab-content">
             {tab === 'overview' && <TeamOverviewTab team={team} />}
             {tab === 'services' && <TeamServicesTab team={team} />}
-            {tab === 'scorecard' && <TeamScorecardTab team={team} passed={passedChecks} score={score} />}
+            {tab === 'scorecard' && (
+              <TeamScorecardTab team={team} passed={passedChecks} score={score} />
+            )}
           </div>
         </div>
       </aside>
@@ -101,7 +113,10 @@ function TeamOverviewTab({ team }: { team: TeamWithStats }) {
           <div className="tier-bar-row">
             <span className="tier-bar-label tier-1">T1</span>
             <div className="tier-bar-track">
-              <div className="tier-bar-fill tier-fill-1" style={{ width: `${(team.tier1Count / team.serviceCount) * 100}%` }} />
+              <div
+                className="tier-bar-fill tier-fill-1"
+                style={{ width: `${(team.tier1Count / team.serviceCount) * 100}%` }}
+              />
             </div>
             <span className="tier-bar-count">{team.tier1Count}</span>
           </div>
@@ -110,7 +125,10 @@ function TeamOverviewTab({ team }: { team: TeamWithStats }) {
           <div className="tier-bar-row">
             <span className="tier-bar-label tier-2">T2</span>
             <div className="tier-bar-track">
-              <div className="tier-bar-fill tier-fill-2" style={{ width: `${(team.tier2Count / team.serviceCount) * 100}%` }} />
+              <div
+                className="tier-bar-fill tier-fill-2"
+                style={{ width: `${(team.tier2Count / team.serviceCount) * 100}%` }}
+              />
             </div>
             <span className="tier-bar-count">{team.tier2Count}</span>
           </div>
@@ -119,7 +137,10 @@ function TeamOverviewTab({ team }: { team: TeamWithStats }) {
           <div className="tier-bar-row">
             <span className="tier-bar-label tier-3">T3</span>
             <div className="tier-bar-track">
-              <div className="tier-bar-fill tier-fill-3" style={{ width: `${(team.tier3Count / team.serviceCount) * 100}%` }} />
+              <div
+                className="tier-bar-fill tier-fill-3"
+                style={{ width: `${(team.tier3Count / team.serviceCount) * 100}%` }}
+              />
             </div>
             <span className="tier-bar-count">{team.tier3Count}</span>
           </div>
@@ -148,7 +169,9 @@ function TeamServicesTab({ team }: { team: TeamWithStats }) {
           <span className={`service-tier-dot tier-dot-${s.tier}`} />
           <div style={{ flex: 1 }}>
             <div className="doc-title">{s.name}</div>
-            <div className="doc-sub">{s.type} · tier {s.tier}</div>
+            <div className="doc-sub">
+              {s.type} · tier {s.tier}
+            </div>
           </div>
           <span className={`tier-badge tier-${s.tier}`}>T{s.tier}</span>
         </div>
@@ -162,12 +185,23 @@ function TeamServicesTab({ team }: { team: TeamWithStats }) {
   );
 }
 
-function TeamScorecardTab({ team, passed, score }: { team: TeamWithStats; passed: number; score: number }) {
+function TeamScorecardTab({
+  team,
+  passed,
+  score,
+}: {
+  team: TeamWithStats;
+  passed: number;
+  score: number;
+}) {
   const checks = [
     { label: 'Slack channel configured', pass: !!team.slackChannel },
     { label: 'On-call rotation active', pass: !!team.onCallSchedule },
     { label: 'At least one service owned', pass: team.serviceCount > 0 },
-    { label: 'Critical services have on-call', pass: team.tier1Count === 0 || !!team.onCallSchedule },
+    {
+      label: 'Critical services have on-call',
+      pass: team.tier1Count === 0 || !!team.onCallSchedule,
+    },
     { label: 'Team ID registered', pass: true },
     { label: 'Contact info complete', pass: !!(team.slackChannel && team.onCallSchedule) },
   ];
@@ -181,7 +215,9 @@ function TeamScorecardTab({ team, passed, score }: { team: TeamWithStats; passed
         </div>
         <div>
           <div className="score-hero-label">Team health</div>
-          <div className="score-hero-main">{passed} / {checks.length} checks passing</div>
+          <div className="score-hero-main">
+            {passed} / {checks.length} checks passing
+          </div>
           <div className="score-hero-sub">Based on team configuration</div>
         </div>
       </div>
@@ -209,10 +245,24 @@ function Ring({ score }: { score: number }) {
   const circ = 2 * Math.PI * r;
   const dash = (score / 100) * circ;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={r + w} cy={r + w} r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={w} />
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      style={{ transform: 'rotate(-90deg)' }}
+    >
       <circle
-        cx={r + w} cy={r + w} r={r}
+        cx={r + w}
+        cy={r + w}
+        r={r}
+        fill="none"
+        stroke="rgba(255,255,255,0.15)"
+        strokeWidth={w}
+      />
+      <circle
+        cx={r + w}
+        cy={r + w}
+        r={r}
         fill="none"
         stroke="white"
         strokeWidth={w}
@@ -224,19 +274,61 @@ function Ring({ score }: { score: number }) {
 }
 
 function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
 }
 
 function CloseIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
 }
 
 function CheckIcon() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.25"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--ok)"
+      strokeWidth="2.25"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
 }
 
 function AlertIcon() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" strokeWidth="2.25"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--warn)"
+      strokeWidth="2.25"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
 }
 
 // Re-use types from shared for the service row rendering
