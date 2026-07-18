@@ -1,26 +1,23 @@
 name: CD
 
-# workflow_run doesn't support a `branches:` filter directly — the `if:` below on each
-# job checks head_branch instead. This trigger (rather than reacting to `push` directly)
-# guarantees CD only ever deploys a commit that the CI workflow already ran green on.
+# Manual-only: nothing deploys until someone clicks "Run workflow" in the Actions tab
+# and picks a branch/ref there. Unlike the previous workflow_run trigger, this does NOT
+# guarantee the chosen ref passed CI — check the CI status for that commit yourself
+# before dispatching. The environment gate below is a second, independent checkpoint.
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          # Build the exact commit CI validated, not whatever master happens to be at
-          # the moment this job starts.
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # Whatever ref was picked in the "Run workflow" dispatch UI.
+          ref: ${{ github.sha }}
       - run: corepack enable
       - uses: actions/setup-node@v4
         with:
@@ -62,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.sha }}
       - uses: actions/download-artifact@v4
         with:
           name: release
@@ -81,10 +78,10 @@ jobs:
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key -o UserKnownHostsFile=~/.ssh/known_hosts" \
-            out/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/daleelex/releases/${{ github.event.workflow_run.head_sha }}/"
+            out/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/daleelex/releases/${{ github.sha }}/"
 
       - name: Migrate, flip symlink, reload pm2
         run: |
           ssh -i ~/.ssh/deploy_key -o UserKnownHostsFile=~/.ssh/known_hosts \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" 'bash -s' \
-            -- "${{ github.event.workflow_run.head_sha }}" < scripts/deploy-remote.sh
+            -- "${{ github.sha }}" < scripts/deploy-remote.sh
