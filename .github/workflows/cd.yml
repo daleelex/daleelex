@@ -24,6 +24,11 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # @prisma/client's postinstall doesn't reliably fire under pnpm --frozen-lockfile
+      # (confirmed by reproducing it with a from-scratch install) — without this, `api
+      # build` below fails on missing/ungenerated Prisma types, and the deploy step
+      # after it would carry that same stale/absent client into the release artifact.
+      - run: pnpm --filter @daleelex/api exec prisma generate
 
       - run: pnpm --filter @daleelex/api build
       - run: pnpm --filter @daleelex/ingestor build
@@ -34,6 +39,15 @@ jobs:
       # would mean re-solving pnpm's workspace linking ourselves for no reason.
       - run: pnpm --filter @daleelex/api deploy --prod out/api
       - run: pnpm --filter @daleelex/ingestor deploy --prod out/ingestor
+
+      # `pnpm deploy` builds out/api's node_modules as its own independent tree, separate
+      # from the one `prisma generate` ran against above — the generated client doesn't
+      # carry over. Without this, the deployed artifact's @prisma/client can't even be
+      # imported (confirmed: `Cannot find module '.prisma/client/default'`), which would
+      # crash daleelex-api on boot on the VM. Uses the artifact's own bundled prisma CLI
+      # (see the earlier commit moving prisma to a production dependency) so it generates
+      # against its own copy of schema.prisma.
+      - run: cd out/api && ./node_modules/.bin/prisma generate
 
       - name: Assemble the web + pm2 config into the same release bundle
         run: |

@@ -42,6 +42,12 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # @prisma/client's postinstall (which normally runs `prisma generate`) doesn't
+      # reliably fire under pnpm --frozen-lockfile in CI — confirmed by reproducing it
+      # locally with a from-scratch node_modules. Without this, the client's types fall
+      # back to an ungenerated stub, and every un-annotated callback over a Prisma query
+      # result (services.map(...), teams.filter(...), etc.) becomes implicit any (TS7006).
+      - run: pnpm --filter @daleelex/api exec prisma generate
       - run: pnpm typecheck
 
   # Covers both plain unit tests and DB-backed ones in a single job: nothing in the
@@ -72,6 +78,9 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # See the typecheck job for why this is explicit rather than relying on postinstall.
+      # migrate deploy on its own does not generate the client either.
+      - run: pnpm --filter @daleelex/api exec prisma generate
       - run: pnpm --filter @daleelex/api exec prisma migrate deploy
       - run: pnpm -r test
 
@@ -103,6 +112,9 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # See the typecheck job for why this is explicit — without it, `api build` below
+      # fails on the same missing-types errors typecheck would.
+      - run: pnpm --filter @daleelex/api exec prisma generate
       - run: pnpm --filter @daleelex/api exec prisma migrate deploy
       - run: pnpm --filter @daleelex/api exec prisma db seed
       - run: pnpm --filter @daleelex/api build
