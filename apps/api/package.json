@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "files": ["dist", "prisma/schema.prisma", "prisma/migrations"],
+  "files": [
+    "dist",
+    "prisma/schema.prisma",
+    "prisma/migrations"
+  ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
