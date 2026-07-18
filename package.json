@@ -1,6 +1,7 @@
 {
   "name": "daleelex",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
@@ -11,5 +12,14 @@
     "jenkins:up": "docker compose up -d jenkins",
     "db:migrate": "pnpm --filter @daleelex/api prisma migrate dev",
     "db:seed": "pnpm --filter @daleelex/api prisma db seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9",
+    "eslint": "^9",
+    "eslint-config-prettier": "^9",
+    "eslint-plugin-react-hooks": "^5",
+    "globals": "^15",
+    "prettier": "^3",
+    "typescript-eslint": "^8"
   }
 }
