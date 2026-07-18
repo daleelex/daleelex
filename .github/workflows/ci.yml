@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+# A new push to the same PR/branch supersedes the previous run — no point
+# burning runner minutes finishing a check on code that's already stale.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Matches docker-compose.yml's local Postgres creds — same DB shape in CI as in dev.
+  DATABASE_URL: postgresql://daleelex:daleelex@localhost:5432/daleelex
+
+jobs:
+  # Independent jobs so a lint failure doesn't wait behind typecheck/tests, and vice versa.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # corepack ships with Node 20 and reads the `packageManager` field in package.json
+      # to install the exact pinned pnpm version — no third-party action needed for this.
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  # Covers both plain unit tests and DB-backed ones in a single job: nothing in the
+  # codebase currently distinguishes the two (one test file exists today, and it doesn't
+  # touch the DB), so a Postgres-less "unit" job would just be a strict subset of this one
+  # for no real benefit. Worth splitting later once there's an actual reason to.
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: daleelex
+          POSTGRES_PASSWORD: daleelex
+          POSTGRES_DB: daleelex
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @daleelex/api exec prisma migrate deploy
+      - run: pnpm -r test
+
+  # Runs on every PR, not just main — the suite is currently a single Chromium smoke test
+  # (~seconds, once the browser binary is cached), and with no staging environment, catching
+  # an e2e break before merge is much cheaper than catching it after it's already live on the
+  # one production VM. Revisit if the suite grows past a few minutes or gets flaky.
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: daleelex
+          POSTGRES_PASSWORD: daleelex
+          POSTGRES_DB: daleelex
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @daleelex/api exec prisma migrate deploy
+      - run: pnpm --filter @daleelex/api exec prisma db seed
+      - run: pnpm --filter @daleelex/api build
+      - run: pnpm --filter @daleelex/web build
+      # The architecture is web → API → DB, never web → DB directly, so the e2e run
+      # exercises the real API rather than a preview server proxying into nothing.
+      - name: Start API in the background
+        run: pnpm --filter @daleelex/api start &
+        env:
+          DATABASE_URL: postgresql://daleelex:daleelex@localhost:5432/daleelex
+      - name: Wait for API health check
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/api/v1/health && exit 0
+            sleep 1
+          done
+          echo "API did not become healthy within 30s" >&2
+          exit 1
+      # Cache the downloaded browser binary (not node_modules — pnpm's own cache already
+      # covers that) so repeat runs skip the ~100MB Chromium download.
+      - name: Cache Playwright browser binary
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install Playwright Chromium
+        run: pnpm --filter @daleelex/web exec playwright install --with-deps chromium
+        # Skip the browser download on a cache hit, but always run --with-deps once per
+        # runner image so OS-level shared libraries are still present after a cache restore.
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: pnpm --filter @daleelex/web exec playwright install-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+      - run: pnpm --filter @daleelex/web e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
