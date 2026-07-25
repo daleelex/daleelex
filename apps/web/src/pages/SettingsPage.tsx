@@ -1,10 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/react';
 import type { JenkinsTestResponse } from '@daleelex/shared';
 import { api } from '../api';
+import { useTheme } from '../lib/theme';
 import './SettingsPage.css';
 
+const NAV_GROUPS = [
+  {
+    section: 'Account',
+    items: [
+      { id: 'profile', label: 'Profile' },
+      { id: 'appearance', label: 'Appearance' },
+    ],
+  },
+  {
+    section: 'Integrations',
+    items: [{ id: 'jenkins', label: 'Jenkins' }],
+  },
+];
+
 export function SettingsPage() {
+  const [active, setActive] = useState('profile');
+
   return (
     <>
       <header className="settings-topbar">
@@ -16,17 +34,111 @@ export function SettingsPage() {
 
       <div className="settings-body">
         <nav className="settings-nav">
-          <div className="settings-nav-section">Integrations</div>
-          <a className="settings-nav-item active" href="#jenkins">
-            Jenkins
-          </a>
+          {NAV_GROUPS.map((group) => (
+            <div key={group.section} className="settings-nav-group">
+              <div className="settings-nav-section">{group.section}</div>
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`settings-nav-item${active === item.id ? ' active' : ''}`}
+                  onClick={() => setActive(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          ))}
         </nav>
 
         <div className="settings-content">
-          <JenkinsSection />
+          {active === 'profile' && <ProfileSection />}
+          {active === 'appearance' && <AppearanceSection />}
+          {active === 'jenkins' && <JenkinsSection />}
         </div>
       </div>
     </>
+  );
+}
+
+function ProfileSection() {
+  const { getToken } = useAuth();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+      return api.me(token);
+    },
+  });
+
+  return (
+    <section className="settings-section">
+      <div className="settings-section-head">
+        <div>
+          <h2>Profile</h2>
+          <p>Your account details, synced from your sign-in provider.</p>
+        </div>
+      </div>
+
+      {isLoading && <div className="settings-loading">Loading profile...</div>}
+      {isError && <div className="settings-loading">Failed to load profile.</div>}
+      {data && (
+        <div className="profile-card">
+          {data.avatarUrl ? (
+            <img className="profile-avatar" src={data.avatarUrl} alt="" />
+          ) : (
+            <div className="profile-avatar profile-avatar-fallback">
+              {(data.name ?? data.email).charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="profile-fields">
+            <div className="profile-field">
+              <span>Name</span>
+              <strong>{data.name ?? 'Not set'}</strong>
+            </div>
+            <div className="profile-field">
+              <span>Email</span>
+              <strong>{data.email}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AppearanceSection() {
+  const [theme, setTheme] = useTheme();
+
+  return (
+    <section className="settings-section">
+      <div className="settings-section-head">
+        <div>
+          <h2>Appearance</h2>
+          <p>Choose how DaleelEx looks on this device.</p>
+        </div>
+      </div>
+
+      <div className="theme-options">
+        <button
+          type="button"
+          className={`theme-option${theme === 'light' ? ' active' : ''}`}
+          onClick={() => setTheme('light')}
+        >
+          <SunIcon />
+          Light
+        </button>
+        <button
+          type="button"
+          className={`theme-option${theme === 'dark' ? ' active' : ''}`}
+          onClick={() => setTheme('dark')}
+        >
+          <MoonIcon />
+          Dark
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -90,7 +202,7 @@ function JenkinsSection() {
   }
 
   return (
-    <section className="settings-section" id="jenkins">
+    <section className="settings-section">
       <div className="settings-section-head">
         <JenkinsLogo />
         <div>
@@ -224,6 +336,30 @@ function JenkinsLogo() {
         d="M16 6C10.477 6 6 10.477 6 16s4.477 10 10 10 10-4.477 10-10S21.523 6 16 6zm0 2a8 8 0 1 1 0 16A8 8 0 0 1 16 8zm-1 3v6l5 3-1 1.732-6-3.464V11h2z"
         fill="#D9E8EE"
       />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
   );
 }
