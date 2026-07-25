@@ -39,7 +39,7 @@ export async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
   }
 }
 
-function readBearerToken(header: string | undefined) {
+export function readBearerToken(header: string | undefined) {
   const [scheme, token] = header?.split(' ') ?? [];
   return scheme?.toLowerCase() === 'bearer' && token ? token : null;
 }
