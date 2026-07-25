@@ -343,62 +343,6 @@
   align-self: start;
 }
 
-.integration-card {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.integration-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink);
-  font-size: 14px;
-}
-
-.integration-card dl {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-}
-
-.integration-card dl div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.integration-card dl div:last-child {
-  border-bottom: 0;
-}
-
-.integration-card dt {
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.integration-card dd {
-  margin: 0;
-  color: var(--ink-2);
-  font-size: 12px;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.integration-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
 .risk-list {
   display: grid;
   gap: 12px;

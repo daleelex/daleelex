@@ -9,11 +9,6 @@ export function HealthPage() {
     queryKey: ['services'],
     queryFn: api.services,
   });
-  const jenkins = useQuery({
-    queryKey: ['integrations', 'jenkins', 'health'],
-    queryFn: api.jenkinsHealth,
-    refetchInterval: 30000,
-  });
 
   const services = data?.data ?? [];
   const health = useMemo(() => computeHealth(services), [services]);
@@ -146,44 +141,6 @@ export function HealthPage() {
         <aside className="health-panel risk-panel">
           <div className="panel-head">
             <div>
-              <h2>Jenkins</h2>
-              <p>Local CI integration</p>
-            </div>
-          </div>
-          <div className="integration-card">
-            {jenkins.isLoading && <div className="health-empty compact">Checking Jenkins...</div>}
-            {jenkins.isError && (
-              <div className="health-empty compact">Failed to check Jenkins.</div>
-            )}
-            {jenkins.data && (
-              <>
-                <div className="integration-status">
-                  <span
-                    className={`summary-dot ${jenkins.data.status === 'ok' ? 'healthy' : jenkins.data.status === 'auth_required' ? 'watch' : 'risk'}`}
-                  />
-                  <strong>{formatJenkinsStatus(jenkins.data.status)}</strong>
-                </div>
-                <dl>
-                  <div>
-                    <dt>URL</dt>
-                    <dd>{jenkins.data.baseUrl ?? 'Not configured'}</dd>
-                  </div>
-                  <div>
-                    <dt>Mode</dt>
-                    <dd>{jenkins.data.mode}</dd>
-                  </div>
-                  <div>
-                    <dt>Version</dt>
-                    <dd>{jenkins.data.version ?? 'Unknown'}</dd>
-                  </div>
-                </dl>
-                <p>{jenkins.data.message}</p>
-              </>
-            )}
-          </div>
-
-          <div className="panel-head">
-            <div>
               <h2>Needs attention</h2>
               <p>Highest priority gaps</p>
             </div>
@@ -232,17 +189,4 @@ function Stat({
       <small>{sub}</small>
     </article>
   );
-}
-
-function formatJenkinsStatus(status: string) {
-  switch (status) {
-    case 'ok':
-      return 'Connected';
-    case 'auth_required':
-      return 'Credentials needed';
-    case 'not_configured':
-      return 'Not configured';
-    default:
-      return 'Unreachable';
-  }
 }

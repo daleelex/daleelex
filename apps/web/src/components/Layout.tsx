@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
+import { useTheme } from '../lib/theme';
 import './Layout.css';
 
 const NAV_GROUPS = [
@@ -25,9 +26,7 @@ const NAV_GROUPS = [
 ];
 
 export function Layout() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('daleelex-theme') as 'light' | 'dark') ?? 'light';
-  });
+  const [theme, setTheme] = useTheme();
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     try {
@@ -41,10 +40,6 @@ export function Layout() {
     return localStorage.getItem('daleelex-sidebar-open') !== 'false';
   });
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
   const { getToken } = useAuth();
   useQuery({
     queryKey: ['me'],
@@ -56,10 +51,7 @@ export function Layout() {
   });
 
   function toggleTheme() {
-    const next = theme === 'light' ? 'dark' : 'light';
-    setTheme(next);
-    localStorage.setItem('daleelex-theme', next);
-    document.documentElement.setAttribute('data-theme', next);
+    setTheme(theme === 'light' ? 'dark' : 'light');
   }
 
   function toggleSection(section: string) {
