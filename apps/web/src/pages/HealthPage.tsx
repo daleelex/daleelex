@@ -190,4 +190,3 @@ function Stat({
     </article>
   );
 }
-
