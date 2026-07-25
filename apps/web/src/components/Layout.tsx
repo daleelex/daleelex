@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { useAuth } from '@clerk/react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../api';
 import './Layout.css';
 
 const NAV_GROUPS = [
@@ -41,6 +44,16 @@ export function Layout() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  const { getToken } = useAuth();
+  useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+      return api.me(token);
+    },
+  });
 
   function toggleTheme() {
     const next = theme === 'light' ? 'dark' : 'light';
