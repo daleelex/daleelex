@@ -11,6 +11,7 @@ import type {
   JenkinsTestResponse,
   CreateServiceRequest,
   Service,
+  MeResponse,
 } from '@daleelex/shared';
 
 const BASE = '/api/v1';
@@ -57,6 +58,14 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function getWithAuth<T>(path: string, token: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw await toApiError(res);
+  return res.json() as Promise<T>;
+}
+
 async function toApiError(res: Response) {
   const body = (await res.json().catch(() => ({}))) as ApiErrorPayload;
   const message =
@@ -83,4 +92,5 @@ export const api = {
     post<JenkinsTestResponse>('/integrations/jenkins/test', body),
   createService: (body: CreateServiceRequest) => post<Service>('/services', body),
   deleteService: (id: string) => del(`/services/${id}`),
+  me: (token: string) => getWithAuth<MeResponse>('/me', token),
 };

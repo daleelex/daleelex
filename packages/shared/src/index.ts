@@ -94,6 +94,13 @@ export interface HealthResponse {
   version: string;
 }
 
+export interface MeResponse {
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 export interface JenkinsHealthResponse {
   provider: 'jenkins';
   configured: boolean;
