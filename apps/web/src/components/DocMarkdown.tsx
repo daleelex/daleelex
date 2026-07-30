@@ -10,7 +10,7 @@ export function DocMarkdown({ doc }: { doc: ServiceDoc }) {
       components={{
         a: ({ href, children, ...props }) => {
           const resolved = resolveDocUrl(href, doc, 'link');
-          const external = resolved?.startsWith('https://');
+          const external = !!resolved && /^https?:\/\//.test(resolved);
           return (
             <a
               {...props}
