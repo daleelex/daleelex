@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/react';
 import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
 import { DocMarkdown } from './DocMarkdown';
 import { api } from '../api';
@@ -41,9 +42,11 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSucce
   const [confirming, setConfirming] = useState(false);
   const [editing, setEditing] = useState(false);
   const queryClient = useQueryClient();
+  const { getToken } = useAuth();
 
   const deleteMutation = useMutation({
-    mutationFn: (target: Service) => api.deleteService(target.id),
+    mutationFn: async (target: Service) =>
+      api.deleteService(target.id, (await getToken()) ?? undefined),
     onSuccess: (_data, deletedService) => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       onDeleteSuccess?.(deletedService);

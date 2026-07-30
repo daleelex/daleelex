@@ -6,6 +6,7 @@ import type {
   UpdateServiceRequest,
 } from '@daleelex/shared';
 import { prisma } from '../db.js';
+import { requireClerkUser } from '../clerkAuth.js';
 
 function toServiceShape(row: Awaited<ReturnType<typeof prisma.service.findFirstOrThrow>>): Service {
   return {
@@ -46,6 +47,7 @@ export async function servicesRoute(app: FastifyInstance) {
   app.post<{ Body: CreateServiceRequest }>(
     '/services',
     {
+      preHandler: requireClerkUser,
       schema: {
         body: {
           type: 'object',
@@ -102,6 +104,7 @@ export async function servicesRoute(app: FastifyInstance) {
   app.patch<{ Params: { id: string }; Body: UpdateServiceRequest }>(
     '/services/:id',
     {
+      preHandler: requireClerkUser,
       schema: {
         params: {
           type: 'object',
@@ -202,6 +205,7 @@ export async function servicesRoute(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>(
     '/services/:id',
     {
+      preHandler: requireClerkUser,
       schema: {
         params: {
           type: 'object',

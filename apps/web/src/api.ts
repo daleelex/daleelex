@@ -46,8 +46,11 @@ async function put<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function del(path: string): Promise<void> {
-  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' });
+async function del(path: string, token?: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   if (!res.ok) {
     throw await toApiError(res);
   }
@@ -135,11 +138,12 @@ export const api = {
     put<JenkinsConfigResponse>('/integrations/jenkins', body),
   testJenkinsConnection: (body: JenkinsConfigRequest) =>
     post<JenkinsTestResponse>('/integrations/jenkins/test', body),
-  createService: (body: CreateServiceRequest) => post<Service>('/services', body),
+  createService: (body: CreateServiceRequest, token?: string) =>
+    token ? postWithAuth<Service>('/services', body, token) : post<Service>('/services', body),
   updateService: (id: string, body: UpdateServiceRequest, token?: string) =>
     patch<Service>(`/services/${id}`, body, token),
   updateTeam: (id: string, body: UpdateTeamRequest, token?: string) =>
     patch<TeamWithStats>(`/teams/${id}`, body, token),
-  deleteService: (id: string) => del(`/services/${id}`),
+  deleteService: (id: string, token?: string) => del(`/services/${id}`, token),
   me: (token: string) => getWithAuth<MeResponse>('/me', token),
 };
