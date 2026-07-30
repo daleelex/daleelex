@@ -40,6 +40,7 @@ async function main() {
         client.serviceDoc.deleteMany({
           where: {
             serviceId: service.id,
+            sourceRepository: { not: null },
             ...(paths.length > 0 ? { path: { notIn: paths } } : {}),
           },
         }),

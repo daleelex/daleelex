@@ -1,16 +1,24 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import type { ServiceDocSummary, TechDocsIndexEntry } from '@daleelex/shared';
+import type {
+  ServiceDocSummary,
+  TechDocsIndexEntry,
+  UploadServiceDocResponse,
+} from '@daleelex/shared';
 import { DocMarkdown } from '../components/DocMarkdown';
+import { UploadDocsModal } from '../components/UploadDocsModal';
 import './TechDocsPage.css';
 
 export function TechDocsPage() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedServiceId = searchParams.get('service');
   const selectedDocId = searchParams.get('doc') ? Number(searchParams.get('doc')) : null;
   const [search, setSearch] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const {
     data: index,
@@ -19,6 +27,11 @@ export function TechDocsPage() {
   } = useQuery({
     queryKey: ['techdocs-index'],
     queryFn: () => api.techDocsIndex(),
+  });
+
+  const { data: servicesResponse } = useQuery({
+    queryKey: ['services'],
+    queryFn: api.services,
   });
 
   const {
@@ -47,11 +60,40 @@ export function TechDocsPage() {
     setSearchParams({ service: serviceId, doc: String(docId) });
   }
 
+  async function handleUploaded(serviceId: string, results: UploadServiceDocResponse[]) {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['techdocs-index'] }),
+      queryClient.invalidateQueries({ queryKey: ['stats'] }),
+      // An overwrite can replace the doc currently on screen; without this the
+      // cached content keeps rendering because the URL params don't change.
+      queryClient.invalidateQueries({ queryKey: ['service-doc'] }),
+    ]);
+    const first = results[0];
+    setSearchParams({ service: serviceId, doc: String(first.data.id) });
+    const created = results.filter((result) => result.operation === 'created').length;
+    const updated = results.length - created;
+    const parts = [created ? `${created} created` : '', updated ? `${updated} updated` : ''].filter(
+      Boolean,
+    );
+    setNotice(`Upload complete: ${parts.join(', ')}.`);
+  }
+
   return (
     <div className="techdocs-page">
       <aside className="techdocs-nav">
         <div className="techdocs-nav-head">
-          <h2 className="techdocs-nav-title">TechDocs</h2>
+          <div className="techdocs-title-row">
+            <h2 className="techdocs-nav-title">TechDocs</h2>
+            <button
+              className="techdocs-upload-button"
+              type="button"
+              onClick={() => setUploading(true)}
+              disabled={!servicesResponse?.data.length}
+            >
+              <UploadIcon />
+              Upload
+            </button>
+          </div>
           <p className="techdocs-nav-sub">{entries.length} services with docs</p>
           <input
             className="techdocs-search"
@@ -82,6 +124,14 @@ export function TechDocsPage() {
       </aside>
 
       <div className="techdocs-content">
+        {notice && (
+          <div className="techdocs-notice" role="status">
+            <span>{notice}</span>
+            <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss">
+              ×
+            </button>
+          </div>
+        )}
         {!selectedServiceId && (
           <div className="techdocs-welcome">
             <WelcomeIcon />
@@ -106,7 +156,9 @@ export function TechDocsPage() {
                   </>
                 )}
               </div>
-              {selectedDoc && <div className="techdocs-content-path">{selectedDoc.path}</div>}
+              {selectedDoc && (
+                <div className="techdocs-content-path">{displayDocPath(selectedDoc.path)}</div>
+              )}
             </div>
 
             <div className="techdocs-content-body">
@@ -123,6 +175,16 @@ export function TechDocsPage() {
           </>
         )}
       </div>
+
+      {uploading && (
+        <UploadDocsModal
+          services={servicesResponse?.data ?? []}
+          docsIndex={entries}
+          initialServiceId={selectedServiceId}
+          onUploaded={handleUploaded}
+          onClose={() => setUploading(false)}
+        />
+      )}
     </div>
   );
 }
@@ -179,6 +241,27 @@ function DocPageItem({
       <PageIcon />
       <span>{doc.title}</span>
     </button>
+  );
+}
+
+function displayDocPath(path: string) {
+  return path.startsWith('manual/') ? path.slice('manual/'.length) : path;
+}
+
+function UploadIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 16V4" />
+      <polyline points="7 9 12 4 17 9" />
+      <path d="M20 15v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4" />
+    </svg>
   );
 }
 

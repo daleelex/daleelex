@@ -1,0 +1,209 @@
+.upload-docs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(5, 20, 26, 0.52);
+  backdrop-filter: blur(3px);
+}
+
+.upload-docs-modal {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  z-index: 41;
+  width: min(560px, 92vw);
+  max-height: 86vh;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.upload-docs-head,
+.upload-docs-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+}
+
+.upload-docs-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.upload-docs-head h2 {
+  margin: 3px 0 0;
+  font: 400 27px/1.1 var(--font-display);
+}
+
+.upload-docs-head button {
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  font-size: 22px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.upload-docs-kicker {
+  color: var(--accent);
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.upload-docs-body {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 22px 24px;
+}
+
+.upload-docs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.upload-docs-field select {
+  padding: 10px 12px;
+  color: var(--ink);
+  font: 13px var(--font-body);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.upload-docs-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.upload-docs-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 24px;
+  color: var(--ink-2);
+  background: var(--panel-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.upload-docs-picker:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.upload-docs-picker span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.upload-docs-files {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.upload-docs-files li {
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.upload-docs-files li > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.upload-docs-files li > div span,
+.upload-docs-files p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.upload-docs-files p {
+  margin: 4px 0 0;
+}
+
+.upload-docs-files li.error {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+}
+
+.upload-docs-files li.error p {
+  color: var(--danger);
+}
+
+.upload-docs-files li.success {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+}
+
+.upload-docs-files li.success p {
+  color: var(--ok);
+}
+
+.upload-docs-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.45;
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line));
+  border-radius: var(--radius-sm);
+}
+
+.upload-docs-foot {
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.upload-docs-secondary,
+.upload-docs-primary {
+  padding: 9px 17px;
+  font: 600 13px var(--font-body);
+  border-radius: var(--radius-sm);
+}
+
+.upload-docs-secondary {
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.upload-docs-primary {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.upload-docs-modal button:disabled,
+.upload-docs-modal select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

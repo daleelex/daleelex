@@ -1,6 +1,41 @@
 import type { FastifyInstance } from 'fastify';
-import type { ServiceDocListResponse, ServiceDoc, TechDocsIndexResponse } from '@daleelex/shared';
+import type {
+  ServiceDocListResponse,
+  ServiceDoc,
+  TechDocsIndexResponse,
+  UploadServiceDocRequest,
+  UploadServiceDocResponse,
+} from '@daleelex/shared';
 import { prisma } from '../db.js';
+import { requireClerkUser } from '../clerkAuth.js';
+import {
+  manualDocPath,
+  markdownTitle,
+  MAX_MARKDOWN_BYTES,
+  validateMarkdownUpload,
+} from '../docUpload.js';
+
+function toServiceDoc(doc: {
+  id: number;
+  path: string;
+  title: string;
+  contentMd: string;
+  sourceRepository: string | null;
+  sourceSha: string | null;
+  uploadedByUserId: string | null;
+  fetchedAt: Date;
+}): ServiceDoc {
+  return {
+    id: doc.id,
+    path: doc.path,
+    title: doc.title,
+    contentMd: doc.contentMd,
+    sourceRepository: doc.sourceRepository,
+    sourceSha: doc.sourceSha,
+    uploadedByUserId: doc.uploadedByUserId,
+    fetchedAt: doc.fetchedAt.toISOString(),
+  };
+}
 
 export async function docsRoute(app: FastifyInstance) {
   app.get('/docs', async (): Promise<TechDocsIndexResponse> => {
@@ -66,15 +101,90 @@ export async function docsRoute(app: FastifyInstance) {
         throw new Error('Doc not found');
       }
 
-      return {
-        id: doc.id,
-        path: doc.path,
-        title: doc.title,
-        contentMd: doc.contentMd,
-        sourceRepository: doc.sourceRepository,
-        sourceSha: doc.sourceSha,
-        fetchedAt: doc.fetchedAt.toISOString(),
-      };
+      return toServiceDoc(doc);
+    },
+  );
+
+  app.post<{ Params: { id: string }; Body: UploadServiceDocRequest }>(
+    '/services/:id/docs',
+    {
+      preHandler: requireClerkUser,
+      // Fastify's default body limit equals MAX_MARKDOWN_BYTES, but the JSON
+      // envelope (escaping, quotes, sibling fields) inflates a near-limit file
+      // past it. Double the transport cap; the byte-accurate 1 MiB check on the
+      // decoded content stays in validateMarkdownUpload.
+      bodyLimit: MAX_MARKDOWN_BYTES * 2,
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', minLength: 1 } },
+        },
+        body: {
+          type: 'object',
+          required: ['filename', 'contentMd', 'overwrite'],
+          additionalProperties: false,
+          properties: {
+            filename: { type: 'string', minLength: 1, maxLength: 128 },
+            contentMd: { type: 'string', minLength: 1, maxLength: MAX_MARKDOWN_BYTES },
+            overwrite: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    async (req, reply): Promise<UploadServiceDocResponse> => {
+      const validationError = validateMarkdownUpload(req.body.filename, req.body.contentMd);
+      if (validationError) {
+        reply.code(422);
+        throw new Error(validationError);
+      }
+
+      const service = await prisma.service.findFirst({
+        where: { id: req.params.id, deletedAt: null },
+        select: { id: true },
+      });
+      if (!service) {
+        reply.code(404);
+        throw new Error(`Service "${req.params.id}" not found.`);
+      }
+
+      const path = manualDocPath(req.body.filename);
+      const existing = await prisma.serviceDoc.findUnique({
+        where: { serviceId_path: { serviceId: service.id, path } },
+        select: { id: true },
+      });
+
+      if (existing && !req.body.overwrite) {
+        reply.code(409);
+        throw new Error(`"${req.body.filename}" already exists. Confirm replacement to continue.`);
+      }
+
+      const now = new Date();
+      const doc = existing
+        ? await prisma.serviceDoc.update({
+            where: { id: existing.id },
+            data: {
+              title: markdownTitle(req.body.contentMd, req.body.filename),
+              contentMd: req.body.contentMd,
+              sourceRepository: null,
+              sourceSha: null,
+              uploadedByUserId: req.clerkUserId!,
+              fetchedAt: now,
+            },
+          })
+        : await prisma.serviceDoc.create({
+            data: {
+              serviceId: service.id,
+              path,
+              title: markdownTitle(req.body.contentMd, req.body.filename),
+              contentMd: req.body.contentMd,
+              uploadedByUserId: req.clerkUserId!,
+              fetchedAt: now,
+            },
+          });
+
+      reply.code(existing ? 200 : 201);
+      return { data: toServiceDoc(doc), operation: existing ? 'updated' : 'created' };
     },
   );
 }
