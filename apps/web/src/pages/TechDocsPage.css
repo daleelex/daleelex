@@ -252,6 +252,17 @@
   flex-shrink: 0;
 }
 
+.techdocs-content-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.techdocs-content-meta {
+  min-width: 0;
+}
+
 .techdocs-breadcrumb {
   display: flex;
   align-items: center;
@@ -274,6 +285,36 @@
   color: var(--muted);
   margin-top: 4px;
   letter-spacing: 0.03em;
+}
+
+.techdocs-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  color: var(--ink-2);
+  font: 600 11px var(--font-body);
+  line-height: 1;
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  transition:
+    color 120ms,
+    background 120ms,
+    border-color 120ms;
+}
+
+.techdocs-edit-button:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.techdocs-edit-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .techdocs-content-body {
