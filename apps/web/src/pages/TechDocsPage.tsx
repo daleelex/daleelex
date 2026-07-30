@@ -9,6 +9,7 @@ import type {
 } from '@daleelex/shared';
 import { DocMarkdown } from '../components/DocMarkdown';
 import { UploadDocsModal } from '../components/UploadDocsModal';
+import { EditDocModal } from '../components/EditDocModal';
 import './TechDocsPage.css';
 
 export function TechDocsPage() {
@@ -19,6 +20,7 @@ export function TechDocsPage() {
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [editingDoc, setEditingDoc] = useState(false);
 
   const {
     data: index,
@@ -157,7 +159,28 @@ export function TechDocsPage() {
                 )}
               </div>
               {selectedDoc && (
-                <div className="techdocs-content-path">{displayDocPath(selectedDoc.path)}</div>
+                <div className="techdocs-content-path">
+                  {displayDocPath(selectedDoc.path)}
+                  {docContent?.sourceRepository ? (
+                    <a
+                      className="techdocs-upload-button"
+                      href={`https://github.com/${docContent.sourceRepository}/edit/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Edit in repository
+                    </a>
+                  ) : (
+                    docContent && (
+                      <button
+                        className="techdocs-upload-button"
+                        onClick={() => setEditingDoc(true)}
+                      >
+                        Edit
+                      </button>
+                    )
+                  )}
+                </div>
               )}
             </div>
 
@@ -183,6 +206,14 @@ export function TechDocsPage() {
           initialServiceId={selectedServiceId}
           onUploaded={handleUploaded}
           onClose={() => setUploading(false)}
+        />
+      )}
+      {editingDoc && docContent && !docContent.sourceRepository && (
+        <EditDocModal
+          serviceId={selectedServiceId!}
+          doc={docContent}
+          onClose={() => setEditingDoc(false)}
+          onUpdated={() => setNotice('Document updated.')}
         />
       )}
     </div>

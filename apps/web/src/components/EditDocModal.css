@@ -1,0 +1,88 @@
+.doc-edit-modal {
+  position: fixed;
+  inset: 5vh 5vw;
+  z-index: 1200;
+  width: auto;
+  max-width: none;
+  height: 90vh;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.doc-edit-modal header,
+.doc-edit-modal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.doc-edit-modal footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
+}
+
+.doc-edit-modal h2 {
+  margin: 2px 0 0;
+}
+.doc-edit-modal button {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 12px;
+}
+.doc-edit-modal .doc-edit-save {
+  background: var(--accent);
+  color: white;
+}
+.doc-edit-filename {
+  display: grid;
+  gap: 6px;
+  padding: 14px 20px;
+}
+.doc-edit-filename input {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 9px;
+}
+.doc-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(90vh - 210px);
+  border-top: 1px solid var(--line);
+}
+.doc-edit-grid > label,
+.doc-edit-grid > section {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+  padding: 14px 20px;
+  min-height: 0;
+}
+.doc-edit-grid > label {
+  border-right: 1px solid var(--line);
+}
+.doc-edit-grid textarea {
+  width: 100%;
+  min-height: 0;
+  resize: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 12px;
+  font: 13px/1.6 var(--font-mono);
+}
+.doc-edit-preview {
+  overflow: auto;
+  padding: 0 12px;
+}
