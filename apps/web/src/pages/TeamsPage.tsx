@@ -69,7 +69,7 @@ export function TeamsPage() {
           <div className="stat-sub">active services</div>
         </div>
         <div className="stat-cell">
-          <div className="stat-label">Ownership gaps</div>
+          <div className="stat-label">Unowned services</div>
           <div className="stat-inner">
             <div className="stat-value">{isLoading ? '—' : (data?.unownedServiceCount ?? 0)}</div>
           </div>
