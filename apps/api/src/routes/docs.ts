@@ -31,7 +31,7 @@ export async function docsRoute(app: FastifyInstance) {
     '/services/:id/docs',
     async (req, reply): Promise<ServiceDocListResponse> => {
       const docs = await prisma.serviceDoc.findMany({
-        where: { serviceId: req.params.id },
+        where: { serviceId: req.params.id, service: { deletedAt: null } },
         select: { id: true, path: true, title: true },
         orderBy: { path: 'asc' },
       });
@@ -54,7 +54,11 @@ export async function docsRoute(app: FastifyInstance) {
     '/services/:id/docs/:docId',
     async (req, reply): Promise<ServiceDoc> => {
       const doc = await prisma.serviceDoc.findFirst({
-        where: { id: Number(req.params.docId), serviceId: req.params.id },
+        where: {
+          id: Number(req.params.docId),
+          serviceId: req.params.id,
+          service: { deletedAt: null },
+        },
       });
 
       if (!doc) {
@@ -67,6 +71,8 @@ export async function docsRoute(app: FastifyInstance) {
         path: doc.path,
         title: doc.title,
         contentMd: doc.contentMd,
+        sourceRepository: doc.sourceRepository,
+        sourceSha: doc.sourceSha,
         fetchedAt: doc.fetchedAt.toISOString(),
       };
     },

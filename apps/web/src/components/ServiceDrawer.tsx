@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import ReactMarkdown from 'react-markdown';
 import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
+import { DocMarkdown } from './DocMarkdown';
 import { api } from '../api';
 import './ServiceDrawer.css';
 
@@ -299,9 +299,7 @@ function DocsTab({ serviceId, links }: { serviceId: string; links: ServiceLink[]
         {contentLoading ? (
           <div className="docs-loading">Loading…</div>
         ) : (
-          <div className="techdocs-body">
-            <ReactMarkdown>{docContent?.contentMd ?? ''}</ReactMarkdown>
-          </div>
+          <div className="techdocs-body">{docContent && <DocMarkdown doc={docContent} />}</div>
         )}
       </div>
     );

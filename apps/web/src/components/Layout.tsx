@@ -10,20 +10,32 @@ const NAV_GROUPS = [
   {
     section: 'Workspace',
     items: [
-      { to: '/', label: 'Home', icon: <HomeIcon />, count: null as number | null, end: true },
-      { to: '/services', label: 'Catalog', icon: <CatalogIcon />, count: null, end: false },
-      { to: '/teams', label: 'Teams', icon: <TeamsIcon />, count: 14, end: false },
-      { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, count: 203, end: false },
+      { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
+      { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: null, end: false },
+      { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
+      { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
     ],
   },
   {
     section: 'Operations',
     items: [
-      { to: '/health', label: 'Health & SLO', icon: <HealthIcon />, count: null, end: false },
-      { to: '/settings', label: 'Settings', icon: <SettingsIcon />, count: null, end: false },
+      {
+        to: '/health',
+        label: 'Health & SLO',
+        icon: <HealthIcon />,
+        countKey: null,
+        end: false,
+      },
+      {
+        to: '/settings',
+        label: 'Settings',
+        icon: <SettingsIcon />,
+        countKey: null,
+        end: false,
+      },
     ],
   },
-];
+] as const;
 
 export function Layout() {
   const [theme, setTheme] = useTheme();
@@ -49,6 +61,16 @@ export function Layout() {
       return api.me(token);
     },
   });
+
+  const statsQuery = useQuery({
+    queryKey: ['stats'],
+    queryFn: api.stats,
+  });
+
+  const navCounts: Record<'teams' | 'docs', number | null> = {
+    teams: statsQuery.data?.teamCount ?? null,
+    docs: statsQuery.data?.docCount ?? null,
+  };
 
   function toggleTheme() {
     setTheme(theme === 'light' ? 'dark' : 'light');
@@ -95,18 +117,22 @@ export function Layout() {
                 </button>
                 <div className={`nav-group-items${isOpen ? ' open' : ''}`}>
                   <div className="nav-group-inner">
-                    {group.items.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end={item.end}
-                        className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                      >
-                        {item.icon}
-                        <span className="label">{item.label}</span>
-                        {item.count != null && <span className="nav-count">{item.count}</span>}
-                      </NavLink>
-                    ))}
+                    {group.items.map((item) => {
+                      const count = item.countKey === null ? null : navCounts[item.countKey];
+
+                      return (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          end={item.end}
+                          className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                        >
+                          {item.icon}
+                          <span className="label">{item.label}</span>
+                          {count !== null && <span className="nav-count">{count}</span>}
+                        </NavLink>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

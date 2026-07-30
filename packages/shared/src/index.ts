@@ -48,6 +48,8 @@ export interface ServiceDocSummary {
 
 export interface ServiceDoc extends ServiceDocSummary {
   contentMd: string;
+  sourceRepository: string | null;
+  sourceSha: string | null;
   fetchedAt: string;
 }
 
@@ -69,12 +71,27 @@ export interface TeamWithStats extends Team {
   tier1Count: number;
   tier2Count: number;
   tier3Count: number;
-  topServices: { id: string; name: string; type: ServiceType; tier: ServiceTier }[];
+  averageScorecardHealth: number | null;
+  scoredServiceCount: number;
+  openOwnershipGaps: {
+    serviceId: string;
+    serviceName: string;
+    message: string | null;
+  }[];
+  services: {
+    id: string;
+    name: string;
+    type: ServiceType;
+    tier: ServiceTier;
+    scorecardHealth: number | null;
+    hasOwnershipGap: boolean;
+  }[];
 }
 
 export interface TeamListResponse {
   data: TeamWithStats[];
   total: number;
+  unownedServiceCount: number;
 }
 
 export interface CreateServiceRequest {
@@ -92,6 +109,12 @@ export interface CreateServiceRequest {
 export interface HealthResponse {
   status: 'ok';
   version: string;
+}
+
+export interface StatsResponse {
+  teamCount: number;
+  serviceCount: number;
+  docCount: number;
 }
 
 export interface MeResponse {

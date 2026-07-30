@@ -108,3 +108,22 @@
   font-family: var(--font-mono);
   text-align: center;
 }
+
+.service-health {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.service-health.gap {
+  color: var(--warn);
+}
+
+.check-label small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+}

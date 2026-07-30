@@ -69,6 +69,21 @@ packages/shared/ TypeScript types shared across apps
 | Start Jenkins | `pnpm jenkins:up` |
 | New DB migration | `pnpm db:migrate` |
 | Seed the database | `pnpm db:seed` |
+| Sync repository docs | `pnpm docs:sync` |
+
+## TechDocs repository sync
+
+Services with an `org/repo` value in their `repository` field can publish Markdown from
+`docs/**/*.md`. Copy `apps/ingestor/.env.example` to `apps/ingestor/.env`, set a GitHub token with
+read access to those repositories, then run:
+
+```bash
+pnpm docs:sync
+```
+
+Each sync reads documents at a stable commit, updates changed pages, and removes pages that no
+longer exist in the repository. Repository-relative links and images are resolved against that
+same commit when rendered in the portal.
 
 ## Contributing
 
