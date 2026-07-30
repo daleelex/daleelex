@@ -54,6 +54,7 @@ export interface ServiceDoc extends ServiceDocSummary {
   sourceRepository: string | null;
   sourceSha: string | null;
   uploadedByUserId: string | null;
+  updatedByUserId: string | null;
   fetchedAt: string;
 }
 
@@ -144,6 +145,9 @@ export interface UpdateTeamRequest {
 export interface UpdateServiceDocRequest {
   filename: string;
   contentMd: string;
+  /** fetchedAt of the revision the client loaded; a mismatch means someone
+   * else saved in between and the edit is rejected with document_modified. */
+  baseFetchedAt: string;
 }
 
 export interface HealthResponse {

@@ -4,6 +4,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ServiceDoc } from '@daleelex/shared';
 import { api } from '../api';
 import { DocMarkdown } from './DocMarkdown';
+// Shared .modal-backdrop / .modal-kicker / .modal-error styles — import them
+// here rather than relying on another page having loaded them first.
+import './RegisterServiceModal.css';
 import './EditDocModal.css';
 
 export function EditDocModal({
@@ -23,7 +26,12 @@ export function EditDocModal({
   const [contentMd, setContentMd] = useState(doc.contentMd);
   const mutation = useMutation({
     mutationFn: async () =>
-      api.updateServiceDoc(serviceId, doc.id, { filename, contentMd }, (await getToken()) ?? ''),
+      api.updateServiceDoc(
+        serviceId,
+        doc.id,
+        { filename, contentMd, baseFetchedAt: doc.fetchedAt },
+        (await getToken()) ?? '',
+      ),
     onSuccess: async (updated) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['service-doc'] }),
@@ -48,7 +56,7 @@ export function EditDocModal({
 
   return (
     <>
-      <div className="modal-backdrop" />
+      <div className="modal-backdrop doc-edit-backdrop" onClick={safeClose} />
       <dialog className="doc-edit-modal" open aria-modal="true" aria-label={`Edit ${doc.title}`}>
         <header>
           <div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
@@ -21,6 +21,10 @@ export function TechDocsPage() {
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [editingDoc, setEditingDoc] = useState(false);
+
+  // Navigating to another doc (sidebar, back button) must not leave the
+  // editor open against content it wasn't opened for.
+  useEffect(() => setEditingDoc(false), [selectedServiceId, selectedDocId]);
 
   const {
     data: index,
@@ -162,13 +166,15 @@ export function TechDocsPage() {
                 <div className="techdocs-content-path">
                   {displayDocPath(selectedDoc.path)}
                   {docContent?.sourceRepository ? (
+                    // GitHub's /edit/ route needs a branch; sourceSha is a
+                    // commit, so link the permalink to the synced revision.
                     <a
                       className="techdocs-upload-button"
-                      href={`https://github.com/${docContent.sourceRepository}/edit/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
+                      href={`https://github.com/${docContent.sourceRepository}/blob/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Edit in repository
+                      View in repository
                     </a>
                   ) : (
                     docContent && (
