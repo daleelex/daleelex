@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/react';
 import type {
   CreateServiceRequest,
   ServiceLifecycle,
@@ -27,6 +28,7 @@ const EMPTY: CreateServiceRequest = {
 
 export function RegisterServiceModal({ onClose }: Props) {
   const qc = useQueryClient();
+  const { getToken } = useAuth();
   const firstRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<CreateServiceRequest>(EMPTY);
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -47,7 +49,8 @@ export function RegisterServiceModal({ onClose }: Props) {
   }, [onClose]);
 
   const { mutate, isPending, error } = useMutation({
-    mutationFn: api.createService,
+    mutationFn: async (body: CreateServiceRequest) =>
+      api.createService(body, (await getToken()) ?? undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['services'] });
       onClose();

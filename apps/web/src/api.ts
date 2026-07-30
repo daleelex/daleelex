@@ -15,6 +15,10 @@ import type {
   MeResponse,
   UploadServiceDocRequest,
   UploadServiceDocResponse,
+  UpdateServiceRequest,
+  UpdateTeamRequest,
+  UpdateServiceDocRequest,
+  TeamWithStats,
 } from '@daleelex/shared';
 
 const BASE = '/api/v1';
@@ -42,8 +46,11 @@ async function put<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function del(path: string): Promise<void> {
-  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' });
+async function del(path: string, token?: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   if (!res.ok) {
     throw await toApiError(res);
   }
@@ -82,6 +89,19 @@ async function postWithAuth<T>(path: string, body: unknown, token: string): Prom
   return res.json() as Promise<T>;
 }
 
+async function patch<T>(path: string, body: unknown, token?: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PATCH',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await toApiError(res);
+  return res.json() as Promise<T>;
+}
+
 async function toApiError(res: Response) {
   const body = (await res.json().catch(() => ({}))) as ApiErrorPayload;
   // Fastify's default error body puts the status phrase ("Conflict") in `error`
@@ -106,13 +126,24 @@ export const api = {
     get<ServiceDoc>(`/services/${serviceId}/docs/${docId}`),
   uploadServiceDoc: (serviceId: string, body: UploadServiceDocRequest, token: string) =>
     postWithAuth<UploadServiceDocResponse>(`/services/${serviceId}/docs`, body, token),
+  updateServiceDoc: (
+    serviceId: string,
+    docId: number,
+    body: UpdateServiceDocRequest,
+    token: string,
+  ) => patch<ServiceDoc>(`/services/${serviceId}/docs/${docId}`, body, token),
   jenkinsHealth: () => get<JenkinsHealthResponse>('/integrations/jenkins/health'),
   jenkinsConfig: () => get<JenkinsConfigResponse>('/integrations/jenkins'),
   saveJenkinsConfig: (body: JenkinsConfigRequest) =>
     put<JenkinsConfigResponse>('/integrations/jenkins', body),
   testJenkinsConnection: (body: JenkinsConfigRequest) =>
     post<JenkinsTestResponse>('/integrations/jenkins/test', body),
-  createService: (body: CreateServiceRequest) => post<Service>('/services', body),
-  deleteService: (id: string) => del(`/services/${id}`),
+  createService: (body: CreateServiceRequest, token?: string) =>
+    token ? postWithAuth<Service>('/services', body, token) : post<Service>('/services', body),
+  updateService: (id: string, body: UpdateServiceRequest, token?: string) =>
+    patch<Service>(`/services/${id}`, body, token),
+  updateTeam: (id: string, body: UpdateTeamRequest, token?: string) =>
+    patch<TeamWithStats>(`/teams/${id}`, body, token),
+  deleteService: (id: string, token?: string) => del(`/services/${id}`, token),
   me: (token: string) => getWithAuth<MeResponse>('/me', token),
 };

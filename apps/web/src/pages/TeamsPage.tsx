@@ -103,7 +103,11 @@ export function TeamsPage() {
         </span>
       </footer>
 
-      <TeamDrawer team={selected} onClose={() => setSelected(null)} />
+      <TeamDrawer
+        team={selected}
+        onClose={() => setSelected(null)}
+        onUpdateSuccess={(updated) => setSelected(updated)}
+      />
     </>
   );
 }

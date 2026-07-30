@@ -77,6 +77,14 @@ spec:
 
 Service IDs are immutable. Names can change. Dependencies reference IDs, not names. Unknown fields produce a soft warning, not a hard error — one team's experiment shouldn't break everyone else's page.
 
+## Catalog editing and conflicts
+
+Services and teams record whether they are managed by DaleelEx or by a source repository.
+Portal-managed entities can be edited in the application; repository-managed entities must be
+changed at their source so ingestion cannot silently overwrite portal changes. Concurrent portal
+edits use last-write-wins for the first implementation. Add optimistic concurrency only if real
+editing conflicts justify the additional contract and UI complexity.
+
 ## Scorecard model
 
 Scorecards tell a team whether their service meets the bar for production. Each check implements:

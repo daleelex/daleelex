@@ -5,6 +5,7 @@ import type {
   TechDocsIndexResponse,
   UploadServiceDocRequest,
   UploadServiceDocResponse,
+  UpdateServiceDocRequest,
 } from '@daleelex/shared';
 import { prisma } from '../db.js';
 import { requireClerkUser } from '../clerkAuth.js';
@@ -185,6 +186,90 @@ export async function docsRoute(app: FastifyInstance) {
 
       reply.code(existing ? 200 : 201);
       return { data: toServiceDoc(doc), operation: existing ? 'updated' : 'created' };
+    },
+  );
+
+  app.patch<{ Params: { id: string; docId: string }; Body: UpdateServiceDocRequest }>(
+    '/services/:id/docs/:docId',
+    {
+      preHandler: requireClerkUser,
+      bodyLimit: MAX_MARKDOWN_BYTES * 2,
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id', 'docId'],
+          properties: {
+            id: { type: 'string', minLength: 1 },
+            docId: { type: 'string', pattern: '^[0-9]+$' },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['filename', 'contentMd'],
+          additionalProperties: false,
+          properties: {
+            filename: { type: 'string', minLength: 1, maxLength: 128 },
+            contentMd: { type: 'string', minLength: 1, maxLength: MAX_MARKDOWN_BYTES },
+          },
+        },
+      },
+    },
+    async (req, reply): Promise<ServiceDoc | void> => {
+      const validationError = validateMarkdownUpload(req.body.filename, req.body.contentMd);
+      if (validationError) {
+        return reply.code(422).send({
+          error: { code: 'invalid_document', message: validationError, details: {} },
+        });
+      }
+
+      const doc = await prisma.serviceDoc.findFirst({
+        where: {
+          id: Number(req.params.docId),
+          serviceId: req.params.id,
+          service: { deletedAt: null },
+        },
+      });
+      if (!doc) {
+        return reply.code(404).send({
+          error: { code: 'doc_not_found', message: 'Doc not found.', details: {} },
+        });
+      }
+      if (doc.sourceRepository) {
+        return reply.code(409).send({
+          error: {
+            code: 'repository_managed_document',
+            message: 'This document is managed in its source repository.',
+            details: { repository: doc.sourceRepository, path: doc.path },
+          },
+        });
+      }
+
+      const path = manualDocPath(req.body.filename);
+      const collision = await prisma.serviceDoc.findFirst({
+        where: { serviceId: req.params.id, path, id: { not: doc.id } },
+        select: { id: true },
+      });
+      if (collision) {
+        return reply.code(409).send({
+          error: {
+            code: 'document_path_conflict',
+            message: `"${req.body.filename}" already exists for this service.`,
+            details: {},
+          },
+        });
+      }
+
+      const updated = await prisma.serviceDoc.update({
+        where: { id: doc.id },
+        data: {
+          path,
+          title: markdownTitle(req.body.contentMd, req.body.filename),
+          contentMd: req.body.contentMd,
+          uploadedByUserId: req.clerkUserId!,
+          fetchedAt: new Date(),
+        },
+      });
+      return toServiceDoc(updated);
     },
   );
 }

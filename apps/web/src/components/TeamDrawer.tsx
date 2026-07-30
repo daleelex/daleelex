@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
+import { api } from '../api';
 import './TeamDrawer.css';
 
 type Tab = 'overview' | 'services' | 'scorecard';
@@ -8,14 +11,45 @@ const TABS: Tab[] = ['overview', 'services', 'scorecard'];
 interface Props {
   team: TeamWithStats | null;
   onClose: () => void;
+  onUpdateSuccess?: (team: TeamWithStats) => void;
 }
 
-export function TeamDrawer({ team, onClose }: Props) {
+export function TeamDrawer({ team, onClose, onUpdateSuccess }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState('');
+  const [slackChannel, setSlackChannel] = useState('');
+  const [onCallSchedule, setOnCallSchedule] = useState('');
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const updateMutation = useMutation({
+    mutationFn: async () =>
+      api.updateTeam(
+        team!.id,
+        {
+          name,
+          slackChannel: slackChannel.trim() || null,
+          onCallSchedule: onCallSchedule.trim() || null,
+        },
+        (await getToken()) ?? undefined,
+      ),
+    onSuccess: async (updated) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['teams'] }),
+        queryClient.invalidateQueries({ queryKey: ['services'] }),
+      ]);
+      setEditing(false);
+      onUpdateSuccess?.(updated);
+    },
+  });
 
   useEffect(() => {
     setTab('overview');
-  }, [team?.id]);
+    setEditing(false);
+    setName(team?.name ?? '');
+    setSlackChannel(team?.slackChannel ?? '');
+    setOnCallSchedule(team?.onCallSchedule ?? '');
+  }, [team?.id, team?.name, team?.onCallSchedule, team?.slackChannel]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -36,6 +70,11 @@ export function TeamDrawer({ team, onClose }: Props) {
             <CloseIcon />
           </button>
           <div style={{ flex: 1 }} />
+          {team.managementSource === 'portal' && (
+            <button className="ghost-btn" onClick={() => setEditing((value) => !value)}>
+              {editing ? 'Cancel' : 'Edit'}
+            </button>
+          )}
         </div>
 
         <div className="drawer-body">
@@ -48,6 +87,50 @@ export function TeamDrawer({ team, onClose }: Props) {
               <div className="drawer-id">{team.id}</div>
             </div>
           </div>
+          <div className="drawer-id">
+            {team.managementSource === 'portal' ? 'Managed in DaleelEx' : 'Synced from GitHub'}
+          </div>
+
+          {editing && (
+            <form
+              className="team-edit-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                updateMutation.mutate();
+              }}
+            >
+              {updateMutation.error && (
+                <div className="drawer-alert error" role="alert">
+                  {(updateMutation.error as Error).message}
+                </div>
+              )}
+              <label>
+                <span className="meta-label">Team ID · immutable</span>
+                <input value={team.id} disabled />
+              </label>
+              <label>
+                <span className="meta-label">Name</span>
+                <input value={name} onChange={(event) => setName(event.target.value)} required />
+              </label>
+              <label>
+                <span className="meta-label">Slack channel</span>
+                <input
+                  value={slackChannel}
+                  onChange={(event) => setSlackChannel(event.target.value)}
+                />
+              </label>
+              <label>
+                <span className="meta-label">On-call schedule</span>
+                <input
+                  value={onCallSchedule}
+                  onChange={(event) => setOnCallSchedule(event.target.value)}
+                />
+              </label>
+              <button className="ghost-btn" disabled={updateMutation.isPending || !name.trim()}>
+                {updateMutation.isPending ? 'Saving…' : 'Save changes'}
+              </button>
+            </form>
+          )}
 
           <div className="tabs">
             {TABS.map((t) => (
