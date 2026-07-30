@@ -54,6 +54,7 @@ export interface ServiceDoc extends ServiceDocSummary {
   sourceRepository: string | null;
   sourceSha: string | null;
   uploadedByUserId: string | null;
+  updatedByUserId: string | null;
   fetchedAt: string;
 }
 

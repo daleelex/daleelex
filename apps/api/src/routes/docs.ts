@@ -24,6 +24,7 @@ function toServiceDoc(doc: {
   sourceRepository: string | null;
   sourceSha: string | null;
   uploadedByUserId: string | null;
+  updatedByUserId: string | null;
   fetchedAt: Date;
 }): ServiceDoc {
   return {
@@ -34,6 +35,7 @@ function toServiceDoc(doc: {
     sourceRepository: doc.sourceRepository,
     sourceSha: doc.sourceSha,
     uploadedByUserId: doc.uploadedByUserId,
+    updatedByUserId: doc.updatedByUserId,
     fetchedAt: doc.fetchedAt.toISOString(),
   };
 }
@@ -169,7 +171,10 @@ export async function docsRoute(app: FastifyInstance) {
               contentMd: req.body.contentMd,
               sourceRepository: null,
               sourceSha: null,
+              // An overwrite replaces the content wholesale, so the uploader
+              // changes too; it also counts as the last modification.
               uploadedByUserId: req.clerkUserId!,
+              updatedByUserId: req.clerkUserId!,
               fetchedAt: now,
             },
           })
@@ -265,7 +270,9 @@ export async function docsRoute(app: FastifyInstance) {
           path,
           title: markdownTitle(req.body.contentMd, req.body.filename),
           contentMd: req.body.contentMd,
-          uploadedByUserId: req.clerkUserId!,
+          // uploadedByUserId keeps pointing at the original uploader;
+          // updatedByUserId records who touched it last.
+          updatedByUserId: req.clerkUserId!,
           fetchedAt: new Date(),
         },
       });
