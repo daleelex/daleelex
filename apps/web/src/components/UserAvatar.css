@@ -10,12 +10,12 @@
 .user-avatar__image {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   box-shadow: 0 0 0 1px var(--line);
 }
 
 .user-avatar__trigger {
-  border-radius: 12px;
+  border-radius: var(--radius);
   transition:
     box-shadow 120ms,
     transform 120ms;
