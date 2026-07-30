@@ -2,6 +2,7 @@ import './env.js';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { healthRoute } from './routes/health.js';
+import { statsRoute } from './routes/stats.js';
 import { servicesRoute } from './routes/services.js';
 import { teamsRoute } from './routes/teams.js';
 import { docsRoute } from './routes/docs.js';
@@ -15,6 +16,7 @@ const app = Fastify({ logger: true });
 await app.register(cors, { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' });
 
 app.register(healthRoute, { prefix: '/api/v1' });
+app.register(statsRoute, { prefix: '/api/v1' });
 app.register(servicesRoute, { prefix: '/api/v1' });
 app.register(teamsRoute, { prefix: '/api/v1' });
 app.register(docsRoute, { prefix: '/api/v1' });

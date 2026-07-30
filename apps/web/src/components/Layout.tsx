@@ -67,18 +67,14 @@ export function Layout() {
     },
   });
 
-  const teamsQuery = useQuery({
-    queryKey: ['teams'],
-    queryFn: api.teams,
-  });
-  const docsQuery = useQuery({
-    queryKey: ['techdocs-index'],
-    queryFn: api.techDocsIndex,
+  const statsQuery = useQuery({
+    queryKey: ['stats'],
+    queryFn: api.stats,
   });
 
   const navCounts: Record<'teams' | 'docs', number | null> = {
-    teams: teamsQuery.data?.total ?? null,
-    docs: docsQuery.data?.data.reduce((total, entry) => total + entry.docs.length, 0) ?? null,
+    teams: statsQuery.data?.teamCount ?? null,
+    docs: statsQuery.data?.docCount ?? null,
   };
 
   function toggleTheme() {

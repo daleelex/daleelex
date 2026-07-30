@@ -2,6 +2,7 @@ import type {
   ServiceListResponse,
   TeamListResponse,
   HealthResponse,
+  StatsResponse,
   ServiceDocListResponse,
   ServiceDoc,
   TechDocsIndexResponse,
@@ -78,6 +79,7 @@ async function toApiError(res: Response) {
 
 export const api = {
   health: () => get<HealthResponse>('/health'),
+  stats: () => get<StatsResponse>('/stats'),
   services: () => get<ServiceListResponse>('/services'),
   teams: () => get<TeamListResponse>('/teams'),
   techDocsIndex: () => get<TechDocsIndexResponse>('/docs'),

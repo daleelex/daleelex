@@ -111,6 +111,12 @@ export interface HealthResponse {
   version: string;
 }
 
+export interface StatsResponse {
+  teamCount: number;
+  serviceCount: number;
+  docCount: number;
+}
+
 export interface MeResponse {
   id: string;
   email: string;
