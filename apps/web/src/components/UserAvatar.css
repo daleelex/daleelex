@@ -32,12 +32,13 @@
 .user-avatar__trigger::after {
   content: '';
   position: absolute;
+  top: 50%;
   right: 10px;
   width: 6px;
   height: 6px;
   border-right: 1.5px solid var(--muted);
   border-bottom: 1.5px solid var(--muted);
-  transform: rotate(45deg) translateY(-2px);
+  transform: translateY(-70%) rotate(45deg);
   transition: border-color 120ms;
 }
 
@@ -69,18 +70,6 @@
   white-space: nowrap;
 }
 
-.user-avatar__status {
-  position: absolute;
-  right: 24px;
-  bottom: 2px;
-  width: 9px;
-  height: 9px;
-  border: 2px solid var(--panel);
-  border-radius: 50%;
-  background: var(--ok);
-  pointer-events: none;
-}
-
 @media (max-width: 900px) {
   .user-avatar__trigger {
     padding-right: 6px;
@@ -89,9 +78,5 @@
   .user-avatar__trigger::after,
   .user-avatar__name {
     display: none;
-  }
-
-  .user-avatar__status {
-    right: 2px;
   }
 }

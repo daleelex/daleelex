@@ -15,7 +15,6 @@ export function UserAvatar() {
           },
         }}
       />
-      <span className="user-avatar__status" aria-hidden="true" />
     </div>
   );
 }
