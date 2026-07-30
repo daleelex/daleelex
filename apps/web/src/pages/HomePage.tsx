@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Service } from '@daleelex/shared';
 import { ServiceDrawer } from '../components/ServiceDrawer';
+import { UserAvatar } from '../components/UserAvatar';
 import { computeHealth, STATE_LABEL, type HealthState } from '../lib/health';
 import { api } from '../api';
 import './HomePage.css';
@@ -148,7 +149,7 @@ export function HomePage() {
           <button className="icon-btn" title="Notifications">
             <BellIcon />
           </button>
-          <div className="avatar">MN</div>
+          <UserAvatar />
         </div>
       </header>
 

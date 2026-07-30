@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
 import { TeamDrawer } from '../components/TeamDrawer';
+import { UserAvatar } from '../components/UserAvatar';
 import { api } from '../api';
 import './TeamsPage.css';
 
@@ -25,7 +26,7 @@ export function TeamsPage() {
           <span className="current">Teams</span>
         </div>
         <div className="top-right">
-          <div className="avatar">NA</div>
+          <UserAvatar />
         </div>
       </header>
 
