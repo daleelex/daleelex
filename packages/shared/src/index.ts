@@ -69,12 +69,27 @@ export interface TeamWithStats extends Team {
   tier1Count: number;
   tier2Count: number;
   tier3Count: number;
-  topServices: { id: string; name: string; type: ServiceType; tier: ServiceTier }[];
+  averageScorecardHealth: number | null;
+  scoredServiceCount: number;
+  openOwnershipGaps: {
+    serviceId: string;
+    serviceName: string;
+    message: string | null;
+  }[];
+  services: {
+    id: string;
+    name: string;
+    type: ServiceType;
+    tier: ServiceTier;
+    scorecardHealth: number | null;
+    hasOwnershipGap: boolean;
+  }[];
 }
 
 export interface TeamListResponse {
   data: TeamWithStats[];
   total: number;
+  unownedServiceCount: number;
 }
 
 export interface CreateServiceRequest {

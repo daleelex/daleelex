@@ -1,37 +1,30 @@
 import type { FastifyInstance } from 'fastify';
 import type { TeamListResponse } from '@daleelex/shared';
 import { prisma } from '../db.js';
+import { buildTeamStats } from '../teamStats.js';
 
 export async function teamsRoute(app: FastifyInstance) {
   app.get('/teams', async (): Promise<TeamListResponse> => {
-    const teams = await prisma.team.findMany({
-      include: {
-        services: {
-          where: { deletedAt: null },
-          select: { id: true, name: true, type: true, tier: true },
-          orderBy: [{ tier: 'asc' }, { name: 'asc' }],
+    const [teams, scorecardResults, unownedServiceCount] = await Promise.all([
+      prisma.team.findMany({
+        include: {
+          services: {
+            where: { deletedAt: null },
+            select: { id: true, name: true, type: true, tier: true },
+            orderBy: [{ tier: 'asc' }, { name: 'asc' }],
+          },
         },
-      },
-      orderBy: { name: 'asc' },
-    });
+        orderBy: { name: 'asc' },
+      }),
+      prisma.scorecardResult.findMany({
+        include: { check: { select: { weight: true, enabled: true } } },
+        orderBy: { ranAt: 'desc' },
+        distinct: ['serviceId', 'checkId'],
+      }),
+      prisma.service.count({ where: { deletedAt: null, ownerTeamId: null } }),
+    ]);
 
-    const data = teams.map((team) => ({
-      id: team.id,
-      name: team.name,
-      slackChannel: team.slackChannel,
-      onCallSchedule: team.onCallSchedule,
-      serviceCount: team.services.length,
-      tier1Count: team.services.filter((s) => s.tier === 1).length,
-      tier2Count: team.services.filter((s) => s.tier === 2).length,
-      tier3Count: team.services.filter((s) => s.tier === 3).length,
-      topServices: team.services.slice(0, 4).map((s) => ({
-        id: s.id,
-        name: s.name,
-        type: s.type as any,
-        tier: s.tier as any,
-      })),
-    }));
-
-    return { data, total: data.length };
+    const data = buildTeamStats(teams, scorecardResults);
+    return { data, total: data.length, unownedServiceCount };
   });
 }

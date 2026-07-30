@@ -15,7 +15,17 @@ export function TeamsPage() {
 
   const teams = data?.data ?? [];
   const totalServices = teams.reduce((sum, t) => sum + t.serviceCount, 0);
-  const tier1Teams = teams.filter((t) => t.tier1Count > 0).length;
+  const teamsWithHealth = teams.filter((team) => team.averageScorecardHealth !== null);
+  const scoredServices = teamsWithHealth.reduce((sum, team) => sum + team.scoredServiceCount, 0);
+  const catalogAverage =
+    scoredServices > 0
+      ? Math.round(
+          teamsWithHealth.reduce(
+            (sum, team) => sum + team.averageScorecardHealth! * team.scoredServiceCount,
+            0,
+          ) / scoredServices,
+        )
+      : null;
 
   return (
     <>
@@ -38,8 +48,8 @@ export function TeamsPage() {
           The people behind <em>every service.</em>
         </h1>
         <p className="page-sub">
-          Every service has an owner. Every owner has a team. Find who to page, which Slack channel
-          to ping, and what each team is responsible for.
+          See what every team owns, how its services score, and where ownership still needs
+          attention.
         </p>
       </section>
 
@@ -59,20 +69,20 @@ export function TeamsPage() {
           <div className="stat-sub">active services</div>
         </div>
         <div className="stat-cell">
-          <div className="stat-label">Own tier 1</div>
+          <div className="stat-label">Ownership gaps</div>
           <div className="stat-inner">
-            <div className="stat-value">{isLoading ? '—' : tier1Teams}</div>
+            <div className="stat-value">{isLoading ? '—' : (data?.unownedServiceCount ?? 0)}</div>
           </div>
-          <div className="stat-sub">teams with critical services</div>
+          <div className="stat-sub">services without a team</div>
         </div>
         <div className="stat-cell accent">
-          <div className="stat-label">Avg per team</div>
+          <div className="stat-label">Average health</div>
           <div className="stat-inner">
             <div className="stat-value">
-              {isLoading || teams.length === 0 ? '—' : (totalServices / teams.length).toFixed(1)}
+              {isLoading ? '—' : catalogAverage === null ? 'N/A' : `${catalogAverage}%`}
             </div>
           </div>
-          <div className="stat-sub">services per team</div>
+          <div className="stat-sub">across scored teams</div>
         </div>
       </section>
 
@@ -99,8 +109,21 @@ export function TeamsPage() {
 }
 
 function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void }) {
+  const visibleServices = team.services.slice(0, 4);
+
   return (
-    <article className="team-card" onClick={onClick} style={{ cursor: 'pointer' }}>
+    <article
+      className="team-card"
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick?.();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="team-card-head">
         <div className="team-avatar">{initials(team.name)}</div>
         <div className="team-head-text">
@@ -129,6 +152,27 @@ function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void
         )}
       </div>
 
+      <div className="team-health-row">
+        <div>
+          <div className="team-services-label">Average scorecard health</div>
+          <strong>
+            {team.averageScorecardHealth === null
+              ? 'Not scored'
+              : `${team.averageScorecardHealth}%`}
+          </strong>
+          <span>
+            {team.scoredServiceCount} of {team.serviceCount} services
+          </span>
+        </div>
+        <div
+          className={`team-gap-count${team.openOwnershipGaps.length > 0 ? ' open' : ''}`}
+          aria-label={`${team.openOwnershipGaps.length} open ownership gaps`}
+        >
+          <strong>{team.openOwnershipGaps.length}</strong>
+          <span>ownership gaps</span>
+        </div>
+      </div>
+
       <div className="team-tier-row">
         {team.tier1Count > 0 && <span className="tier-pill tier-1">T1 · {team.tier1Count}</span>}
         {team.tier2Count > 0 && <span className="tier-pill tier-2">T2 · {team.tier2Count}</span>}
@@ -136,18 +180,21 @@ function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void
         {team.serviceCount === 0 && <span className="tier-pill tier-3">No services</span>}
       </div>
 
-      {team.topServices.length > 0 && (
+      {visibleServices.length > 0 && (
         <div className="team-services">
           <div className="team-services-label">Services</div>
-          {team.topServices.map((s) => (
+          {visibleServices.map((s) => (
             <div key={s.id} className="team-service-row">
               <span className={`service-tier-dot tier-dot-${s.tier}`} />
               <span className="service-name">{s.name}</span>
+              <span className="team-service-score">
+                {s.scorecardHealth === null ? '—' : `${s.scorecardHealth}%`}
+              </span>
             </div>
           ))}
-          {team.serviceCount > team.topServices.length && (
+          {team.serviceCount > visibleServices.length && (
             <div className="team-service-more">
-              +{team.serviceCount - team.topServices.length} more
+              +{team.serviceCount - visibleServices.length} more
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { TeamWithStats, ServiceType, ServiceTier } from '@daleelex/shared';
+import type { TeamWithStats } from '@daleelex/shared';
 import './TeamDrawer.css';
 
 type Tab = 'overview' | 'services' | 'scorecard';
@@ -26,17 +26,6 @@ export function TeamDrawer({ team, onClose }: Props) {
   }, [onClose]);
 
   if (!team) return null;
-
-  const totalChecks = 6;
-  const passedChecks = [
-    team.slackChannel !== null,
-    team.onCallSchedule !== null,
-    team.serviceCount > 0,
-    team.tier1Count > 0 ? team.onCallSchedule !== null : true,
-    true,
-    true,
-  ].filter(Boolean).length;
-  const score = Math.round((passedChecks / totalChecks) * 100);
 
   return (
     <>
@@ -75,9 +64,7 @@ export function TeamDrawer({ team, onClose }: Props) {
           <div className="tab-content">
             {tab === 'overview' && <TeamOverviewTab team={team} />}
             {tab === 'services' && <TeamServicesTab team={team} />}
-            {tab === 'scorecard' && (
-              <TeamScorecardTab team={team} passed={passedChecks} score={score} />
-            )}
+            {tab === 'scorecard' && <TeamScorecardTab team={team} />}
           </div>
         </div>
       </aside>
@@ -104,6 +91,18 @@ function TeamOverviewTab({ team }: { team: TeamWithStats }) {
         <div className="kv">
           <div className="meta-label">Critical (Tier 1)</div>
           <div className="meta-value">{team.tier1Count}</div>
+        </div>
+        <div className="kv">
+          <div className="meta-label">Average health</div>
+          <div className="meta-value">
+            {team.averageScorecardHealth === null
+              ? 'Not scored'
+              : `${team.averageScorecardHealth}%`}
+          </div>
+        </div>
+        <div className="kv">
+          <div className="meta-label">Ownership gaps</div>
+          <div className="meta-value">{team.openOwnershipGaps.length}</div>
         </div>
       </div>
 
@@ -154,7 +153,7 @@ function TeamOverviewTab({ team }: { team: TeamWithStats }) {
 }
 
 function TeamServicesTab({ team }: { team: TeamWithStats }) {
-  if (team.topServices.length === 0) {
+  if (team.services.length === 0) {
     return (
       <div className="dep-empty">
         <p>No services owned by this team yet.</p>
@@ -164,7 +163,7 @@ function TeamServicesTab({ team }: { team: TeamWithStats }) {
 
   return (
     <div className="doc-list">
-      {team.topServices.map((s) => (
+      {team.services.map((s) => (
         <div key={s.id} className="team-svc-row">
           <span className={`service-tier-dot tier-dot-${s.tier}`} />
           <div style={{ flex: 1 }}>
@@ -173,67 +172,57 @@ function TeamServicesTab({ team }: { team: TeamWithStats }) {
               {s.type} · tier {s.tier}
             </div>
           </div>
+          <span className={`service-health${s.hasOwnershipGap ? ' gap' : ''}`}>
+            {s.hasOwnershipGap
+              ? 'Owner gap'
+              : s.scorecardHealth === null
+                ? 'Not scored'
+                : `${s.scorecardHealth}%`}
+          </span>
           <span className={`tier-badge tier-${s.tier}`}>T{s.tier}</span>
         </div>
       ))}
-      {team.serviceCount > team.topServices.length && (
-        <div className="team-svc-more">
-          +{team.serviceCount - team.topServices.length} more services
-        </div>
-      )}
     </div>
   );
 }
 
-function TeamScorecardTab({
-  team,
-  passed,
-  score,
-}: {
-  team: TeamWithStats;
-  passed: number;
-  score: number;
-}) {
-  const checks = [
-    { label: 'Slack channel configured', pass: !!team.slackChannel },
-    { label: 'On-call rotation active', pass: !!team.onCallSchedule },
-    { label: 'At least one service owned', pass: team.serviceCount > 0 },
-    {
-      label: 'Critical services have on-call',
-      pass: team.tier1Count === 0 || !!team.onCallSchedule,
-    },
-    { label: 'Team ID registered', pass: true },
-    { label: 'Contact info complete', pass: !!(team.slackChannel && team.onCallSchedule) },
-  ];
-
+function TeamScorecardTab({ team }: { team: TeamWithStats }) {
+  const score = team.averageScorecardHealth;
   return (
     <>
       <div className="score-hero">
         <div className="ring-wrap">
-          <Ring score={score} />
-          <span className="ring-pct">{score}%</span>
+          <Ring score={score ?? 0} />
+          <span className="ring-pct">{score === null ? '—' : `${score}%`}</span>
         </div>
         <div>
-          <div className="score-hero-label">Team health</div>
+          <div className="score-hero-label">Average service health</div>
           <div className="score-hero-main">
-            {passed} / {checks.length} checks passing
+            {team.scoredServiceCount} / {team.serviceCount} services scored
           </div>
-          <div className="score-hero-sub">Based on team configuration</div>
+          <div className="score-hero-sub">Latest enabled, weighted scorecard checks</div>
         </div>
       </div>
 
-      <h4 className="section-title">Checks</h4>
-      <div>
-        {checks.map((c) => (
-          <div key={c.label} className={`check-row${c.pass ? ' pass' : ' fail'}`}>
-            {c.pass ? <CheckIcon /> : <AlertIcon />}
-            <span className="check-label">{c.label}</span>
-            <span className={`check-status${c.pass ? ' pass' : ' fail'}`}>
-              {c.pass ? 'pass' : 'action needed'}
-            </span>
-          </div>
-        ))}
-      </div>
+      <h4 className="section-title">Open ownership gaps</h4>
+      {team.openOwnershipGaps.length === 0 ? (
+        <div className="dep-empty">
+          <p>No failed owner-assigned checks.</p>
+        </div>
+      ) : (
+        <div>
+          {team.openOwnershipGaps.map((gap) => (
+            <div key={gap.serviceId} className="check-row fail">
+              <AlertIcon />
+              <span className="check-label">
+                {gap.serviceName}
+                {gap.message && <small>{gap.message}</small>}
+              </span>
+              <span className="check-status fail">action needed</span>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -298,22 +287,6 @@ function CloseIcon() {
   );
 }
 
-function CheckIcon() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="var(--ok)"
-      strokeWidth="2.25"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  );
-}
-
 function AlertIcon() {
   return (
     <svg
@@ -330,6 +303,3 @@ function AlertIcon() {
     </svg>
   );
 }
-
-// Re-use types from shared for the service row rendering
-export type { ServiceType, ServiceTier };
