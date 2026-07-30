@@ -229,6 +229,16 @@ are not documented here on purpose):
 - `CORS_ORIGIN` — set to the real site origin (e.g. `https://daleelex.com`); if unset,
   `apps/api/src/index.ts` falls back to `http://localhost:5173`, which is wrong for
   production.
+- `CLERK_SECRET_KEY` — the **secret half of the same Clerk instance** whose publishable
+  key `cd.yml` bakes into the web bundle. They are a pair: `apps/api/src/clerkAuth.ts`
+  verifies tokens against the instance this key belongs to, so a key from a different
+  instance fails exactly like a missing one. Every signed-in action (upload/edit docs,
+  register a service, the avatar menu's `/me` call) 401s or 503s without it, while
+  anonymous browsing keeps working — so the CD health check, which only curls the public
+  `/api/v1/health`, will **not** catch a missing key. Verify by signing in, not by
+  watching the deploy go green.
+- `DALEELEX_ENCRYPTION_KEY` — 64-char hex (32 bytes); `apps/api/src/crypto.ts` uses it to
+  encrypt stored Jenkins credentials. Saving Jenkins settings throws without it.
 - `JENKINS_BASE_URL`
 - `JENKINS_USERNAME`
 - `JENKINS_API_TOKEN`
