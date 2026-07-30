@@ -9,6 +9,7 @@ const doc: ServiceDoc = {
   contentMd: '',
   sourceRepository: 'acme/payments',
   sourceSha: 'abc123',
+  uploadedByUserId: null,
   fetchedAt: '2026-07-30T00:00:00Z',
 };
 

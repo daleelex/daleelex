@@ -50,6 +50,7 @@ export interface ServiceDoc extends ServiceDocSummary {
   contentMd: string;
   sourceRepository: string | null;
   sourceSha: string | null;
+  uploadedByUserId: string | null;
   fetchedAt: string;
 }
 
@@ -64,6 +65,17 @@ export interface TechDocsIndexEntry {
 
 export interface TechDocsIndexResponse {
   data: TechDocsIndexEntry[];
+}
+
+export interface UploadServiceDocRequest {
+  filename: string;
+  contentMd: string;
+  overwrite: boolean;
+}
+
+export interface UploadServiceDocResponse {
+  data: ServiceDoc;
+  operation: 'created' | 'updated';
 }
 
 export interface TeamWithStats extends Team {
