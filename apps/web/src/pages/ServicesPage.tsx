@@ -231,6 +231,10 @@ export function ServicesPage() {
         onDeleteSuccess={(service) => {
           setNotice({ kind: 'success', message: `${service.name} was removed from the catalog.` });
         }}
+        onUpdateSuccess={(service) => {
+          setSelected(service);
+          setNotice({ kind: 'success', message: `${service.name} was updated.` });
+        }}
       />
       {registering && <RegisterServiceModal onClose={() => setRegistering(false)} />}
     </>

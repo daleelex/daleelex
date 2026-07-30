@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
 import { DocMarkdown } from './DocMarkdown';
 import { api } from '../api';
+import { EditServiceModal } from './EditServiceModal';
+import { EditDocModal } from './EditDocModal';
 import './ServiceDrawer.css';
 
 type Tab = 'overview' | 'scorecard' | 'dependencies' | 'docs';
@@ -18,6 +20,7 @@ interface Props {
   service: Service | null;
   onClose: () => void;
   onDeleteSuccess?: (service: Service) => void;
+  onUpdateSuccess?: (service: Service) => void;
 }
 
 function deriveChecks(service: Service) {
@@ -33,9 +36,10 @@ function deriveChecks(service: Service) {
   ];
 }
 
-export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
+export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSuccess }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -50,6 +54,7 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
   useEffect(() => {
     setTab('overview');
     setConfirming(false);
+    setEditing(false);
   }, [service?.id]);
 
   useEffect(() => {
@@ -96,6 +101,22 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
             </div>
           ) : (
             <>
+              {service.managementSource === 'portal' ? (
+                <button className="ghost-btn" onClick={() => setEditing(true)}>
+                  Edit
+                </button>
+              ) : (
+                service.repository && (
+                  <a
+                    className="ghost-btn"
+                    href={`https://github.com/${service.repository}/edit/HEAD/catalog-info.yaml`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Edit in repository
+                  </a>
+                )
+              )}
               <button className="ghost-btn" onClick={() => setConfirming(true)}>
                 <TrashIcon /> Delete
               </button>
@@ -119,6 +140,9 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
               <CircleDot color={LIFECYCLE_COLOR[service.lifecycle] ?? 'var(--muted)'} />
               <span>{service.lifecycle}</span>
             </div>
+          </div>
+          <div className="drawer-id">
+            {service.managementSource === 'portal' ? 'Managed in DaleelEx' : 'Synced from GitHub'}
           </div>
 
           <h2 className="drawer-title">{service.name}</h2>
@@ -145,6 +169,13 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess }: Props) {
           </div>
         </div>
       </aside>
+      {editing && (
+        <EditServiceModal
+          service={service}
+          onClose={() => setEditing(false)}
+          onUpdated={(updated) => onUpdateSuccess?.(updated)}
+        />
+      )}
     </>
   );
 }
@@ -269,6 +300,7 @@ function DependenciesTab() {
 
 function DocsTab({ serviceId, links }: { serviceId: string; links: ServiceLink[] }) {
   const [selectedDoc, setSelectedDoc] = useState<ServiceDocSummary | null>(null);
+  const [editingDoc, setEditingDoc] = useState(false);
 
   const { data: docList, isLoading: listLoading } = useQuery({
     queryKey: ['service-docs', serviceId],
@@ -295,11 +327,36 @@ function DocsTab({ serviceId, links }: { serviceId: string; links: ServiceLink[]
           <BackIcon /> All pages
         </button>
         <div className="techdocs-title">{selectedDoc.title}</div>
-        <div className="techdocs-path">{selectedDoc.path}</div>
+        <div className="techdocs-path">
+          {selectedDoc.path}
+          {docContent?.sourceRepository ? (
+            <a
+              className="ghost-btn"
+              href={`https://github.com/${docContent.sourceRepository}/edit/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Edit in repository
+            </a>
+          ) : (
+            docContent && (
+              <button className="ghost-btn" onClick={() => setEditingDoc(true)}>
+                Edit
+              </button>
+            )
+          )}
+        </div>
         {contentLoading ? (
           <div className="docs-loading">Loading…</div>
         ) : (
           <div className="techdocs-body">{docContent && <DocMarkdown doc={docContent} />}</div>
+        )}
+        {editingDoc && docContent && !docContent.sourceRepository && (
+          <EditDocModal
+            serviceId={serviceId}
+            doc={docContent}
+            onClose={() => setEditingDoc(false)}
+          />
         )}
       </div>
     );
