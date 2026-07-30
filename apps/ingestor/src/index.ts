@@ -20,7 +20,9 @@ async function main() {
   prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   const client = prisma;
   const github = new GitHubDocsClient(githubToken, process.env.GITHUB_API_URL);
-  const ref = process.env.GITHUB_REF ?? 'HEAD';
+  // Not GITHUB_REF — GitHub Actions sets that to the portal repo's own ref,
+  // which would silently override the default when syncing other repositories.
+  const ref = process.env.DOCS_SYNC_REF ?? 'HEAD';
   const services = await client.service.findMany({
     where: { deletedAt: null, repository: { not: null } },
     select: { id: true, repository: true },
