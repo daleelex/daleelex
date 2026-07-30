@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
 import { api } from '../api';
 import type { ServiceDocSummary, TechDocsIndexEntry } from '@daleelex/shared';
+import { DocMarkdown } from '../components/DocMarkdown';
 import './TechDocsPage.css';
 
 export function TechDocsPage() {
@@ -12,12 +12,20 @@ export function TechDocsPage() {
   const selectedDocId = searchParams.get('doc') ? Number(searchParams.get('doc')) : null;
   const [search, setSearch] = useState('');
 
-  const { data: index, isLoading } = useQuery({
+  const {
+    data: index,
+    isLoading,
+    isError: indexError,
+  } = useQuery({
     queryKey: ['techdocs-index'],
     queryFn: () => api.techDocsIndex(),
   });
 
-  const { data: docContent, isLoading: contentLoading } = useQuery({
+  const {
+    data: docContent,
+    isLoading: contentLoading,
+    isError: contentError,
+  } = useQuery({
     queryKey: ['service-doc', selectedServiceId, selectedDocId],
     queryFn: () => api.serviceDoc(selectedServiceId!, selectedDocId!),
     enabled: selectedServiceId !== null && selectedDocId !== null,
@@ -57,7 +65,8 @@ export function TechDocsPage() {
 
         <div className="techdocs-nav-list">
           {isLoading && <div className="techdocs-nav-empty">Loading…</div>}
-          {!isLoading && filtered.length === 0 && (
+          {indexError && <div className="techdocs-nav-empty">Failed to load documentation.</div>}
+          {!isLoading && !indexError && filtered.length === 0 && (
             <div className="techdocs-nav-empty">No docs found.</div>
           )}
           {filtered.map((entry) => (
@@ -102,9 +111,12 @@ export function TechDocsPage() {
 
             <div className="techdocs-content-body">
               {contentLoading && <div className="techdocs-spinner">Loading…</div>}
+              {contentError && (
+                <div className="techdocs-spinner">Failed to load this document.</div>
+              )}
               {!contentLoading && docContent && (
                 <div className="techdocs-prose">
-                  <ReactMarkdown>{docContent.contentMd}</ReactMarkdown>
+                  <DocMarkdown doc={docContent} />
                 </div>
               )}
             </div>

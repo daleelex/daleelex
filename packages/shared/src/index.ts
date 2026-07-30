@@ -48,6 +48,8 @@ export interface ServiceDocSummary {
 
 export interface ServiceDoc extends ServiceDocSummary {
   contentMd: string;
+  sourceRepository: string | null;
+  sourceSha: string | null;
   fetchedAt: string;
 }
 

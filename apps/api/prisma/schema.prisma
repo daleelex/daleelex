@@ -8,41 +8,41 @@ datasource db {
 }
 
 model Team {
-  id              String    @id
-  name            String
-  slackChannel    String?   @map("slack_channel")
-  onCallSchedule  String?   @map("on_call_schedule")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String   @id
+  name           String
+  slackChannel   String?  @map("slack_channel")
+  onCallSchedule String?  @map("on_call_schedule")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  services        Service[]
+  services Service[]
 
   @@map("teams")
 }
 
 model Service {
-  id            String    @id
-  name          String
-  description   String?
-  type          String
-  tier          Int
-  lifecycle     String
-  ownerTeamId   String?   @map("owner_team_id")
-  language      String?
-  repository    String?
-  sloTarget     String?   @map("slo_target")
-  sloWindow     String?   @map("slo_window")
-  tags          String[]
-  sourceSha     String?   @map("source_sha")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
+  id          String    @id
+  name        String
+  description String?
+  type        String
+  tier        Int
+  lifecycle   String
+  ownerTeamId String?   @map("owner_team_id")
+  language    String?
+  repository  String?
+  sloTarget   String?   @map("slo_target")
+  sloWindow   String?   @map("slo_window")
+  tags        String[]
+  sourceSha   String?   @map("source_sha")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
-  owner         Team?     @relation(fields: [ownerTeamId], references: [id])
-  links         Link[]
-  docs          ServiceDoc[]
-  dependencies  ServiceDependency[] @relation("ServiceDeps")
-  dependents    ServiceDependency[] @relation("ServiceDependents")
+  owner        Team?               @relation(fields: [ownerTeamId], references: [id])
+  links        Link[]
+  docs         ServiceDoc[]
+  dependencies ServiceDependency[] @relation("ServiceDeps")
+  dependents   ServiceDependency[] @relation("ServiceDependents")
 
   @@index([deletedAt, tier])
   @@index([deletedAt, ownerTeamId])
@@ -51,24 +51,24 @@ model Service {
 }
 
 model ServiceDependency {
-  serviceId   String  @map("service_id")
-  dependsOnId String  @map("depends_on_id")
+  serviceId   String @map("service_id")
+  dependsOnId String @map("depends_on_id")
 
-  service     Service @relation("ServiceDeps", fields: [serviceId], references: [id])
-  dependsOn   Service @relation("ServiceDependents", fields: [dependsOnId], references: [id])
+  service   Service @relation("ServiceDeps", fields: [serviceId], references: [id])
+  dependsOn Service @relation("ServiceDependents", fields: [dependsOnId], references: [id])
 
   @@id([serviceId, dependsOnId])
   @@map("service_dependencies")
 }
 
 model Link {
-  id         Int     @id @default(autoincrement())
-  serviceId  String  @map("service_id")
-  url        String
-  title      String?
-  type       String  @default("other")
+  id        Int     @id @default(autoincrement())
+  serviceId String  @map("service_id")
+  url       String
+  title     String?
+  type      String  @default("other")
 
-  service    Service @relation(fields: [serviceId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
 
   @@map("links")
 }
@@ -80,7 +80,7 @@ model ScorecardCheck {
   weight   Int
   enabled  Boolean @default(true)
 
-  results  ScorecardResult[]
+  results ScorecardResult[]
 
   @@map("scorecard_checks")
 }
@@ -94,21 +94,23 @@ model ScorecardResult {
   evidence  Json?
   ranAt     DateTime @map("ran_at")
 
-  check     ScorecardCheck @relation(fields: [checkId], references: [id])
+  check ScorecardCheck @relation(fields: [checkId], references: [id])
 
   @@index([serviceId, checkId, ranAt(sort: Desc)])
   @@map("scorecard_results")
 }
 
 model ServiceDoc {
-  id          Int      @id @default(autoincrement())
-  serviceId   String   @map("service_id")
-  path        String
-  title       String
-  contentMd   String   @map("content_md")
-  fetchedAt   DateTime @default(now()) @map("fetched_at")
+  id               Int      @id @default(autoincrement())
+  serviceId        String   @map("service_id")
+  path             String
+  title            String
+  contentMd        String   @map("content_md")
+  sourceRepository String?  @map("source_repository")
+  sourceSha        String?  @map("source_sha")
+  fetchedAt        DateTime @default(now()) @map("fetched_at")
 
-  service     Service  @relation(fields: [serviceId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
 
   @@unique([serviceId, path])
   @@index([serviceId])
@@ -116,12 +118,12 @@ model ServiceDoc {
 }
 
 model User {
-  id          String    @id
-  email       String    @unique
-  name        String?
-  avatarUrl   String?   @map("avatar_url")
-  lastSeenAt  DateTime? @map("last_seen_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id         String    @id
+  email      String    @unique
+  name       String?
+  avatarUrl  String?   @map("avatar_url")
+  lastSeenAt DateTime? @map("last_seen_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
 
   @@map("users")
 }

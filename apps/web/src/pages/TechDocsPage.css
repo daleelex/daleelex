@@ -386,3 +386,12 @@
   border-top: 1px solid var(--line);
   margin: 28px 0;
 }
+
+.techdocs-prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 20px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}

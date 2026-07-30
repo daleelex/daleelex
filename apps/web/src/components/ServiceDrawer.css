@@ -497,6 +497,15 @@
   color: var(--ink-2);
 }
 
+.techdocs-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
 .techdocs-body h1,
 .techdocs-body h2,
 .techdocs-body h3,
