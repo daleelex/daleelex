@@ -165,9 +165,7 @@ export function TechDocsPage() {
                     )}
                   </div>
                   {selectedDoc && (
-                    <div className="techdocs-content-path">
-                      {displayDocPath(selectedDoc.path)}
-                    </div>
+                    <div className="techdocs-content-path">{displayDocPath(selectedDoc.path)}</div>
                   )}
                 </div>
                 {selectedDoc &&
