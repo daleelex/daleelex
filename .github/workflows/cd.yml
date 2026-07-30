@@ -54,6 +54,15 @@ jobs:
       # against its own copy of schema.prisma.
       - run: cd out/api && ./node_modules/.bin/prisma generate
 
+      # out/ingestor has the exact same problem — its node_modules is another
+      # independent tree whose @prisma/client is ungenerated, and the ingestor imports
+      # PrismaClient at startup. Masked so far because the ingestor is a one-shot stub
+      # with autorestart: false, so the import crash never crash-looped pm2. The
+      # ingestor doesn't own a schema (it queries the api's tables), so copy the api's
+      # schema in and generate with the artifact's own bundled prisma CLI, same as api.
+      - run: mkdir -p out/ingestor/prisma && cp apps/api/prisma/schema.prisma out/ingestor/prisma/
+      - run: cd out/ingestor && ./node_modules/.bin/prisma generate
+
       - name: Assemble the web + pm2 config into the same release bundle
         run: |
           mkdir -p out/web
