@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    port: 5173,
+    port: Number(process.env.PORT) || 5173,
     allowedHosts: ['daleelex.com'],
     proxy: {
       '/api': 'http://localhost:3000',
