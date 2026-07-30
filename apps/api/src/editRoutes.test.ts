@@ -151,6 +151,7 @@ describe('editing routes', () => {
       sourceRepository: null,
       sourceSha: null,
       uploadedByUserId: 'old-user',
+      updatedByUserId: null,
       fetchedAt: new Date('2026-01-01'),
     };
     mocks.serviceDocFindFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
@@ -159,7 +160,7 @@ describe('editing routes', () => {
       path: 'manual/new.md',
       title: 'New title',
       contentMd: '# New title',
-      uploadedByUserId: 'user-1',
+      updatedByUserId: 'user-1',
       fetchedAt: new Date('2026-01-02'),
     });
     const app = Fastify();
@@ -168,11 +169,27 @@ describe('editing routes', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/v1/services/svc-1/docs/7',
-      payload: { filename: 'new.md', contentMd: '# New title' },
+      payload: {
+        filename: 'new.md',
+        contentMd: '# New title',
+        baseFetchedAt: existing.fetchedAt.toISOString(),
+      },
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ path: 'manual/new.md', title: 'New title' });
+    expect(response.json()).toMatchObject({
+      path: 'manual/new.md',
+      title: 'New title',
+      uploadedByUserId: 'old-user',
+      updatedByUserId: 'user-1',
+    });
+    expect(mocks.serviceDocUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ updatedByUserId: 'user-1' }),
+      }),
+    );
+    // The original uploader must survive an edit.
+    expect(mocks.serviceDocUpdate.mock.calls[0][0].data).not.toHaveProperty('uploadedByUserId');
   });
 
   it('rejects repository-managed document edits', async () => {
@@ -188,7 +205,11 @@ describe('editing routes', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/v1/services/svc-1/docs/7',
-      payload: { filename: 'index.md', contentMd: '# Changed' },
+      payload: {
+        filename: 'index.md',
+        contentMd: '# Changed',
+        baseFetchedAt: '2026-01-01T00:00:00.000Z',
+      },
     });
 
     expect(response.statusCode).toBe(409);

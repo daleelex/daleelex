@@ -26,7 +26,12 @@ export function EditDocModal({
   const [contentMd, setContentMd] = useState(doc.contentMd);
   const mutation = useMutation({
     mutationFn: async () =>
-      api.updateServiceDoc(serviceId, doc.id, { filename, contentMd }, (await getToken()) ?? ''),
+      api.updateServiceDoc(
+        serviceId,
+        doc.id,
+        { filename, contentMd, baseFetchedAt: doc.fetchedAt },
+        (await getToken()) ?? '',
+      ),
     onSuccess: async (updated) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['service-doc'] }),

@@ -210,11 +210,12 @@ export async function docsRoute(app: FastifyInstance) {
         },
         body: {
           type: 'object',
-          required: ['filename', 'contentMd'],
+          required: ['filename', 'contentMd', 'baseFetchedAt'],
           additionalProperties: false,
           properties: {
             filename: { type: 'string', minLength: 1, maxLength: 128 },
             contentMd: { type: 'string', minLength: 1, maxLength: MAX_MARKDOWN_BYTES },
+            baseFetchedAt: { type: 'string', minLength: 1 },
           },
         },
       },
@@ -249,6 +250,20 @@ export async function docsRoute(app: FastifyInstance) {
         });
       }
 
+      // Optimistic concurrency: the client sends the fetchedAt of the
+      // revision it loaded. A mismatch means someone saved in between —
+      // reject rather than silently discard their work.
+      if (doc.fetchedAt.toISOString() !== req.body.baseFetchedAt) {
+        return reply.code(409).send({
+          error: {
+            code: 'document_modified',
+            message:
+              'This document changed while you were editing. Reopen it to pick up the latest version.',
+            details: { fetchedAt: doc.fetchedAt.toISOString() },
+          },
+        });
+      }
+
       const path = manualDocPath(req.body.filename);
       const collision = await prisma.serviceDoc.findFirst({
         where: { serviceId: req.params.id, path, id: { not: doc.id } },
@@ -264,19 +279,35 @@ export async function docsRoute(app: FastifyInstance) {
         });
       }
 
-      const updated = await prisma.serviceDoc.update({
-        where: { id: doc.id },
-        data: {
-          path,
-          title: markdownTitle(req.body.contentMd, req.body.filename),
-          contentMd: req.body.contentMd,
-          // uploadedByUserId keeps pointing at the original uploader;
-          // updatedByUserId records who touched it last.
-          updatedByUserId: req.clerkUserId!,
-          fetchedAt: new Date(),
-        },
-      });
-      return toServiceDoc(updated);
+      try {
+        const updated = await prisma.serviceDoc.update({
+          where: { id: doc.id },
+          data: {
+            path,
+            title: markdownTitle(req.body.contentMd, req.body.filename),
+            contentMd: req.body.contentMd,
+            // uploadedByUserId keeps pointing at the original uploader;
+            // updatedByUserId records who touched it last.
+            updatedByUserId: req.clerkUserId!,
+            fetchedAt: new Date(),
+          },
+        });
+        return toServiceDoc(updated);
+      } catch (err: any) {
+        // A rename racing past the collision check trips the
+        // @@unique([serviceId, path]) constraint — that's still a conflict,
+        // not a server error.
+        if (err.code === 'P2002') {
+          return reply.code(409).send({
+            error: {
+              code: 'document_path_conflict',
+              message: `"${req.body.filename}" already exists for this service.`,
+              details: {},
+            },
+          });
+        }
+        throw err;
+      }
     },
   );
 }
