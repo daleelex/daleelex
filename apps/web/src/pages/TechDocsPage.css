@@ -293,23 +293,18 @@
   gap: 6px;
   flex-shrink: 0;
   padding: 6px 10px;
-  color: var(--ink-2);
+  color: var(--accent-fg);
   font: 600 11px var(--font-body);
   line-height: 1;
   text-decoration: none;
-  background: transparent;
-  border: 1px solid var(--line-strong);
+  background: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
-  transition:
-    color 120ms,
-    background 120ms,
-    border-color 120ms;
+  transition: opacity 120ms;
 }
 
 .techdocs-edit-button:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  opacity: 0.88;
 }
 
 .techdocs-edit-button:focus-visible {
