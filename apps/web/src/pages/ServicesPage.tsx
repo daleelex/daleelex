@@ -5,6 +5,7 @@ import type { Service } from '@daleelex/shared';
 import { ServiceCard } from '../components/ServiceCard';
 import { ServiceDrawer } from '../components/ServiceDrawer';
 import { RegisterServiceModal } from '../components/RegisterServiceModal';
+import { UserAvatar } from '../components/UserAvatar';
 import { api } from '../api';
 import './ServicesPage.css';
 
@@ -121,7 +122,7 @@ export function ServicesPage() {
           <button className="icon-btn" title="Notifications">
             <BellIcon />
           </button>
-          <div className="avatar">NA</div>
+          <UserAvatar />
         </div>
       </header>
 
