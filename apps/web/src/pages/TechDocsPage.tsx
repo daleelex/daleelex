@@ -162,13 +162,15 @@ export function TechDocsPage() {
                 <div className="techdocs-content-path">
                   {displayDocPath(selectedDoc.path)}
                   {docContent?.sourceRepository ? (
+                    // GitHub's /edit/ route needs a branch; sourceSha is a
+                    // commit, so link the permalink to the synced revision.
                     <a
                       className="techdocs-upload-button"
-                      href={`https://github.com/${docContent.sourceRepository}/edit/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
+                      href={`https://github.com/${docContent.sourceRepository}/blob/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Edit in repository
+                      View in repository
                     </a>
                   ) : (
                     docContent && (
