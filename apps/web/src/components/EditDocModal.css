@@ -1,3 +1,9 @@
+/* Backdrop must sit above the nav hamburger fab (z-index 100) so the page
+   really is inert while the editor is open. */
+.doc-edit-backdrop {
+  z-index: 1199;
+}
+
 .doc-edit-modal {
   position: fixed;
   inset: 5vh 5vw;
