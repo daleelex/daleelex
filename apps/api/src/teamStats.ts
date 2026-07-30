@@ -1,10 +1,11 @@
-import type { ServiceTier, ServiceType, TeamWithStats } from '@daleelex/shared';
+import type { ManagementSource, ServiceTier, ServiceType, TeamWithStats } from '@daleelex/shared';
 
 export interface TeamRow {
   id: string;
   name: string;
   slackChannel: string | null;
   onCallSchedule: string | null;
+  managementSource: string;
   services: {
     id: string;
     name: string;
@@ -87,6 +88,7 @@ export function buildTeamStats(
       name: team.name,
       slackChannel: team.slackChannel,
       onCallSchedule: team.onCallSchedule,
+      managementSource: team.managementSource as ManagementSource,
       serviceCount: services.length,
       tier1Count: services.filter((service) => service.tier === 1).length,
       tier2Count: services.filter((service) => service.tier === 2).length,

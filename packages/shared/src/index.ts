@@ -1,12 +1,14 @@
 export type ServiceType = 'api' | 'db' | 'web' | 'ml' | 'tool';
 export type ServiceLifecycle = 'production' | 'beta' | 'deprecated';
 export type ServiceTier = 1 | 2 | 3;
+export type ManagementSource = 'portal' | 'repository';
 
 export interface Team {
   id: string;
   name: string;
   slackChannel: string | null;
   onCallSchedule: string | null;
+  managementSource: ManagementSource;
 }
 
 export interface ServiceLink {
@@ -33,6 +35,7 @@ export interface Service {
   links: ServiceLink[];
   createdAt: string;
   updatedAt: string;
+  managementSource: ManagementSource;
 }
 
 export interface ServiceListResponse {
@@ -116,6 +119,31 @@ export interface CreateServiceRequest {
   description?: string;
   language?: string;
   repository?: string;
+}
+
+export interface UpdateServiceRequest {
+  name: string;
+  type: ServiceType;
+  tier: ServiceTier;
+  lifecycle: ServiceLifecycle;
+  ownerTeamId: string | null;
+  description: string | null;
+  language: string | null;
+  repository: string | null;
+  sloTarget: string | null;
+  sloWindow: string | null;
+  tags: string[];
+}
+
+export interface UpdateTeamRequest {
+  name: string;
+  slackChannel: string | null;
+  onCallSchedule: string | null;
+}
+
+export interface UpdateServiceDocRequest {
+  filename: string;
+  contentMd: string;
 }
 
 export interface HealthResponse {
