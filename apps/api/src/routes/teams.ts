@@ -7,7 +7,7 @@ import type {
 } from '@daleelex/shared';
 import { prisma } from '../db.js';
 import { buildTeamStats, type ScorecardResultRow } from '../teamStats.js';
-import { requireClerkAdmin, requireClerkUser } from '../clerkAuth.js';
+import { requireClerkAdmin } from '../clerkAuth.js';
 import { sendApiError } from '../apiError.js';
 
 interface LatestResultRow {
@@ -126,7 +126,8 @@ export async function teamsRoute(app: FastifyInstance) {
   app.patch<{ Params: { id: string }; Body: UpdateTeamRequest }>(
     '/teams/:id',
     {
-      preHandler: requireClerkUser,
+      preHandler: requireClerkAdmin,
+      attachValidation: true,
       schema: {
         params: {
           type: 'object',
@@ -146,24 +147,30 @@ export async function teamsRoute(app: FastifyInstance) {
       },
     },
     async (req, reply): Promise<TeamWithStats | void> => {
-      const existing = await prisma.team.findUnique({ where: { id: req.params.id } });
-      if (!existing) {
-        return reply.code(404).send({
-          error: {
-            code: 'team_not_found',
-            message: `Team "${req.params.id}" not found.`,
-            details: {},
-          },
+      if (req.validationError) {
+        return sendApiError(req, reply, 422, 'validation_failed', 'The team request is invalid.', {
+          issues: req.validationError.validation ?? [],
         });
       }
+
+      const existing = await prisma.team.findUnique({ where: { id: req.params.id } });
+      if (!existing) {
+        return sendApiError(
+          req,
+          reply,
+          404,
+          'team_not_found',
+          `Team "${req.params.id}" not found.`,
+        );
+      }
       if (existing.managementSource === 'repository') {
-        return reply.code(409).send({
-          error: {
-            code: 'repository_managed_team',
-            message: 'This team is managed in its source repository.',
-            details: {},
-          },
-        });
+        return sendApiError(
+          req,
+          reply,
+          409,
+          'repository_managed_team',
+          'This team is managed in its source repository.',
+        );
       }
 
       await prisma.team.update({

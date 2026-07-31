@@ -29,14 +29,12 @@ export function CreateTeamModal({ onClose, onCreated }: Props) {
   const [form, setForm] = useState<CreateTeamRequest>(EMPTY_TEAM);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<TeamField, string>>>({});
 
+  // Focus must only run on mount; the Escape listener lives in its own effect
+  // below so a parent re-render (which re-creates the onClose prop) can't
+  // re-fire focus and yank the caret back to the Team ID field mid-typing.
   useEffect(() => {
     firstInputRef.current?.focus();
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, []);
 
   const createMutation = useMutation({
     mutationFn: async (body: CreateTeamRequest) => {
@@ -52,6 +50,17 @@ export function CreateTeamModal({ onClose, onCreated }: Props) {
       onCreated(team);
     },
   });
+
+  // While the create request is in flight, dismissing would hide the outcome
+  // and invite a 409 on retry — so Escape (like Cancel and the backdrop) is
+  // inert until the mutation settles.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !createMutation.isPending) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, createMutation.isPending]);
 
   function set<K extends TeamField>(key: K, value: CreateTeamRequest[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -69,14 +78,22 @@ export function CreateTeamModal({ onClose, onCreated }: Props) {
 
   return (
     <>
-      <div className="modal-backdrop" onClick={onClose} />
+      <div
+        className="modal-backdrop"
+        onClick={createMutation.isPending ? undefined : onClose}
+      />
       <dialog className="modal" open aria-label="Add a team" aria-modal="true">
         <div className="modal-head">
           <div>
             <div className="modal-kicker">DaleelEx managed</div>
             <h2 className="modal-title">Add a team</h2>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
+          <button
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Close"
+            disabled={createMutation.isPending}
+          >
             <CloseIcon />
           </button>
         </div>
