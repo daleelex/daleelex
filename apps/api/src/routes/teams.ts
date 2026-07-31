@@ -7,7 +7,7 @@ import type {
 } from '@daleelex/shared';
 import { prisma } from '../db.js';
 import { buildTeamStats, type ScorecardResultRow } from '../teamStats.js';
-import { requireClerkAdmin, requireClerkUser } from '../clerkAuth.js';
+import { requireClerkAdmin } from '../clerkAuth.js';
 import { sendApiError } from '../apiError.js';
 
 interface LatestResultRow {
@@ -126,7 +126,7 @@ export async function teamsRoute(app: FastifyInstance) {
   app.patch<{ Params: { id: string }; Body: UpdateTeamRequest }>(
     '/teams/:id',
     {
-      preHandler: requireClerkUser,
+      preHandler: requireClerkAdmin,
       schema: {
         params: {
           type: 'object',
