@@ -78,10 +78,7 @@ export function CreateTeamModal({ onClose, onCreated }: Props) {
 
   return (
     <>
-      <div
-        className="modal-backdrop"
-        onClick={createMutation.isPending ? undefined : onClose}
-      />
+      <div className="modal-backdrop" onClick={createMutation.isPending ? undefined : onClose} />
       <dialog className="modal" open aria-label="Add a team" aria-modal="true">
         <div className="modal-head">
           <div>
