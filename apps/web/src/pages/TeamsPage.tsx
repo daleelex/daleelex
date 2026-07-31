@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useUser } from '@clerk/react';
 import { useQuery } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
+import { CreateTeamModal } from '../components/CreateTeamModal';
 import { TeamDrawer } from '../components/TeamDrawer';
 import { UserAvatar } from '../components/UserAvatar';
 import { api } from '../api';
@@ -8,6 +10,9 @@ import './TeamsPage.css';
 
 export function TeamsPage() {
   const [selected, setSelected] = useState<TeamWithStats | null>(null);
+  const [creating, setCreating] = useState(false);
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata.role === 'admin';
   const { data, isLoading, isError } = useQuery({
     queryKey: ['teams'],
     queryFn: api.teams,
@@ -36,6 +41,12 @@ export function TeamsPage() {
           <span className="current">Teams</span>
         </div>
         <div className="top-right">
+          {isAdmin && (
+            <button className="add-team-btn" onClick={() => setCreating(true)}>
+              <PlusIcon />
+              Add team
+            </button>
+          )}
           <UserAvatar />
         </div>
       </header>
@@ -98,9 +109,7 @@ export function TeamsPage() {
 
       <footer className="foot">
         <span className="mono">DALEELEX v0.5 {new Date().getFullYear()}</span>
-        <span>
-          Teams sourced from <code>catalog-info.yaml</code>
-        </span>
+        <span>Teams can be repository-synced or managed in DaleelEx</span>
       </footer>
 
       <TeamDrawer
@@ -108,6 +117,15 @@ export function TeamsPage() {
         onClose={() => setSelected(null)}
         onUpdateSuccess={(updated) => setSelected(updated)}
       />
+      {creating && (
+        <CreateTeamModal
+          onClose={() => setCreating(false)}
+          onCreated={(team) => {
+            setCreating(false);
+            setSelected(team);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -134,6 +152,9 @@ function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void
           <h3 className="team-name">{team.name}</h3>
           <div className="team-id">{team.id}</div>
         </div>
+        <span className={`team-source-badge ${team.managementSource}`}>
+          {team.managementSource === 'portal' ? 'DaleelEx managed' : 'Repository managed'}
+        </span>
       </div>
 
       <div className="team-meta">
@@ -204,6 +225,22 @@ function TeamCard({ team, onClick }: { team: TeamWithStats; onClick?: () => void
         </div>
       )}
     </article>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
   );
 }
 

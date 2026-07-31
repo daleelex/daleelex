@@ -11,6 +11,7 @@ import type {
   JenkinsConfigRequest,
   JenkinsTestResponse,
   CreateServiceRequest,
+  CreateTeamRequest,
   Service,
   MeResponse,
   UploadServiceDocRequest,
@@ -140,6 +141,8 @@ export const api = {
     post<JenkinsTestResponse>('/integrations/jenkins/test', body),
   createService: (body: CreateServiceRequest, token?: string) =>
     token ? postWithAuth<Service>('/services', body, token) : post<Service>('/services', body),
+  createTeam: (body: CreateTeamRequest, token: string) =>
+    postWithAuth<TeamWithStats>('/teams', body, token),
   updateService: (id: string, body: UpdateServiceRequest, token?: string) =>
     patch<Service>(`/services/${id}`, body, token),
   updateTeam: (id: string, body: UpdateTeamRequest, token?: string) =>

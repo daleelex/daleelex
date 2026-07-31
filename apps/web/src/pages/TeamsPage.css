@@ -1,5 +1,35 @@
 /* Reuse topbar, hero, stats, foot from ServicesPage — same structure */
 
+.add-team-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    opacity 120ms,
+    transform 80ms;
+}
+
+.add-team-btn:hover {
+  opacity: 0.88;
+}
+
+.add-team-btn:active {
+  transform: scale(0.98);
+}
+
+.add-team-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .teams-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -74,6 +104,32 @@
 
 .team-head-text {
   min-width: 0;
+  flex: 1;
+}
+
+.team-source-badge {
+  align-self: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.team-source-badge.portal {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  background: var(--accent-soft);
+}
+
+.team-source-badge.repository {
+  color: var(--muted);
+  background: var(--panel-2);
 }
 
 .team-name {
@@ -276,5 +332,16 @@
 @media (max-width: 900px) {
   .teams-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .team-card-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .team-source-badge {
+    margin-left: 58px;
   }
 }
