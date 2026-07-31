@@ -38,11 +38,14 @@ id                text PRIMARY KEY              -- e.g. "platform-identity"
 name              text NOT NULL                 -- human name
 slack_channel     text
 on_call_schedule  text                          -- PagerDuty schedule ID or similar
+management_source text NOT NULL                 -- portal | repository; every writer sets this
 created_at        timestamptz NOT NULL
 updated_at        timestamptz NOT NULL
 ```
 
 Teams are typically themselves defined in a `catalog-info.yaml` file — same ingestor picks them up, different `kind: Team` entries.
+Repository ingestion writes `repository`; teams created through the admin portal write `portal`.
+There is deliberately no database default, so a new writer cannot silently misclassify provenance.
 
 ### service_dependencies
 

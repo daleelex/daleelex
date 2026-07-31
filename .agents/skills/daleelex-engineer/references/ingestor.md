@@ -12,6 +12,11 @@ The ingestor is the component that turns scattered `catalog-info.yaml` files acr
 6. **Run scorecards** — for each service, run every registered check. Save results with timestamps.
 7. **Emit events** — publish `service.created`, `service.updated`, `scorecard.changed` events. Other subsystems (notifications, webhooks) subscribe as needed.
 
+Every service or team written from `catalog-info.yaml` sets `management_source` to `repository`
+explicitly. The column has no database default: portal-created entities use `portal`, and requiring
+each writer to choose prevents repository-managed records from being presented as editable portal
+data.
+
 ## Why it's a separate process
 
 The API serves page loads; it needs to be fast and stateless. The ingestor does slow, bursty work — GitHub API calls, YAML parsing across hundreds of repos, scorecard runs that hit external services. Mixing them means page loads block on ingestion, which is unacceptable.
