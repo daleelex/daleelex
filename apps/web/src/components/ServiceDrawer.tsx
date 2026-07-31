@@ -330,20 +330,26 @@ function DocsTab({ serviceId, links }: { serviceId: string; links: ServiceLink[]
           <BackIcon /> All pages
         </button>
         <div className="techdocs-title">{selectedDoc.title}</div>
-        <div className="techdocs-path">
-          {selectedDoc.path}
+        <div className="techdocs-doc-meta">
+          <span className="techdocs-path">{selectedDoc.path}</span>
           {docContent?.sourceRepository ? (
             <a
-              className="ghost-btn"
+              className="drawer-doc-edit-button"
               href={`https://github.com/${docContent.sourceRepository}/edit/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
               target="_blank"
               rel="noreferrer"
             >
+              <EditIcon />
               Edit in repository
             </a>
           ) : (
             docContent && (
-              <button className="ghost-btn" onClick={() => setEditingDoc(true)}>
+              <button
+                className="drawer-doc-edit-button"
+                type="button"
+                onClick={() => setEditingDoc(true)}
+              >
+                <EditIcon />
                 Edit
               </button>
             )
@@ -582,6 +588,25 @@ function ExternalIcon() {
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
     </svg>
   );
 }

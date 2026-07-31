@@ -1,5 +1,10 @@
 generator client {
   provider = "prisma-client-js"
+  // "native" covers wherever generate runs (dev Macs, the x86-64 CI runner);
+  // the arm64 target is the production VM. Without it, `prisma generate` in
+  // cd.yml only bundles the runner's own query engine and every DB-touching
+  // endpoint 500s in production with "could not locate the Query Engine".
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -111,6 +116,7 @@ model ServiceDoc {
   sourceRepository String?  @map("source_repository")
   sourceSha        String?  @map("source_sha")
   uploadedByUserId String?  @map("uploaded_by_user_id")
+  updatedByUserId  String?  @map("updated_by_user_id")
   fetchedAt        DateTime @default(now()) @map("fetched_at")
 
   service Service @relation(fields: [serviceId], references: [id])

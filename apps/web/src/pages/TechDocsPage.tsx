@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
@@ -21,6 +21,10 @@ export function TechDocsPage() {
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [editingDoc, setEditingDoc] = useState(false);
+
+  // Navigating to another doc (sidebar, back button) must not leave the
+  // editor open against content it wasn't opened for.
+  useEffect(() => setEditingDoc(false), [selectedServiceId, selectedDocId]);
 
   const {
     data: index,
@@ -147,41 +151,49 @@ export function TechDocsPage() {
         {selectedServiceId && selectedDocId && (
           <>
             <div className="techdocs-content-head">
-              <div className="techdocs-breadcrumb">
-                <span className="techdocs-bc-service">
-                  {selectedEntry?.service.name ?? selectedServiceId}
-                </span>
-                {selectedDoc && (
-                  <>
-                    <span className="techdocs-bc-sep">/</span>
-                    <span>{selectedDoc.title}</span>
-                  </>
-                )}
-              </div>
-              {selectedDoc && (
-                <div className="techdocs-content-path">
-                  {displayDocPath(selectedDoc.path)}
-                  {docContent?.sourceRepository ? (
+              <div className="techdocs-content-heading">
+                <div className="techdocs-content-meta">
+                  <div className="techdocs-breadcrumb">
+                    <span className="techdocs-bc-service">
+                      {selectedEntry?.service.name ?? selectedServiceId}
+                    </span>
+                    {selectedDoc && (
+                      <>
+                        <span className="techdocs-bc-sep">/</span>
+                        <span>{selectedDoc.title}</span>
+                      </>
+                    )}
+                  </div>
+                  {selectedDoc && (
+                    <div className="techdocs-content-path">{displayDocPath(selectedDoc.path)}</div>
+                  )}
+                </div>
+                {selectedDoc &&
+                  (docContent?.sourceRepository ? (
+                    // GitHub's /edit/ route needs a branch; sourceSha is a
+                    // commit, so link the permalink to the synced revision.
+                    // No pencil here on purpose — this one navigates, it doesn't edit.
                     <a
-                      className="techdocs-upload-button"
-                      href={`https://github.com/${docContent.sourceRepository}/edit/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
+                      className="techdocs-edit-button"
+                      href={`https://github.com/${docContent.sourceRepository}/blob/${docContent.sourceSha ?? 'HEAD'}/${docContent.path}`}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Edit in repository
+                      View in repository
                     </a>
                   ) : (
                     docContent && (
                       <button
-                        className="techdocs-upload-button"
+                        className="techdocs-edit-button"
+                        type="button"
                         onClick={() => setEditingDoc(true)}
                       >
+                        <EditIcon />
                         Edit
                       </button>
                     )
-                  )}
-                </div>
-              )}
+                  ))}
+              </div>
             </div>
 
             <div className="techdocs-content-body">
@@ -292,6 +304,25 @@ function UploadIcon() {
       <path d="M12 16V4" />
       <polyline points="7 9 12 4 17 9" />
       <path d="M20 15v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
     </svg>
   );
 }

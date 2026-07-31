@@ -187,6 +187,7 @@ describe('editing routes', () => {
       sourceRepository: null,
       sourceSha: null,
       uploadedByUserId: 'old-user',
+      updatedByUserId: null,
       fetchedAt: new Date('2026-01-01'),
     };
     mocks.serviceDocFindFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(null);
@@ -195,7 +196,7 @@ describe('editing routes', () => {
       path: 'manual/new.md',
       title: 'New title',
       contentMd: '# New title',
-      uploadedByUserId: 'user-1',
+      updatedByUserId: 'user-1',
       fetchedAt: new Date('2026-01-02'),
     });
     const app = Fastify();
@@ -204,11 +205,27 @@ describe('editing routes', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/v1/services/svc-1/docs/7',
-      payload: { filename: 'new.md', contentMd: '# New title' },
+      payload: {
+        filename: 'new.md',
+        contentMd: '# New title',
+        baseFetchedAt: existing.fetchedAt.toISOString(),
+      },
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ path: 'manual/new.md', title: 'New title' });
+    expect(response.json()).toMatchObject({
+      path: 'manual/new.md',
+      title: 'New title',
+      uploadedByUserId: 'old-user',
+      updatedByUserId: 'user-1',
+    });
+    expect(mocks.serviceDocUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ updatedByUserId: 'user-1' }),
+      }),
+    );
+    // The original uploader must survive an edit.
+    expect(mocks.serviceDocUpdate.mock.calls[0][0].data).not.toHaveProperty('uploadedByUserId');
   });
 
   it('rejects repository-managed document edits', async () => {
@@ -224,11 +241,101 @@ describe('editing routes', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/v1/services/svc-1/docs/7',
-      payload: { filename: 'index.md', contentMd: '# Changed' },
+      payload: {
+        filename: 'index.md',
+        contentMd: '# Changed',
+        baseFetchedAt: '2026-01-01T00:00:00.000Z',
+      },
     });
 
     expect(response.statusCode).toBe(409);
     expect(response.json().error.code).toBe('repository_managed_document');
     expect(mocks.serviceDocUpdate).not.toHaveBeenCalled();
+  });
+
+  const uploadedDoc = {
+    id: 7,
+    serviceId: 'svc-1',
+    path: 'manual/notes.md',
+    title: 'Notes',
+    contentMd: '# Notes',
+    sourceRepository: null,
+    sourceSha: null,
+    uploadedByUserId: 'old-user',
+    updatedByUserId: null,
+    fetchedAt: new Date('2026-01-01'),
+  };
+
+  async function patchDoc(payload: Record<string, unknown>) {
+    const app = Fastify();
+    await app.register(docsRoute, { prefix: '/api/v1' });
+    return app.inject({
+      method: 'PATCH',
+      url: '/api/v1/services/svc-1/docs/7',
+      payload: {
+        filename: 'notes.md',
+        contentMd: '# Notes',
+        baseFetchedAt: uploadedDoc.fetchedAt.toISOString(),
+        ...payload,
+      },
+    });
+  }
+
+  it('404s on a doc that does not exist for the service', async () => {
+    mocks.serviceDocFindFirst.mockResolvedValue(null);
+
+    const response = await patchDoc({});
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error.code).toBe('doc_not_found');
+    expect(mocks.serviceDocUpdate).not.toHaveBeenCalled();
+  });
+
+  it('422s on a filename that fails markdown validation', async () => {
+    const response = await patchDoc({ filename: '../escape.md' });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json().error.code).toBe('invalid_document');
+    expect(mocks.serviceDocUpdate).not.toHaveBeenCalled();
+  });
+
+  it('409s a stale edit when the doc changed since it was loaded', async () => {
+    mocks.serviceDocFindFirst.mockResolvedValue({
+      ...uploadedDoc,
+      fetchedAt: new Date('2026-01-05'),
+    });
+
+    const response = await patchDoc({ baseFetchedAt: '2026-01-01T00:00:00.000Z' });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('document_modified');
+    expect(response.json().error.details.fetchedAt).toBe('2026-01-05T00:00:00.000Z');
+    expect(mocks.serviceDocUpdate).not.toHaveBeenCalled();
+  });
+
+  it('409s a rename onto another doc, excluding the doc itself from the check', async () => {
+    mocks.serviceDocFindFirst.mockResolvedValueOnce(uploadedDoc).mockResolvedValueOnce({ id: 9 });
+
+    const response = await patchDoc({ filename: 'other.md' });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('document_path_conflict');
+    expect(mocks.serviceDocUpdate).not.toHaveBeenCalled();
+    // Renaming a doc to its own current path must not conflict with itself.
+    expect(mocks.serviceDocFindFirst).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ path: 'manual/other.md', id: { not: 7 } }),
+      }),
+    );
+  });
+
+  it('maps a rename race tripping the unique constraint to a 409', async () => {
+    mocks.serviceDocFindFirst.mockResolvedValueOnce(uploadedDoc).mockResolvedValueOnce(null);
+    mocks.serviceDocUpdate.mockRejectedValue(Object.assign(new Error('unique'), { code: 'P2002' }));
+
+    const response = await patchDoc({ filename: 'other.md' });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('document_path_conflict');
   });
 });
