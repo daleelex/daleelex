@@ -177,6 +177,62 @@ describe('editing routes', () => {
     });
   });
 
+  it('404s an unknown team with the standard error envelope and request id', async () => {
+    mocks.teamFindUnique.mockResolvedValue(null);
+    const app = Fastify();
+    await app.register(teamsRoute, { prefix: '/api/v1' });
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/teams/nope',
+      payload: { name: 'New team', slackChannel: null, onCallSchedule: null },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error.code).toBe('team_not_found');
+    expect(response.json().request_id).toBeTruthy();
+    expect(response.headers['x-request-id']).toBe(response.json().request_id);
+    expect(mocks.teamUpdate).not.toHaveBeenCalled();
+  });
+
+  it('409s repository-managed team edits with the standard error envelope', async () => {
+    mocks.teamFindUnique.mockResolvedValue({
+      id: 'team-1',
+      managementSource: 'repository',
+    });
+    const app = Fastify();
+    await app.register(teamsRoute, { prefix: '/api/v1' });
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/teams/team-1',
+      payload: { name: 'New team', slackChannel: null, onCallSchedule: null },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('repository_managed_team');
+    expect(response.json().request_id).toBeTruthy();
+    expect(response.headers['x-request-id']).toBe(response.json().request_id);
+    expect(mocks.teamUpdate).not.toHaveBeenCalled();
+  });
+
+  it('422s an invalid team update body with the standard validation shape', async () => {
+    const app = Fastify();
+    await app.register(teamsRoute, { prefix: '/api/v1' });
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/teams/team-1',
+      payload: { slackChannel: null, onCallSchedule: null },
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json().error.code).toBe('validation_failed');
+    expect(response.json().request_id).toBeTruthy();
+    expect(mocks.teamFindUnique).not.toHaveBeenCalled();
+    expect(mocks.teamUpdate).not.toHaveBeenCalled();
+  });
+
   it('updates an uploaded document and derives its title', async () => {
     const existing = {
       id: 7,
