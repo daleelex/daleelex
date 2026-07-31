@@ -122,6 +122,13 @@ export interface CreateServiceRequest {
   repository?: string;
 }
 
+export interface CreateTeamRequest {
+  id: string;
+  name: string;
+  slackChannel?: string | null;
+  onCallSchedule?: string | null;
+}
+
 export interface UpdateServiceRequest {
   name: string;
   type: ServiceType;

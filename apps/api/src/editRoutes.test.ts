@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  serviceCreate: vi.fn(),
   serviceFindFirst: vi.fn(),
   serviceUpdate: vi.fn(),
   teamFindUnique: vi.fn(),
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('./db.js', () => ({
   prisma: {
     service: {
+      create: mocks.serviceCreate,
       findFirst: mocks.serviceFindFirst,
       update: mocks.serviceUpdate,
     },
@@ -33,6 +35,9 @@ vi.mock('./db.js', () => ({
 vi.mock('./clerkAuth.js', () => ({
   requireClerkUser: async (request: { clerkUserId?: string }) => {
     request.clerkUserId = 'user-1';
+  },
+  requireClerkAdmin: async (request: { clerkUserId?: string }) => {
+    request.clerkUserId = 'admin-1';
   },
 }));
 
@@ -56,6 +61,37 @@ const updateBody = {
 
 describe('editing routes', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('records portal provenance explicitly when registering a service', async () => {
+    mocks.serviceCreate.mockResolvedValue({
+      id: 'svc-new',
+      name: 'New service',
+      type: 'api',
+      tier: 2,
+      lifecycle: 'beta',
+      tags: [],
+      managementSource: 'portal',
+      owner: null,
+      links: [],
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    });
+    const app = Fastify();
+    await app.register(servicesRoute, { prefix: '/api/v1' });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/services',
+      payload: { id: 'svc-new', name: 'New service', type: 'api', tier: 2, lifecycle: 'beta' },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(mocks.serviceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ id: 'svc-new', managementSource: 'portal' }),
+      }),
+    );
+  });
 
   it('updates a portal-managed service without allowing its id to change', async () => {
     mocks.serviceFindFirst.mockResolvedValue({
