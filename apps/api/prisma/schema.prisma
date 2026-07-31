@@ -35,7 +35,7 @@ model Service {
   sloWindow        String?   @map("slo_window")
   tags             String[]
   sourceSha        String?   @map("source_sha")
-  managementSource String    @default("portal") @map("management_source")
+  managementSource String    @map("management_source")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")

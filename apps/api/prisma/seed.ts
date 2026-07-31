@@ -55,6 +55,7 @@ const services = [
     sloTarget: '99.95%',
     sloWindow: '30d',
     tags: ['critical', 'security', 'public'],
+    managementSource: 'repository',
     links: [
       { url: 'https://runbook.internal/auth', title: 'Runbook', type: 'runbook' },
       { url: 'https://grafana.internal/d/auth', title: 'Dashboard', type: 'dashboard' },
@@ -74,6 +75,7 @@ const services = [
     sloTarget: '99.99%',
     sloWindow: '30d',
     tags: ['critical', 'public'],
+    managementSource: 'repository',
     links: [{ url: 'https://runbook.internal/gateway', title: 'Runbook', type: 'runbook' }],
   },
   {
@@ -89,6 +91,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['critical'],
+    managementSource: 'repository',
     links: [{ url: 'https://docs.internal/user-service', title: 'API Docs', type: 'docs' }],
   },
   {
@@ -105,6 +108,7 @@ const services = [
     sloTarget: '99.5%',
     sloWindow: '30d',
     tags: ['transactional'],
+    managementSource: 'repository',
     links: [],
   },
   {
@@ -120,6 +124,7 @@ const services = [
     sloTarget: '99.5%',
     sloWindow: '30d',
     tags: ['search', 'ml'],
+    managementSource: 'repository',
     links: [],
   },
   {
@@ -135,6 +140,7 @@ const services = [
     sloTarget: '99.99%',
     sloWindow: '30d',
     tags: ['critical', 'data'],
+    managementSource: 'repository',
     links: [{ url: 'https://runbook.internal/postgres', title: 'Runbook', type: 'runbook' }],
   },
   {
@@ -150,6 +156,7 @@ const services = [
     sloTarget: '99.95%',
     sloWindow: '30d',
     tags: ['critical', 'payments', 'pci'],
+    managementSource: 'repository',
     links: [{ url: 'https://runbook.internal/billing', title: 'Runbook', type: 'runbook' }],
   },
   {
@@ -165,6 +172,7 @@ const services = [
     sloTarget: '99%',
     sloWindow: '30d',
     tags: ['analytics', 'data'],
+    managementSource: 'repository',
     links: [],
   },
   {
@@ -180,6 +188,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['public', 'frontend'],
+    managementSource: 'repository',
     links: [],
   },
   {
@@ -195,6 +204,7 @@ const services = [
     sloTarget: '99%',
     sloWindow: '30d',
     tags: ['ml', 'beta'],
+    managementSource: 'repository',
     links: [],
   },
   {
@@ -210,6 +220,7 @@ const services = [
     sloTarget: '99%',
     sloWindow: '30d',
     tags: ['internal'],
+    managementSource: 'repository',
     links: [],
   },
   {
@@ -225,6 +236,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['infrastructure', 'release'],
+    managementSource: 'repository',
     links: [{ url: 'https://docs.internal/feature-flags', title: 'Docs', type: 'docs' }],
   },
 ];

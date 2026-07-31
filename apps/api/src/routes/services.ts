@@ -82,6 +82,7 @@ export async function servicesRoute(app: FastifyInstance) {
             language: language || null,
             repository: repository || null,
             tags: [],
+            managementSource: 'portal',
           },
           include: { owner: true, links: true },
         });
