@@ -3,12 +3,42 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const teams = [
-  { id: 'platform-identity', name: 'Platform Identity', slackChannel: '#platform-identity' },
-  { id: 'platform-infra', name: 'Platform Infra', slackChannel: '#platform-infra' },
-  { id: 'platform-data', name: 'Platform Data', slackChannel: '#platform-data' },
-  { id: 'product-core', name: 'Product Core', slackChannel: '#product-core' },
-  { id: 'product-growth', name: 'Product Growth', slackChannel: '#product-growth' },
-  { id: 'product-ml', name: 'Product ML', slackChannel: '#product-ml' },
+  {
+    id: 'platform-identity',
+    name: 'Platform Identity',
+    slackChannel: '#platform-identity',
+    managementSource: 'repository',
+  },
+  {
+    id: 'platform-infra',
+    name: 'Platform Infra',
+    slackChannel: '#platform-infra',
+    managementSource: 'repository',
+  },
+  {
+    id: 'platform-data',
+    name: 'Platform Data',
+    slackChannel: '#platform-data',
+    managementSource: 'repository',
+  },
+  {
+    id: 'product-core',
+    name: 'Product Core',
+    slackChannel: '#product-core',
+    managementSource: 'repository',
+  },
+  {
+    id: 'product-growth',
+    name: 'Product Growth',
+    slackChannel: '#product-growth',
+    managementSource: 'repository',
+  },
+  {
+    id: 'product-ml',
+    name: 'Product ML',
+    slackChannel: '#product-ml',
+    managementSource: 'repository',
+  },
 ];
 
 const services = [

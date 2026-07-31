@@ -8,13 +8,13 @@ datasource db {
 }
 
 model Team {
-  id             String   @id
-  name           String
-  slackChannel   String?  @map("slack_channel")
-  onCallSchedule String?  @map("on_call_schedule")
-  managementSource String @default("portal") @map("management_source")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id               String   @id
+  name             String
+  slackChannel     String?  @map("slack_channel")
+  onCallSchedule   String?  @map("on_call_schedule")
+  managementSource String   @map("management_source")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   services Service[]
 
@@ -22,23 +22,23 @@ model Team {
 }
 
 model Service {
-  id          String    @id
-  name        String
-  description String?
-  type        String
-  tier        Int
-  lifecycle   String
-  ownerTeamId String?   @map("owner_team_id")
-  language    String?
-  repository  String?
-  sloTarget   String?   @map("slo_target")
-  sloWindow   String?   @map("slo_window")
-  tags        String[]
-  sourceSha   String?   @map("source_sha")
-  managementSource String @default("portal") @map("management_source")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id               String    @id
+  name             String
+  description      String?
+  type             String
+  tier             Int
+  lifecycle        String
+  ownerTeamId      String?   @map("owner_team_id")
+  language         String?
+  repository       String?
+  sloTarget        String?   @map("slo_target")
+  sloWindow        String?   @map("slo_window")
+  tags             String[]
+  sourceSha        String?   @map("source_sha")
+  managementSource String    @default("portal") @map("management_source")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
 
   owner        Team?               @relation(fields: [ownerTeamId], references: [id])
   links        Link[]
