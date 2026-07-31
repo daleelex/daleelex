@@ -34,6 +34,9 @@ vi.mock('./clerkAuth.js', () => ({
   requireClerkUser: async (request: { clerkUserId?: string }) => {
     request.clerkUserId = 'user-1';
   },
+  requireClerkAdmin: async (request: { clerkUserId?: string }) => {
+    request.clerkUserId = 'admin-1';
+  },
 }));
 
 import { servicesRoute } from './routes/services.js';

@@ -1,8 +1,14 @@
 import type { FastifyInstance } from 'fastify';
-import type { TeamListResponse, TeamWithStats, UpdateTeamRequest } from '@daleelex/shared';
+import type {
+  CreateTeamRequest,
+  TeamListResponse,
+  TeamWithStats,
+  UpdateTeamRequest,
+} from '@daleelex/shared';
 import { prisma } from '../db.js';
 import { buildTeamStats, type ScorecardResultRow } from '../teamStats.js';
-import { requireClerkUser } from '../clerkAuth.js';
+import { requireClerkAdmin, requireClerkUser } from '../clerkAuth.js';
+import { sendApiError } from '../apiError.js';
 
 interface LatestResultRow {
   serviceId: string;
@@ -37,6 +43,86 @@ async function fetchLatestScorecardResults(): Promise<ScorecardResultRow[]> {
 }
 
 export async function teamsRoute(app: FastifyInstance) {
+  app.post<{ Body: CreateTeamRequest }>(
+    '/teams',
+    {
+      preHandler: requireClerkAdmin,
+      attachValidation: true,
+      schema: {
+        body: {
+          type: 'object',
+          required: ['id', 'name'],
+          additionalProperties: false,
+          properties: {
+            id: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 100,
+              pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$',
+            },
+            name: { type: 'string', minLength: 1, maxLength: 200, pattern: '\\S' },
+            slackChannel: {
+              anyOf: [
+                {
+                  type: 'string',
+                  maxLength: 81,
+                  pattern: '^#[a-z0-9][a-z0-9_-]{0,79}$',
+                },
+                { type: 'null' },
+              ],
+            },
+            onCallSchedule: {
+              anyOf: [
+                { type: 'string', minLength: 1, maxLength: 200, pattern: '\\S' },
+                { type: 'null' },
+              ],
+            },
+          },
+        },
+      },
+    },
+    async (req, reply): Promise<TeamWithStats | void> => {
+      if (req.validationError) {
+        return sendApiError(req, reply, 422, 'validation_failed', 'The team request is invalid.', {
+          issues: req.validationError.validation ?? [],
+        });
+      }
+
+      try {
+        const team = await prisma.team.create({
+          data: {
+            id: req.body.id,
+            name: req.body.name.trim(),
+            slackChannel: req.body.slackChannel?.trim() || null,
+            onCallSchedule: req.body.onCallSchedule?.trim() || null,
+            managementSource: 'portal',
+          },
+          include: {
+            services: {
+              where: { deletedAt: null },
+              select: { id: true, name: true, type: true, tier: true },
+              orderBy: [{ tier: 'asc' }, { name: 'asc' }],
+            },
+          },
+        });
+        reply.code(201);
+        return buildTeamStats([team], [])[0];
+      } catch (err) {
+        if (hasPrismaCode(err, 'P2002')) {
+          return sendApiError(
+            req,
+            reply,
+            409,
+            'team_id_conflict',
+            `A team with ID "${req.body.id}" already exists.`,
+            { id: req.body.id },
+          );
+        }
+        throw err;
+      }
+    },
+  );
+
   app.patch<{ Params: { id: string }; Body: UpdateTeamRequest }>(
     '/teams/:id',
     {
@@ -124,4 +210,13 @@ export async function teamsRoute(app: FastifyInstance) {
     const data = buildTeamStats(teams, scorecardResults);
     return { data, total: data.length, unownedServiceCount };
   });
+}
+
+function hasPrismaCode(error: unknown, code: string) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === code
+  );
 }
