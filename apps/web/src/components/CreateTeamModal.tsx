@@ -29,8 +29,14 @@ export function CreateTeamModal({ onClose, onCreated }: Props) {
   const [form, setForm] = useState<CreateTeamRequest>(EMPTY_TEAM);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<TeamField, string>>>({});
 
+  // Focus must only run on mount; the Escape listener lives in its own effect
+  // below so a parent re-render (which re-creates the onClose prop) can't
+  // re-fire focus and yank the caret back to the Team ID field mid-typing.
   useEffect(() => {
     firstInputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
