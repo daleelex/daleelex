@@ -52,7 +52,16 @@ Filter params on the list endpoint: `?tier=1&type=api&owner=platform-identity&li
 ```
 GET    /api/v1/teams                       List
 GET    /api/v1/teams/:id                   Detail + member services
+POST   /api/v1/teams                       Create a portal-managed team (admin only)
 ```
+
+`POST /api/v1/teams` accepts an immutable lowercase slug `id` (1-100 characters), a required
+`name` (1-200 non-whitespace characters), and optional nullable `slackChannel` and
+`onCallSchedule` fields. Slack channels include the leading `#` and match the portal's supported
+channel-name shape; on-call schedules are free text up to 200 characters and are not resolved
+against PagerDuty or another provider. The endpoint returns `201` with the created team and its
+empty calculated statistics. Duplicate IDs return `409` with `team_id_conflict`; invalid bodies
+return `422` with `validation_failed`. Both use the standard error envelope and request ID.
 
 ### Scorecards
 
