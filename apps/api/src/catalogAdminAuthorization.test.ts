@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import type { LightMyRequestResponse } from 'fastify';
 import type { Mock } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +12,7 @@ const dbMocks = vi.hoisted(() => ({
   serviceCreate: vi.fn(),
   serviceFindFirst: vi.fn(),
   serviceUpdate: vi.fn(),
+  teamCreate: vi.fn(),
   teamFindUnique: vi.fn(),
   teamFindUniqueOrThrow: vi.fn(),
   teamUpdate: vi.fn(),
@@ -30,6 +32,7 @@ vi.mock('./db.js', () => ({
       update: dbMocks.serviceUpdate,
     },
     team: {
+      create: dbMocks.teamCreate,
       findUnique: dbMocks.teamFindUnique,
       findUniqueOrThrow: dbMocks.teamFindUniqueOrThrow,
       update: dbMocks.teamUpdate,
@@ -78,6 +81,12 @@ const teamRow = {
   services: [],
 };
 
+const createdTeamRow = {
+  ...teamRow,
+  id: 'platform-edge',
+  name: 'Platform Edge',
+};
+
 interface MutationCase {
   name: string;
   method: 'POST' | 'PATCH' | 'DELETE';
@@ -118,6 +127,19 @@ const mutationCases: MutationCase[] = [
     mutation: dbMocks.serviceUpdate,
   },
   {
+    name: 'POST /api/v1/teams',
+    method: 'POST',
+    url: '/api/v1/teams',
+    payload: {
+      id: 'platform-edge',
+      name: 'Platform Edge',
+      slackChannel: '#platform-edge',
+      onCallSchedule: null,
+    },
+    successStatus: 201,
+    mutation: dbMocks.teamCreate,
+  },
+  {
     name: 'PATCH /api/v1/teams/:id',
     method: 'PATCH',
     url: '/api/v1/teams/team-1',
@@ -136,6 +158,11 @@ beforeEach(() => {
   process.env[ENV_KEY] = 'sk_test_route_authorization';
 
   clerkMocks.verifyToken.mockResolvedValue({ sub: 'user-1' });
+  // `vi.clearAllMocks()` wipes call history but keeps implementations, so a role stubbed
+  // inside one test body would otherwise leak into every test after it. Default to a user
+  // with no role — a test that forgets to stub `getUser` then fails closed with a 403
+  // instead of silently inheriting the admin from an earlier case.
+  clerkMocks.getUser.mockResolvedValue({ publicMetadata: {} });
   dbMocks.serviceCreate.mockResolvedValue(serviceRow);
   dbMocks.serviceFindFirst.mockResolvedValue({
     id: 'svc-1',
@@ -149,6 +176,7 @@ beforeEach(() => {
   });
   dbMocks.teamFindUniqueOrThrow.mockResolvedValue(teamRow);
   dbMocks.teamUpdate.mockResolvedValue(teamRow);
+  dbMocks.teamCreate.mockResolvedValue(createdTeamRow);
   dbMocks.queryRaw.mockResolvedValue([]);
 });
 
@@ -169,7 +197,7 @@ describe('catalog mutation authorization', () => {
 
     expect(response.statusCode).toBe(401);
     expect(response.json().error.code).toBe('missing_session_token');
-    expect(response.json().request_id).toBe(response.headers['x-request-id']);
+    expectCorrelatedRequestId(response);
     expect(testCase.mutation).not.toHaveBeenCalled();
     await app.close();
   });
@@ -187,7 +215,7 @@ describe('catalog mutation authorization', () => {
 
     expect(response.statusCode).toBe(403);
     expect(response.json().error.code).toBe('admin_forbidden');
-    expect(response.json().request_id).toBe(response.headers['x-request-id']);
+    expectCorrelatedRequestId(response);
     expect(testCase.mutation).not.toHaveBeenCalled();
     await app.close();
   });
@@ -208,6 +236,16 @@ describe('catalog mutation authorization', () => {
     await app.close();
   });
 });
+
+// Asserting only `request_id === headers['x-request-id']` passes vacuously when the
+// envelope drops both — `undefined === undefined` — which is exactly the regression the
+// assertion exists to catch. Pin the header to a real value first, then correlate.
+function expectCorrelatedRequestId(response: LightMyRequestResponse) {
+  const headerRequestId = response.headers['x-request-id'];
+  expect(typeof headerRequestId).toBe('string');
+  expect(headerRequestId).not.toBe('');
+  expect(response.json().request_id).toBe(headerRequestId);
+}
 
 async function buildApp() {
   const app = Fastify();
