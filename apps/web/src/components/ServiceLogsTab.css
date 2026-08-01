@@ -89,6 +89,29 @@
   font-weight: 600;
 }
 
+.service-logs-refresh {
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.service-logs-refresh:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: var(--panel-3);
+  color: var(--ink);
+}
+
+.service-logs-refresh:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .service-log-list {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -187,6 +210,18 @@
 
 .service-logs-state.error {
   color: var(--danger);
+}
+
+/* Compact form used when entries are already on screen and the error sits above them. */
+.service-logs-state.banner {
+  justify-content: space-between;
+  min-height: 0;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-style: solid;
+  border-color: var(--danger);
+  font-size: 12px;
+  text-align: left;
 }
 
 .service-logs-state button {

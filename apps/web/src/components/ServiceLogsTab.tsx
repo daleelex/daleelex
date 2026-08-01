@@ -50,15 +50,22 @@ export function ServiceLogsTab({ serviceId }: { serviceId: string }) {
 
   const entries = query.data?.pages.flatMap((page) => page.data) ?? [];
 
+  // The window is pinned at mount so cursors stay valid across pages — every control
+  // that restarts the query has to re-pin it, otherwise "Last 1 hour" quietly keeps
+  // meaning the hour the drawer happened to open.
+  function refresh() {
+    setWindowEnd(new Date());
+  }
+
   function updateRange(nextRange: number) {
     setRangeMs(nextRange);
-    setWindowEnd(new Date());
+    refresh();
   }
 
   function applySearch(event: FormEvent) {
     event.preventDefault();
     setSearch(searchInput.trim() || undefined);
-    setWindowEnd(new Date());
+    refresh();
   }
 
   return (
@@ -96,24 +103,35 @@ export function ServiceLogsTab({ serviceId }: { serviceId: string }) {
         <span aria-hidden="true">→</span>
         <span>{formatWindow(range.end)}</span>
         <span className="service-logs-order">Newest first</span>
+        <button
+          className="service-logs-refresh"
+          type="button"
+          disabled={query.isFetching}
+          onClick={refresh}
+        >
+          {query.isFetching ? 'Refreshing…' : 'Refresh'}
+        </button>
       </div>
 
-      {query.isPending ? (
-        <div className="service-logs-state" role="status">
-          Loading logs…
-        </div>
-      ) : query.isError ? (
-        <div className="service-logs-state error" role="alert">
+      {/* React Query keeps `data` when a fetch fails, so the error is rendered beside the
+          already-loaded pages: a failed "Load older logs" must not blank the list. */}
+      {query.isError && (
+        <div
+          className={`service-logs-state error${entries.length > 0 ? ' banner' : ''}`}
+          role="alert"
+        >
           <span>{query.error.message}</span>
           <button type="button" onClick={() => query.refetch()}>
             Try again
           </button>
         </div>
-      ) : entries.length === 0 ? (
-        <div className="service-logs-state">
-          No logs matched this time range{search ? ` and “${search}”` : ''}.
+      )}
+
+      {query.isPending ? (
+        <div className="service-logs-state" role="status">
+          Loading logs…
         </div>
-      ) : (
+      ) : entries.length > 0 ? (
         <>
           <div className="service-log-list" role="list" aria-label="Log entries">
             {entries.map((entry) => (
@@ -132,6 +150,10 @@ export function ServiceLogsTab({ serviceId }: { serviceId: string }) {
             </button>
           )}
         </>
+      ) : query.isError ? null : (
+        <div className="service-logs-state">
+          No logs matched this time range{search ? ` and “${search}”` : ''}.
+        </div>
       )}
     </section>
   );
