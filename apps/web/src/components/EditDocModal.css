@@ -22,8 +22,9 @@
   overflow: auto;
   border: 1px solid var(--line-strong);
   border-radius: 16px;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
 }
 
 .doc-edit-modal header,
@@ -48,13 +49,13 @@
 .doc-edit-modal button {
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
+  background: var(--panel-2);
+  color: var(--ink);
   padding: 8px 12px;
 }
 .doc-edit-modal .doc-edit-save {
   background: var(--accent);
-  color: white;
+  color: var(--accent-fg);
 }
 .doc-edit-filename {
   display: grid;
@@ -64,8 +65,8 @@
 .doc-edit-filename input {
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
+  background: var(--panel-2);
+  color: var(--ink);
   padding: 9px;
 }
 .doc-edit-grid {
@@ -97,8 +98,8 @@
   resize: none;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
+  background: var(--panel-2);
+  color: var(--ink);
   padding: 12px;
   font: 13px/1.6 var(--font-mono);
 }
