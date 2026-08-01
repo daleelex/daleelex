@@ -8,6 +8,8 @@ import { teamsRoute } from './routes/teams.js';
 import { docsRoute } from './routes/docs.js';
 import { integrationsRoute } from './routes/integrations.js';
 import { meRoute } from './routes/me.js';
+import { serviceLogsRoute } from './routes/serviceLogs.js';
+import { MockLogSource } from './logs/mockLogSource.js';
 
 const app = Fastify({ logger: true });
 
@@ -22,6 +24,7 @@ app.register(teamsRoute, { prefix: '/api/v1' });
 app.register(docsRoute, { prefix: '/api/v1' });
 app.register(integrationsRoute, { prefix: '/api/v1' });
 app.register(meRoute, { prefix: '/api/v1' });
+app.register(serviceLogsRoute, { prefix: '/api/v1', logSource: new MockLogSource() });
 
 try {
   await app.listen({ port: 3000, host: '0.0.0.0' });

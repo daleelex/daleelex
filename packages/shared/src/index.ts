@@ -43,6 +43,21 @@ export interface ServiceListResponse {
   total: number;
 }
 
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
+
+export interface ServiceLogEntry {
+  id: string;
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  labels: Record<string, string>;
+}
+
+export interface ServiceLogListResponse {
+  data: ServiceLogEntry[];
+  next_cursor: string | null;
+}
+
 export interface ServiceDocSummary {
   id: number;
   path: string;

@@ -6,10 +6,11 @@ import { DocMarkdown } from './DocMarkdown';
 import { api } from '../api';
 import { EditServiceModal } from './EditServiceModal';
 import { EditDocModal } from './EditDocModal';
+import { ServiceLogsTab } from './ServiceLogsTab';
 import './ServiceDrawer.css';
 
-type Tab = 'overview' | 'scorecard' | 'dependencies' | 'docs';
-const TABS: Tab[] = ['overview', 'scorecard', 'dependencies', 'docs'];
+type Tab = 'overview' | 'scorecard' | 'dependencies' | 'logs' | 'docs';
+const TABS: Tab[] = ['overview', 'scorecard', 'dependencies', 'logs', 'docs'];
 
 const LIFECYCLE_COLOR: Record<string, string> = {
   production: 'var(--ok)',
@@ -168,6 +169,7 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSucce
             {tab === 'overview' && <OverviewTab service={service} />}
             {tab === 'scorecard' && <ScorecardTab checks={checks} passed={passed} score={score} />}
             {tab === 'dependencies' && <DependenciesTab />}
+            {tab === 'logs' && <ServiceLogsTab serviceId={service.id} />}
             {tab === 'docs' && <DocsTab serviceId={service.id} links={service.links} />}
           </div>
         </div>

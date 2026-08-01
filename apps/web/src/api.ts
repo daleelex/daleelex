@@ -20,6 +20,7 @@ import type {
   UpdateTeamRequest,
   UpdateServiceDocRequest,
   TeamWithStats,
+  ServiceLogListResponse,
 } from '@daleelex/shared';
 
 const BASE = '/api/v1';
@@ -116,6 +117,22 @@ async function toApiError(res: Response) {
   return new Error(message);
 }
 
+export interface ServiceLogsQuery {
+  start: string;
+  end: string;
+  search?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+function serviceLogsPath(serviceId: string, query: ServiceLogsQuery) {
+  const params = new URLSearchParams({ start: query.start, end: query.end });
+  if (query.search) params.set('search', query.search);
+  if (query.cursor) params.set('cursor', query.cursor);
+  if (query.limit) params.set('limit', String(query.limit));
+  return `/services/${encodeURIComponent(serviceId)}/logs?${params.toString()}`;
+}
+
 export const api = {
   health: () => get<HealthResponse>('/health'),
   stats: () => get<StatsResponse>('/stats'),
@@ -125,6 +142,8 @@ export const api = {
   serviceDocs: (serviceId: string) => get<ServiceDocListResponse>(`/services/${serviceId}/docs`),
   serviceDoc: (serviceId: string, docId: number) =>
     get<ServiceDoc>(`/services/${serviceId}/docs/${docId}`),
+  serviceLogs: (serviceId: string, query: ServiceLogsQuery, token: string) =>
+    getWithAuth<ServiceLogListResponse>(serviceLogsPath(serviceId, query), token),
   uploadServiceDoc: (serviceId: string, body: UploadServiceDocRequest, token: string) =>
     postWithAuth<UploadServiceDocResponse>(`/services/${serviceId}/docs`, body, token),
   updateServiceDoc: (
