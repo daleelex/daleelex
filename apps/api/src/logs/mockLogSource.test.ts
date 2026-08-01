@@ -15,12 +15,15 @@ describe('MockLogSource', () => {
     const first = await source.query(baseQuery);
     const second = await source.query({ ...baseQuery, cursor: first.nextCursor! });
 
+    const firstIds = first.entries.map((entry) => entry.id);
+    const secondIds = second.entries.map((entry) => entry.id);
+
     expect(first.entries).toHaveLength(5);
     expect(first.nextCursor).toBeTruthy();
     expect(second.entries).toHaveLength(5);
-    expect(second.entries.map((entry) => entry.id)).not.toEqual(
-      expect.arrayContaining(first.entries.map((entry) => entry.id)),
-    );
+    // Disjoint, not merely "not a superset" — an off-by-one that repeats only the
+    // boundary entry still satisfies `not.arrayContaining`.
+    expect(secondIds.filter((id) => firstIds.includes(id))).toEqual([]);
     expect(second.entries[0].timestamp <= first.entries.at(-1)!.timestamp).toBe(true);
 
     const payload = JSON.parse(Buffer.from(first.nextCursor!, 'base64url').toString('utf8'));

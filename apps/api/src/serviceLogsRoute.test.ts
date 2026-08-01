@@ -130,14 +130,17 @@ describe('service logs route', () => {
     });
     const secondBody = second.json();
 
+    const firstIds = firstBody.data.map((entry: { id: string }) => entry.id);
+    const secondIds = secondBody.data.map((entry: { id: string }) => entry.id);
+
     expect(first.statusCode).toBe(200);
     expect(firstBody.data).toHaveLength(3);
     expect(firstBody.next_cursor).toBeTruthy();
     expect(second.statusCode).toBe(200);
     expect(secondBody.data).toHaveLength(3);
-    expect(secondBody.data.map((entry: { id: string }) => entry.id)).not.toEqual(
-      expect.arrayContaining(firstBody.data.map((entry: { id: string }) => entry.id)),
-    );
+    // Disjoint, not merely "not a superset" — an off-by-one that repeats only the
+    // boundary entry still satisfies `not.arrayContaining`.
+    expect(secondIds.filter((id: string) => firstIds.includes(id))).toEqual([]);
   });
 
   it.each([
