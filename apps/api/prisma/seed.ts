@@ -1,47 +1,50 @@
 import { PrismaClient } from '@prisma/client';
+import { pathToFileURL } from 'node:url';
 
 const prisma = new PrismaClient();
 
-const teams = [
+// These are DaleelEx-owned sample records, not entities ingested from catalog-info.yaml.
+// Keep them portal-managed so fresh development databases exercise the in-app edit flows.
+export const teams = [
   {
     id: 'platform-identity',
     name: 'Platform Identity',
     slackChannel: '#platform-identity',
-    managementSource: 'repository',
+    managementSource: 'portal',
   },
   {
     id: 'platform-infra',
     name: 'Platform Infra',
     slackChannel: '#platform-infra',
-    managementSource: 'repository',
+    managementSource: 'portal',
   },
   {
     id: 'platform-data',
     name: 'Platform Data',
     slackChannel: '#platform-data',
-    managementSource: 'repository',
+    managementSource: 'portal',
   },
   {
     id: 'product-core',
     name: 'Product Core',
     slackChannel: '#product-core',
-    managementSource: 'repository',
+    managementSource: 'portal',
   },
   {
     id: 'product-growth',
     name: 'Product Growth',
     slackChannel: '#product-growth',
-    managementSource: 'repository',
+    managementSource: 'portal',
   },
   {
     id: 'product-ml',
     name: 'Product ML',
     slackChannel: '#product-ml',
-    managementSource: 'repository',
+    managementSource: 'portal',
   },
 ];
 
-const services = [
+export const services = [
   {
     id: 'svc-auth-001',
     name: 'Authentication Gateway',
@@ -55,7 +58,7 @@ const services = [
     sloTarget: '99.95%',
     sloWindow: '30d',
     tags: ['critical', 'security', 'public'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [
       { url: 'https://runbook.internal/auth', title: 'Runbook', type: 'runbook' },
       { url: 'https://grafana.internal/d/auth', title: 'Dashboard', type: 'dashboard' },
@@ -75,7 +78,7 @@ const services = [
     sloTarget: '99.99%',
     sloWindow: '30d',
     tags: ['critical', 'public'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [{ url: 'https://runbook.internal/gateway', title: 'Runbook', type: 'runbook' }],
   },
   {
@@ -91,7 +94,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['critical'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [{ url: 'https://docs.internal/user-service', title: 'API Docs', type: 'docs' }],
   },
   {
@@ -108,7 +111,7 @@ const services = [
     sloTarget: '99.5%',
     sloWindow: '30d',
     tags: ['transactional'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [],
   },
   {
@@ -124,7 +127,7 @@ const services = [
     sloTarget: '99.5%',
     sloWindow: '30d',
     tags: ['search', 'ml'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [],
   },
   {
@@ -140,7 +143,7 @@ const services = [
     sloTarget: '99.99%',
     sloWindow: '30d',
     tags: ['critical', 'data'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [{ url: 'https://runbook.internal/postgres', title: 'Runbook', type: 'runbook' }],
   },
   {
@@ -156,7 +159,7 @@ const services = [
     sloTarget: '99.95%',
     sloWindow: '30d',
     tags: ['critical', 'payments', 'pci'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [{ url: 'https://runbook.internal/billing', title: 'Runbook', type: 'runbook' }],
   },
   {
@@ -172,7 +175,7 @@ const services = [
     sloTarget: '99%',
     sloWindow: '30d',
     tags: ['analytics', 'data'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [],
   },
   {
@@ -188,7 +191,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['public', 'frontend'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [],
   },
   {
@@ -204,7 +207,7 @@ const services = [
     sloTarget: '99%',
     sloWindow: '30d',
     tags: ['ml', 'beta'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [],
   },
   {
@@ -220,7 +223,7 @@ const services = [
     sloTarget: '99%',
     sloWindow: '30d',
     tags: ['internal'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [],
   },
   {
@@ -236,7 +239,7 @@ const services = [
     sloTarget: '99.9%',
     sloWindow: '30d',
     tags: ['infrastructure', 'release'],
-    managementSource: 'repository',
+    managementSource: 'portal',
     links: [{ url: 'https://docs.internal/feature-flags', title: 'Docs', type: 'docs' }],
   },
 ];
@@ -400,9 +403,11 @@ async function main() {
   console.log('Done.');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}
