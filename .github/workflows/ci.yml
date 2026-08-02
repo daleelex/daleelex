@@ -90,6 +90,20 @@ jobs:
   # one production VM. Revisit if the suite grows past a few minutes or gets flaky.
   e2e:
     runs-on: ubuntu-latest
+    # The smoke test asserts Clerk's real login page renders, so ClerkProvider has to
+    # boot against a live instance — a synthetic key won't do, it just throws.
+    #
+    # Gated on the repo not being a fork, NOT on the variable being set. Gating on the
+    # variable looks safer but is worse: repo variables (unlike secrets) ARE exposed to
+    # fork pull requests, so the variable is nearly always present anyway, and the one
+    # thing that condition reliably caught was the maintainer setting the value as a
+    # *secret* by mistake — which silently skipped the job on this repo instead of
+    # failing it. Here e2e always runs, and a missing variable fails loudly.
+    #
+    # A fork running CI on its own repo (push to its master) has no Clerk instance of
+    # its own, so it skips rather than failing for a reason the contributor can't fix;
+    # setting the variable in the fork is not required but does opt them back in.
+    if: github.event.repository.fork == false || vars.VITE_CLERK_PUBLISHABLE_KEY_CI != ''
     services:
       postgres:
         image: postgres:16
@@ -105,10 +119,20 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      # Publishable, not secret — Clerk keys prefixed pk_ are meant to ship in client
-      # bundles. Vite bakes VITE_* vars in at build time, so the web build step below
-      # needs this present or the app throws on boot (no VITE_CLERK_PUBLISHABLE_KEY).
-      VITE_CLERK_PUBLISHABLE_KEY: pk_test_Y29ycmVjdC13YWxydXMtNzUuY2xlcmsuYWNjb3VudHMuZGV2JA
+      # Publishable, not secret — pk_ keys are meant to ship in client bundles, so this
+      # is a repo *variable* (Settings → Secrets and variables → Actions → Variables),
+      # not a secret. It lives there rather than inline so the public repo isn't
+      # hardcoded to one maintainer's Clerk instance. Vite bakes VITE_* in at build
+      # time, so the web build below needs it present or the app throws on boot.
+      #
+      # Deliberately a DIFFERENT variable from the pk_live_ key cd.yml uses, and it must
+      # hold a Clerk *development*-instance key (pk_test_). The e2e suite serves the app
+      # from http://localhost:4173; Clerk production instances are bound to their
+      # configured domain over HTTPS, so a pk_live_ key cannot initialise there —
+      # ClerkJS never loads, <Show when="signed-in"> never resolves, and the redirect
+      # the smoke test asserts never happens. Development instances are the ones that
+      # permit localhost. Pointing this at the production key is what broke this job.
+      VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY_CI }}
     steps:
       - uses: actions/checkout@v4
       - run: corepack enable

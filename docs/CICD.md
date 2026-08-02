@@ -178,6 +178,51 @@ Runs **on the VM**, not the runner. In order:
 | `SSH_PRIVATE_KEY` | Private half of a dedicated deploy keypair (not a personal key) |
 | `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan <SSH_HOST>`                              |
 
+**Variables** (same page, the **Variables** tab — not Secrets):
+
+| Variable                        | Used by  | Value                                                        |
+| ------------------------------- | -------- | ------------------------------------------------------------ |
+| `VITE_CLERK_PUBLISHABLE_KEY`    | `cd.yml` | Clerk **production**-instance publishable key (`pk_live_…`)  |
+| `VITE_CLERK_PUBLISHABLE_KEY_CI` | `ci.yml` | Clerk **development**-instance publishable key (`pk_test_…`) |
+
+Variables rather than secrets on purpose: publishable keys are meant to ship in client
+bundles, so there is nothing to protect, and GitHub would otherwise redact them from
+build logs and withhold them from fork pull requests for no benefit.
+
+### Why these are two separate variables
+
+They are not interchangeable, and using one value for both breaks a job.
+
+`ci.yml`'s `e2e` job serves the built app from `http://localhost:4173`. Clerk production
+instances are bound to their configured domain and require HTTPS, so a `pk_live_` key
+cannot initialise there: ClerkJS never loads, `<Show when="signed-in">` in
+`apps/web/src/main.tsx` never resolves, the app renders an empty body, and the redirect
+`apps/web/e2e/smoke.spec.ts` asserts never happens. The failure looks like a routing bug
+(`Expected /\/login/, received "http://localhost:4173/"`) rather than an auth
+misconfiguration. Development instances are the ones that permit `localhost`, so CI gets
+a `pk_test_` key.
+
+`cd.yml` is the opposite: it builds the bundle served from the real domain, so it needs
+the `pk_live_` key. A development key there would work but is wrong for production — dev
+instances share OAuth credentials with every other Clerk dev instance and carry lower
+rate limits.
+
+### Pairing with `CLERK_SECRET_KEY`
+
+The `pk_live_` key must pair with the `CLERK_SECRET_KEY` in
+`/opt/daleelex/shared/api.env` (§5) — same Clerk instance on both halves. A publishable
+key from one instance and a secret key from another fails exactly like a missing key.
+
+Before switching production to a new Clerk instance, confirm its Frontend API host
+actually resolves (`dig +short clerk.<your-domain>`). A production instance whose DNS
+records are not yet in place will serve a blank page to every user, because ClerkJS
+cannot load at all. `cd.yml`'s health check will not catch this: it curls the public
+`/api/v1/health`, which knows nothing about the browser bundle.
+
+`cd.yml` fails before building if `VITE_CLERK_PUBLISHABLE_KEY` is unset, because Vite
+bakes `VITE_*` in at build time and an empty value yields a bundle that throws on boot —
+a failure that would otherwise only surface after the artifact was already on the VM.
+
 **Environment:** Settings → Environments → New environment → name it exactly
 `production` (must match `environment: production` in `cd.yml`'s `deploy` job, or the
 job will implicitly create/use a differently-configured environment). Required

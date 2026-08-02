@@ -19,6 +19,7 @@ Internal developer portal and service catalogue. Engineers use it to find every 
 - [CI/CD](#cicd)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
+- [License](#license)
 
 ## What it does
 
@@ -324,6 +325,8 @@ Test files are named for what they prove, not what they touch: `catalogAdminAuth
 
 One thing worth knowing before debugging a red build: every CI job that touches Prisma-typed code runs `prisma generate` explicitly, because `@prisma/client`'s `postinstall` doesn't reliably fire under `pnpm install --frozen-lockfile` here. If you see `TS7006: Parameter '...' implicitly has an 'any' type` on a callback that looks correct, check that `prisma generate` ran in that job before suspecting the application code.
 
+Both workflows read the web app's Clerk publishable key from repository **variables** (Settings → Secrets and variables → Actions → Variables) rather than secrets, since publishable keys are meant to ship in client bundles — but they read *different* ones, and the two are not interchangeable. CD uses `VITE_CLERK_PUBLISHABLE_KEY`, a production-instance `pk_live_` key, and fails before building if it is unset. CI's `e2e` job uses `VITE_CLERK_PUBLISHABLE_KEY_CI`, which must be a **development**-instance `pk_test_` key: the suite serves the app from `http://localhost:4173`, and Clerk production instances are bound to their own domain over HTTPS, so a `pk_live_` key there leaves ClerkJS unable to load and the smoke test failing as though routing were broken. See [docs/CICD.md](docs/CICD.md) for the full explanation.
+
 Full details, including secret setup and rollback, are in [docs/CICD.md](docs/CICD.md).
 
 ## Troubleshooting
@@ -349,3 +352,7 @@ Contributions are welcome. Start with [CONTRIBUTING.md](./CONTRIBUTING.md) — i
 3. Ship in vertical slices — each commit takes one thin capability end to end.
 4. Every schema change goes through a Prisma migration, no exceptions.
 5. Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before opening a PR.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

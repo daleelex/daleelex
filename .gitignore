@@ -6,3 +6,10 @@ dist
 .DS_Store
 playwright-report
 test-results
+
+# Per-developer agent state. The committed .claude/skills and .claude/launch.json
+# above are shared config; these two are not. They were previously covered only by
+# .git/info/exclude and a personal global gitignore, neither of which survives a
+# clone — so a new contributor had nothing stopping them from committing either.
+.claude/settings.local.json
+.claude/worktrees/
