@@ -91,11 +91,19 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     # The smoke test asserts Clerk's real login page renders, so ClerkProvider has to
-    # boot against a live instance — a synthetic key won't do, it just throws. On this
-    # repo the variable is always set, so this never skips; on a fork that hasn't
-    # configured its own Clerk instance, e2e sits out instead of failing a PR for a
-    # reason the contributor can't fix. lint/typecheck/test still gate the fork's PR.
-    if: vars.VITE_CLERK_PUBLISHABLE_KEY != ''
+    # boot against a live instance — a synthetic key won't do, it just throws.
+    #
+    # Gated on the repo not being a fork, NOT on the variable being set. Gating on the
+    # variable looks safer but is worse: repo variables (unlike secrets) ARE exposed to
+    # fork pull requests, so the variable is nearly always present anyway, and the one
+    # thing that condition reliably caught was the maintainer setting the value as a
+    # *secret* by mistake — which silently skipped the job on this repo instead of
+    # failing it. Here e2e always runs, and a missing variable fails loudly.
+    #
+    # A fork running CI on its own repo (push to its master) has no Clerk instance of
+    # its own, so it skips rather than failing for a reason the contributor can't fix;
+    # setting the variable in the fork is not required but does opt them back in.
+    if: github.event.repository.fork == false || vars.VITE_CLERK_PUBLISHABLE_KEY != ''
     services:
       postgres:
         image: postgres:16
