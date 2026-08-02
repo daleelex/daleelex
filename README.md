@@ -19,6 +19,7 @@ Internal developer portal and service catalogue. Engineers use it to find every 
 - [CI/CD](#cicd)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
+- [License](#license)
 
 ## What it does
 
@@ -324,6 +325,8 @@ Test files are named for what they prove, not what they touch: `catalogAdminAuth
 
 One thing worth knowing before debugging a red build: every CI job that touches Prisma-typed code runs `prisma generate` explicitly, because `@prisma/client`'s `postinstall` doesn't reliably fire under `pnpm install --frozen-lockfile` here. If you see `TS7006: Parameter '...' implicitly has an 'any' type` on a callback that looks correct, check that `prisma generate` ran in that job before suspecting the application code.
 
+Both workflows read the web app's Clerk publishable key from a `VITE_CLERK_PUBLISHABLE_KEY` repository **variable** (Settings → Secrets and variables → Actions → Variables) rather than a secret, since publishable keys are meant to ship in client bundles. CD fails before building if it is unset. CI's `e2e` job needs it too — the smoke test asserts Clerk's real login page renders, so it is skipped on a fork that has not set its own.
+
 Full details, including secret setup and rollback, are in [docs/CICD.md](docs/CICD.md).
 
 ## Troubleshooting
@@ -349,3 +352,7 @@ Contributions are welcome. Start with [CONTRIBUTING.md](./CONTRIBUTING.md) — i
 3. Ship in vertical slices — each commit takes one thin capability end to end.
 4. Every schema change goes through a Prisma migration, no exceptions.
 5. Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before opening a PR.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

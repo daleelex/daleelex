@@ -178,6 +178,26 @@ Runs **on the VM**, not the runner. In order:
 | `SSH_PRIVATE_KEY` | Private half of a dedicated deploy keypair (not a personal key) |
 | `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan <SSH_HOST>`                              |
 
+**Variables** (same page, the **Variables** tab — not Secrets):
+
+| Variable                     | Value                                                           |
+| ---------------------------- | --------------------------------------------------------------- |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (`pk_live_…`) for the production instance |
+
+A variable rather than a secret on purpose: publishable keys are meant to ship in
+client bundles, so there is nothing to protect, and GitHub would otherwise redact it
+from build logs and withhold it from fork pull requests for no benefit. Both workflows
+read it as `${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}`.
+
+Use a key from a Clerk **production** instance, not a `pk_test_` development one — dev
+instances share OAuth credentials and carry lower rate limits. It must pair with the
+`CLERK_SECRET_KEY` in `/opt/daleelex/shared/api.env` (§5); a publishable key from one
+instance and a secret key from another fails exactly like a missing key.
+
+`cd.yml` fails before building if this is unset, because Vite bakes `VITE_*` in at build
+time and an empty value yields a bundle that throws on boot — a failure that would
+otherwise only surface after the artifact was already on the VM.
+
 **Environment:** Settings → Environments → New environment → name it exactly
 `production` (must match `environment: production` in `cd.yml`'s `deploy` job, or the
 job will implicitly create/use a differently-configured environment). Required
