@@ -10,12 +10,15 @@ Read `.claude/skills/daleelex-engineer/SKILL.md` at the start of every session. 
 - The repo layout, schema, and conventions
 
 Also read the references in `.claude/skills/daleelex-engineer/references/` when relevant:
-- `getting-started.md` — day-one scaffolding (read this first, since the repo is empty)
 - `schema.md` — database schema
 - `api.md` — API contract
 - `ingestor.md` — the repo-scanning worker
 - `frontend.md` — React app conventions
+- `getting-started.md` — the original day-one scaffolding plan. Historical: the scaffolding
+  it describes is done. Useful for the reasoning behind the layout, not as instructions.
 
 ## Status
 
-Currently scaffolding from empty repo. Follow `getting-started.md`.
+Building on an established codebase — `apps/api`, `apps/web`, `apps/ingestor`, and
+`packages/shared` all exist and run. See [README.md](./README.md) for local setup and
+[ARCHITECTURE.md](./ARCHITECTURE.md) for how the pieces fit together.
