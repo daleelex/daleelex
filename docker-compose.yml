@@ -106,6 +106,13 @@ services:
     #
     #   docker compose run --rm ingestor
     #
+    # Caveat that follows from the profile: `docker compose up --build` only builds
+    # services in an ACTIVE profile, so this one is skipped and `run` silently reuses
+    # whatever image is already tagged. After changing its Dockerfile, build it
+    # explicitly or you are testing the previous image:
+    #
+    #   docker compose build ingestor
+    #
     # This mirrors `autorestart: false` in ecosystem.config.cjs, set for the same
     # reason. Revisit when the ingestor becomes an actual long-running worker.
     profiles: [ingestor]

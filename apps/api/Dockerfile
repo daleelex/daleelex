@@ -6,6 +6,14 @@
 
 FROM node:20-alpine AS build
 
+# openssl is needed in the BUILD stage too, not just at runtime. Without it Prisma's
+# platform detection cannot read an OpenSSL version, silently falls back to
+# openssl-1.1.x, and resolves the engine to libquery_engine-*-openssl-1.1.x.so.node —
+# which then fails to load with "Error loading shared library libssl.so.1.1". Invisible
+# in the production image (whose runtime stage installs openssl) but fatal for the dev
+# compose override, which runs this stage directly.
+RUN apk add --no-cache openssl
+
 # corepack ships with Node 20 and reads `packageManager` from the root package.json,
 # so the pinned pnpm version is the same one CI and the VM use. No curl-pipe-sh.
 RUN corepack enable

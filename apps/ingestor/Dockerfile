@@ -5,6 +5,12 @@
 
 FROM node:20-alpine AS build
 
+# Needed in the build stage as well as at runtime — without it Prisma detects no
+# OpenSSL version, falls back to openssl-1.1.x, and the engine fails to load with
+# "Error loading shared library libssl.so.1.1". See apps/api/Dockerfile for the
+# longer note; the dev compose override runs this stage directly.
+RUN apk add --no-cache openssl
+
 RUN corepack enable
 WORKDIR /repo
 
