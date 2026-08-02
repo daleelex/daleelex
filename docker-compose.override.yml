@@ -1,0 +1,10 @@
+# Dev-only overrides. Compose loads this automatically, so plain `docker compose up`
+# is the dev command and prod has to opt out of it explicitly by naming its own files.
+
+services:
+  postgres:
+    # Published so host-side tooling keeps working unchanged — `pnpm db:migrate`,
+    # `pnpm db:seed`, and psql all point at localhost:5432. Prod does not publish it:
+    # only the api container needs to reach the database there.
+    ports:
+      - '5432:5432'

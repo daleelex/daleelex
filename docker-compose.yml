@@ -1,3 +1,12 @@
+# Base topology, shared by dev and prod. On its own this file is closest to a prod
+# shape: no bind mounts, and no host ports for the app services.
+#
+#   dev   docker compose up            (docker-compose.override.yml is auto-loaded)
+#   prod  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Caddy is NOT here on purpose — it stays on the host reverse-proxying into these
+# containers, so TLS and certificate renewal keep working exactly as they do today.
+
 services:
   postgres:
     image: postgres:16
@@ -5,11 +14,20 @@ services:
       POSTGRES_USER: daleelex
       POSTGRES_PASSWORD: daleelex
       POSTGRES_DB: daleelex
-    ports:
-      - '5432:5432'
+    # api waits on this rather than on the container merely existing — Postgres
+    # accepts TCP connections a beat before it will answer queries, and without the
+    # gate the API loses that race on a cold start and exits.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U daleelex -d daleelex']
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - pg_data:/var/lib/postgresql/data
+    networks: [daleelex]
 
+  # Unchanged from before this pass and out of scope for it, beyond joining the shared
+  # network so the API container can reach it by name.
   jenkins:
     image: jenkins/jenkins:lts
     ports:
@@ -17,6 +35,50 @@ services:
       - '50000:50000'
     volumes:
       - jenkins_home:/var/jenkins_home
+    networks: [daleelex]
+
+  api:
+    # Both `image` and `build` on purpose: dev builds locally and tags it with this
+    # name, prod overrides `image` to the published GHCR tag and never builds.
+    image: ghcr.io/daleelex/daleelex-api:${DALEELEX_TAG:-dev}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      # Container-to-container, so the service name `postgres` and the *internal* 5432
+      # — unaffected by whatever the host happens to have bound on its own 5432.
+      DATABASE_URL: postgresql://daleelex:daleelex@postgres:5432/daleelex
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      # Optional at boot: the affected features report a clear error instead of the
+      # process refusing to start. See .env.docker.example.
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      DALEELEX_ENCRYPTION_KEY: ${DALEELEX_ENCRYPTION_KEY:-}
+      DALEELEX_ADMIN_API_TOKEN: ${DALEELEX_ADMIN_API_TOKEN:-}
+      JENKINS_BASE_URL: ${JENKINS_BASE_URL:-}
+      JENKINS_USERNAME: ${JENKINS_USERNAME:-}
+      JENKINS_API_TOKEN: ${JENKINS_API_TOKEN:-}
+    # There is no curl or wget in the runtime image, and adding a package purely to
+    # poll one URL is not worth the layer — Node 20 has fetch built in.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [daleelex]
+
+networks:
+  daleelex:
+    driver: bridge
 
 volumes:
   pg_data:

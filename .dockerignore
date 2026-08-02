@@ -1,0 +1,50 @@
+# Build context exclusions. The single most important entry here is node_modules:
+# every image installs its own dependencies inside the target-arch build stage, and
+# esbuild/rollup/Prisma all ship per-platform binaries. Letting a macOS arm64
+# node_modules leak into the context would either bloat the layer or, worse, shadow
+# the container's correct install with host binaries that cannot execute.
+node_modules
+**/node_modules
+
+.git
+.gitignore
+.github
+
+# Build output — every image rebuilds this from source inside the build stage.
+dist
+**/dist
+apps/web/dist
+
+# Secrets never belong in an image layer. .env.example is not matched by these.
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Test and tooling artifacts
+playwright-report
+**/playwright-report
+test-results
+**/test-results
+coverage
+**/coverage
+
+# Agent / editor state
+.claude
+.agents
+.vscode
+.idea
+.DS_Store
+
+# Docs and design assets: not needed to build or run any of the three apps.
+assets
+design_handoff_daleelex_enhancement
+docs
+*.md
+!README.md
+
+# Docker's own files — changing a compose file should not bust the build cache.
+Dockerfile
+**/Dockerfile
+docker-compose*.yml
+.dockerignore
