@@ -1,0 +1,91 @@
+# Production overrides for the single Oracle Cloud VM (Ampere ARM).
+#
+# Compose auto-loads docker-compose.override.yml, so production has to name its files
+# explicitly — otherwise it silently inherits the dev bind mounts. There is no way to
+# opt out of the override implicitly, so this is always a two-file invocation:
+#
+#   export DALEELEX_TAG=<git-sha>
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Deliberately NOT here:
+#   - bind mounts. The image is the artifact; a host path that shadows it means the
+#     thing running is not the thing that was built and tested.
+#   - Caddy. It stays on the host terminating TLS and proxying into `web` below.
+#   - automatic migrations. Run them explicitly, and look at the output:
+#       docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#         run --rm --entrypoint sh api -c './node_modules/.bin/prisma migrate deploy'
+
+services:
+  postgres:
+    restart: unless-stopped
+    # `unless-stopped` rather than `always`: after a deliberate `docker compose stop`,
+    # a VM reboot should not quietly bring the stack back up underneath whoever
+    # stopped it.
+    deploy:
+      resources:
+        limits:
+          # The box is shared with Caddy and the pm2 processes during the transition,
+          # so nothing here is allowed to consume the whole VM. Raise deliberately if
+          # the working set genuinely outgrows it rather than because a query is slow.
+          memory: 1g
+    # Not published to the host. Only the api container needs to reach Postgres, and
+    # the host already runs its own Postgres on 5432 — publishing here would either
+    # collide with it or, worse, quietly bind and confuse which database is in use.
+    ports: !reset []
+
+  api:
+    image: ghcr.io/daleelex/daleelex-api:${DALEELEX_TAG:?set DALEELEX_TAG to the git SHA being deployed}
+    # No `build` key: production pulls a published, CI-built multi-arch image. Leaving
+    # build in would let a `docker compose up --build` on the VM produce an untested
+    # image that shadows the tag it was meant to run.
+    build: !reset null
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    # No published port: nginx in the web container reaches the API over the compose
+    # network, so nothing but the edge needs a host port.
+    ports: !reset []
+    logging: &logging
+      driver: json-file
+      options:
+        # Unbounded container logs are the classic way to fill a small VM's disk and
+        # take down everything on it, including the database.
+        max-size: '10m'
+        max-file: '5'
+
+  web:
+    image: ghcr.io/daleelex/daleelex-web:${DALEELEX_TAG:?set DALEELEX_TAG to the git SHA being deployed}
+    build: !reset null
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          # Static files out of nginx — this is generous already.
+          memory: 128m
+    ports:
+      # Bound to loopback ON PURPOSE. Caddy runs on the host and proxies to
+      # 127.0.0.1:8080; without the explicit 127.0.0.1 Docker publishes on 0.0.0.0 and
+      # punches a hole straight through the VM firewall to the untrusted internet,
+      # bypassing TLS termination entirely.
+      - '127.0.0.1:8080:80'
+    logging: *logging
+
+  ingestor:
+    image: ghcr.io/daleelex/daleelex-ingestor:${DALEELEX_TAG:?set DALEELEX_TAG to the git SHA being deployed}
+    build: !reset null
+    # Stays `no` in production too — it is a one-shot job that exits 0 on success, so
+    # any restart policy would run it in a loop. Invoke it from cron or by hand:
+    #   docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm ingestor
+    restart: 'no'
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging: *logging

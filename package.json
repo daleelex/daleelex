@@ -12,7 +12,6 @@
     "format:check": "prettier --check .",
     "test": "pnpm -r test",
     "db:up": "docker compose up -d postgres",
-    "jenkins:up": "docker compose up -d jenkins",
     "db:migrate": "pnpm --filter @daleelex/api prisma migrate dev",
     "db:seed": "pnpm --filter @daleelex/api prisma db seed",
     "docs:sync": "pnpm --filter @daleelex/ingestor sync"

@@ -171,7 +171,6 @@ Request and response types live in `packages/shared` so the API and the web app 
 | Format with Prettier | `pnpm format` |
 | Check formatting (what CI runs) | `pnpm format:check` |
 | Start Postgres | `pnpm db:up` |
-| Start Jenkins | `pnpm jenkins:up` |
 | New DB migration | `pnpm db:migrate` |
 | Seed the database | `pnpm db:seed` |
 | Sync repository docs | `pnpm docs:sync` |
@@ -297,15 +296,11 @@ pnpm docs:sync
 
 Each sync reads documents at a stable commit, updates changed pages, and removes pages that no longer exist in the repository. Repository-relative links and images resolve against that same commit when rendered in the portal.
 
-## Local Jenkins integration
+## Jenkins integration
 
-DaleelEx can connect to a local Jenkins instance for development:
+The API can report the health of a Jenkins instance. Set `JENKINS_BASE_URL`, `JENKINS_USERNAME`, and `JENKINS_API_TOKEN` in `apps/api/.env` (or the root `.env` when running under Compose) and point them at an existing instance. The Health & SLO page shows the resulting connection status via `GET /api/v1/integrations/jenkins/health`.
 
-```bash
-pnpm jenkins:up
-```
-
-Jenkins runs at http://localhost:8080. On first boot, complete the setup wizard and create an API token, then set `JENKINS_BASE_URL`, `JENKINS_USERNAME`, and `JENKINS_API_TOKEN` in `apps/api/.env`. The Health & SLO page shows the resulting connection status via `GET /api/v1/integrations/jenkins/health`.
+Compose no longer ships a local Jenkins container. It published `0.0.0.0:8080`, which collided with the web container in the production overlay, and it was a heavyweight thing to start for a feature most work never touches.
 
 ## Testing
 

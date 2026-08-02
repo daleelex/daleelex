@@ -26,17 +26,6 @@ services:
       - pg_data:/var/lib/postgresql/data
     networks: [daleelex]
 
-  # Unchanged from before this pass and out of scope for it, beyond joining the shared
-  # network so the API container can reach it by name.
-  jenkins:
-    image: jenkins/jenkins:lts
-    ports:
-      - '8080:8080'
-      - '50000:50000'
-    volumes:
-      - jenkins_home:/var/jenkins_home
-    networks: [daleelex]
-
   api:
     # Both `image` and `build` on purpose: dev builds locally and tags it with this
     # name, prod overrides `image` to the published GHCR tag and never builds.
@@ -141,4 +130,3 @@ networks:
 
 volumes:
   pg_data:
-  jenkins_home:
