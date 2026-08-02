@@ -171,7 +171,6 @@ Request and response types live in `packages/shared` so the API and the web app 
 | Format with Prettier | `pnpm format` |
 | Check formatting (what CI runs) | `pnpm format:check` |
 | Start Postgres | `pnpm db:up` |
-| Start Jenkins | `pnpm jenkins:up` |
 | New DB migration | `pnpm db:migrate` |
 | Seed the database | `pnpm db:seed` |
 | Sync repository docs | `pnpm docs:sync` |
@@ -297,15 +296,11 @@ pnpm docs:sync
 
 Each sync reads documents at a stable commit, updates changed pages, and removes pages that no longer exist in the repository. Repository-relative links and images resolve against that same commit when rendered in the portal.
 
-## Local Jenkins integration
+## Jenkins integration
 
-DaleelEx can connect to a local Jenkins instance for development:
+The API can report the health of a Jenkins instance. Set `JENKINS_BASE_URL`, `JENKINS_USERNAME`, and `JENKINS_API_TOKEN` in `apps/api/.env` (or the root `.env` when running under Compose) and point them at an existing instance. The Health & SLO page shows the resulting connection status via `GET /api/v1/integrations/jenkins/health`.
 
-```bash
-pnpm jenkins:up
-```
-
-Jenkins runs at http://localhost:8080. On first boot, complete the setup wizard and create an API token, then set `JENKINS_BASE_URL`, `JENKINS_USERNAME`, and `JENKINS_API_TOKEN` in `apps/api/.env`. The Health & SLO page shows the resulting connection status via `GET /api/v1/integrations/jenkins/health`.
+Compose no longer ships a local Jenkins container. It published `0.0.0.0:8080`, which collided with the web container in the production overlay, and it was a heavyweight thing to start for a feature most work never touches.
 
 ## Testing
 
@@ -318,9 +313,66 @@ The Vitest suites run without a database: API route tests mock `./db.js` and `@c
 
 Test files are named for what they prove, not what they touch: `catalogAdminAuthorization.test.ts` asserts that catalogue mutations reject non-admins, and reads that way in the output.
 
+## Docker
+
+All three apps ship as container images. This runs alongside the pm2 deploy rather than replacing it — nothing about `ecosystem.config.cjs`, `cd.yml`, or the host Caddy changed.
+
+### Local development
+
+```bash
+docker compose up -d --build
+```
+
+Source is bind-mounted and the watchers run inside the containers, so editing a file on the host reloads the service: `tsx watch` for the API, Vite HMR for the web app. The web app is on http://localhost:5173, the API on http://localhost:3000, Postgres on 5432.
+
+The ingestor is a one-shot job rather than a service, so it sits behind a Compose profile and is not started by `up`:
+
+```bash
+docker compose build ingestor && docker compose run --rm ingestor
+```
+
+The explicit build matters: `up --build` skips services in inactive profiles, so without it `run` silently reuses the previous image.
+
+Each service masks its `node_modules` with an anonymous volume, so the host's macOS build never shadows the container's Linux one. Those volumes survive `--build`, which means after changing dependencies or regenerating the Prisma client you need `docker compose up -d --build -V` (`-V` renews them). The symptom of forgetting is a module that is definitely installed being reported missing.
+
+### Production
+
+```bash
+export DALEELEX_TAG=<git-sha>
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Naming both files is required, not stylistic: Compose auto-loads `docker-compose.override.yml`, and there is no implicit way to opt out, so a plain `up` on the VM would inherit the dev bind mounts. `DALEELEX_TAG` has no default and the stack refuses to start without it — deploying should name an exact commit.
+
+Only the web container publishes a port, bound to `127.0.0.1:8080`, and Caddy stays on the host proxying into it. The API and Postgres have no host port at all; nginx inside the web container reaches the API over the Compose network.
+
+Migrations are never run automatically on container start — a bad migration would otherwise take the service down on every restart with no review step:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+  run --rm --entrypoint sh api -c './node_modules/.bin/prisma migrate deploy'
+```
+
+### Images and architectures
+
+Images are published to GHCR as `ghcr.io/daleelex/daleelex-{api,web,ingestor}`, tagged with both the git SHA and `latest`, built for `linux/amd64` and `linux/arm64`. The arm64 half is what the Ampere production VM runs; amd64 covers developer machines and CI runners.
+
+`apps/api/prisma/schema.prisma` therefore lists four `binaryTargets`. The two `-musl-` ones exist because the images are Alpine: Prisma's glibc engines will not load there, and the failure is a runtime `could not locate the Query Engine` on every database call rather than a build error.
+
+To build and push by hand — normally CI's job:
+
+```bash
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_... ./scripts/build-images.sh
+```
+
+The web image bakes its Clerk key in at build time, because Vite inlines `VITE_*` into the bundle. A published web image is therefore pinned to one Clerk instance and cannot be repointed at another without rebuilding. Dev is unaffected — `vite dev` reads the variable at process start.
+
+> **After the first successful push, confirm each package is private.** GHCR packages default to the source repository's visibility, but this is worth checking rather than assuming: GitHub → Packages → each of the three → Package settings → Danger Zone → Change visibility.
+
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yml`) runs on every pull request and every push to `master`: `lint`, `typecheck`, `test`, and `e2e` as four independent jobs, so a slow one never blocks a fast one from reporting. A concurrency group cancels superseded runs.
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request and every push to `master`: `lint`, `typecheck`, `test`, and `e2e` as four independent jobs, so a slow one never blocks a fast one from reporting. A concurrency group cancels superseded runs. On a push to `master` — never on a pull request — a fifth job, `images`, builds and pushes the three multi-arch images to GHCR once all four have passed. It authenticates with the built-in `GITHUB_TOKEN` and `packages: write`; no registry secret is involved.
 - **CD** (`.github/workflows/cd.yml`) is dispatched manually from the Actions tab. It builds a release tarball, rsyncs it to the VM, runs `prisma migrate deploy`, swaps the `current` symlink, reloads pm2, and health-checks the API before declaring success. **CD does not verify that the chosen ref passed CI — check that yourself.**
 
 One thing worth knowing before debugging a red build: every CI job that touches Prisma-typed code runs `prisma generate` explicitly, because `@prisma/client`'s `postinstall` doesn't reliably fire under `pnpm install --frozen-lockfile` here. If you see `TS7006: Parameter '...' implicitly has an 'any' type` on a callback that looks correct, check that `prisma generate` ran in that job before suspecting the application code.
