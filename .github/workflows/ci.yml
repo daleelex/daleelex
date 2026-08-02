@@ -90,6 +90,12 @@ jobs:
   # one production VM. Revisit if the suite grows past a few minutes or gets flaky.
   e2e:
     runs-on: ubuntu-latest
+    # The smoke test asserts Clerk's real login page renders, so ClerkProvider has to
+    # boot against a live instance — a synthetic key won't do, it just throws. On this
+    # repo the variable is always set, so this never skips; on a fork that hasn't
+    # configured its own Clerk instance, e2e sits out instead of failing a PR for a
+    # reason the contributor can't fix. lint/typecheck/test still gate the fork's PR.
+    if: vars.VITE_CLERK_PUBLISHABLE_KEY != ''
     services:
       postgres:
         image: postgres:16
@@ -106,9 +112,12 @@ jobs:
           --health-retries 5
     env:
       # Publishable, not secret — Clerk keys prefixed pk_ are meant to ship in client
-      # bundles. Vite bakes VITE_* vars in at build time, so the web build step below
-      # needs this present or the app throws on boot (no VITE_CLERK_PUBLISHABLE_KEY).
-      VITE_CLERK_PUBLISHABLE_KEY: pk_test_Y29ycmVjdC13YWxydXMtNzUuY2xlcmsuYWNjb3VudHMuZGV2JA
+      # bundles, so this is a repo *variable* (Settings → Secrets and variables →
+      # Actions → Variables), not a secret. It lives there rather than inline so the
+      # public repo isn't hardcoded to one maintainer's personal Clerk dev instance,
+      # and so a fork can point CI at its own. Vite bakes VITE_* in at build time, so
+      # the web build below needs it present or the app throws on boot.
+      VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - run: corepack enable

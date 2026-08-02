@@ -33,11 +33,22 @@ jobs:
       - run: pnpm --filter @daleelex/api build
       - run: pnpm --filter @daleelex/ingestor build
       # Publishable, not secret — Clerk keys prefixed pk_ are meant to ship in client
-      # bundles. Vite bakes VITE_* vars in at build time; without this the deployed app
-      # throws on boot (blank page) since apps/web/.env never leaves the developer machine.
+      # bundles, so this is a repo *variable* rather than a secret, and rather than a
+      # literal that would hardcode the public repo to one maintainer's Clerk instance.
+      # Checked before the build because Vite bakes VITE_* in at build time and an
+      # empty value produces a bundle that throws on boot (blank page) — a failure that
+      # would otherwise only surface after the artifact is already on the VM.
+      - name: Require a Clerk publishable key
+        run: |
+          if [ -z "${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}" ]; then
+            echo "vars.VITE_CLERK_PUBLISHABLE_KEY is unset — set it under Settings →" >&2
+            echo "Secrets and variables → Actions → Variables. Production should use a" >&2
+            echo "pk_live_ key from a Clerk production instance, not a pk_test_ one." >&2
+            exit 1
+          fi
       - run: pnpm --filter @daleelex/web build
         env:
-          VITE_CLERK_PUBLISHABLE_KEY: pk_test_Y29ycmVjdC13YWxydXMtNzUuY2xlcmsuYWNjb3VudHMuZGV2JA
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
 
       # pnpm's own workspace-deploy command: resolves @daleelex/shared and prunes to
       # production-only node_modules per app. Hand-rolling this with rsync-of-source
