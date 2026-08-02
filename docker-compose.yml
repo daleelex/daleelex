@@ -76,6 +76,23 @@ services:
         condition: service_healthy
     networks: [daleelex]
 
+  web:
+    image: ghcr.io/daleelex/daleelex-web:${DALEELEX_TAG:-dev}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Vite inlines VITE_* at build time, so this is a build arg, not a runtime env
+        # var — the built image is pinned to whichever Clerk instance it was built
+        # against. Publishable, not secret.
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:-}
+    # nginx serves the bundle and proxies /api to the api service, so this is the only
+    # container the host Caddy needs to know about.
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [daleelex]
+
   ingestor:
     image: ghcr.io/daleelex/daleelex-ingestor:${DALEELEX_TAG:-dev}
     build:
