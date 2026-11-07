@@ -1,9 +1,8 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Service } from '@daleelex/shared';
 import { ServiceDrawer } from '../components/ServiceDrawer';
-import { UserAvatar } from '../components/UserAvatar';
 import { computeHealth, STATE_LABEL, type HealthState } from '../lib/health';
 import { api } from '../api';
 import './HomePage.css';
@@ -65,10 +64,7 @@ function greeting() {
 }
 
 export function HomePage() {
-  const navigate = useNavigate();
   const [selected, setSelected] = useState<Service | null>(null);
-  const [searchQ, setSearchQ] = useState('');
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const { data } = useQuery({ queryKey: ['services'], queryFn: api.services });
   const services = data?.data ?? [];
@@ -78,23 +74,6 @@ export function HomePage() {
     () => new Set(services.map((s) => s.ownerTeamId).filter(Boolean)).size,
     [services],
   );
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (searchQ.trim()) navigate(`/services?q=${encodeURIComponent(searchQ.trim())}`);
-    else navigate('/services');
-  }
 
   const kpis = [
     {
@@ -123,36 +102,6 @@ export function HomePage() {
 
   return (
     <>
-      {/* Topbar */}
-      <header className="topbar">
-        <div className="crumb">
-          <span>DaleelEx</span>
-          <ChevronRight />
-          <span className="current">Home</span>
-        </div>
-        <div className="top-right">
-          <form className="search" onSubmit={handleSearch}>
-            <label className="sr-only" htmlFor="home-search">
-              Search services, docs, teams
-            </label>
-            <SearchIcon />
-            <input
-              ref={searchRef}
-              id="home-search"
-              type="search"
-              placeholder="Search services, docs, teams..."
-              value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
-            />
-            <kbd className="kbd">⌘K</kbd>
-          </form>
-          <button className="icon-btn" title="Notifications">
-            <BellIcon />
-          </button>
-          <UserAvatar />
-        </div>
-      </header>
-
       <div className="home-body">
         {/* Hero banner */}
         <div className="home-hero">
@@ -357,51 +306,6 @@ function QuickLink({
 }
 
 /* ── Icons ──────────────────────────────────────────────────────────────── */
-function SearchIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      style={{ color: 'var(--muted)', flexShrink: 0 }}
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-function BellIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  );
-}
-function ChevronRight() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
 function ArrowRight() {
   return (
     <svg
