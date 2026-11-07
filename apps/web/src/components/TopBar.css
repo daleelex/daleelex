@@ -1,0 +1,46 @@
+/* The search box is a button that opens the palette, so it needs the affordances
+   a bare .search div never had. */
+.search-trigger {
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.search-trigger:hover {
+  border-color: var(--line-strong);
+}
+
+.search-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.search-trigger-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-actions:empty {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .search-trigger {
+    width: auto;
+  }
+
+  .search-trigger-label,
+  .search-trigger .kbd {
+    display: none;
+  }
+}
