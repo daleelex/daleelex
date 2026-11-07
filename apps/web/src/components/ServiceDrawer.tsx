@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/react';
 import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
 import { DocMarkdown } from './DocMarkdown';
 import { api } from '../api';
+import { buildDependencyTree, flatten, type TreeNode } from '../lib/dependencyTree';
 import { EditServiceModal } from './EditServiceModal';
 import { EditDocModal } from './EditDocModal';
 import { ServiceLogsTab } from './ServiceLogsTab';
@@ -215,20 +217,12 @@ function OverviewTab({ service }: { service: Service }) {
         </div>
       </div>
 
-      <h4 className="section-title">Health signals · 30 days</h4>
-      <div className="signal-row">
-        {[
-          { label: 'Availability', value: '99.8%', color: 'var(--ok)' },
-          { label: 'Incidents', value: '0', color: 'var(--ok)' },
-          { label: 'Deploys', value: '12', color: 'var(--accent)' },
-          { label: 'p95 latency', value: '184 ms', color: 'var(--ok)' },
-        ].map((s) => (
-          <div key={s.label} className="signal-cell">
-            <div className="meta-label">{s.label}</div>
-            <div className="signal-value">{s.value}</div>
-            <div className="signal-bar" style={{ background: s.color }} />
-          </div>
-        ))}
+      <h4 className="section-title">Health signals</h4>
+      <div className="signal-empty">
+        <p>No metrics source connected.</p>
+        <Link to="/settings" className="signal-empty-link">
+          Connect one in Settings
+        </Link>
       </div>
 
       {service.tags.length > 0 && (
@@ -298,25 +292,14 @@ const TYPE_COLOR: Record<Service['type'], string> = {
   tool: '#D89510',
 };
 
-// Keep the picture readable: beyond four a side it stops being a diagram.
-const MAX_PER_SIDE = 4;
-const PAD_TOP = 34;
-const ROW = 64;
-
 function DependenciesTab({ service }: { service: Service }) {
   const { data } = useQuery({ queryKey: ['services'], queryFn: api.services });
   const services = data?.data ?? [];
-  const byId = new Map(services.map((entry) => [entry.id, entry]));
 
-  const upstream = service.dependencies
-    .map((id) => byId.get(id))
-    .filter((entry): entry is Service => !!entry)
-    .slice(0, MAX_PER_SIDE);
-  const downstream = services
-    .filter((entry) => entry.dependencies.includes(service.id))
-    .slice(0, MAX_PER_SIDE);
+  const upstream = buildDependencyTree(service, services, 'upstream');
+  const downstream = buildDependencyTree(service, services, 'downstream');
 
-  if (upstream.length === 0 && downstream.length === 0) {
+  if (upstream.children.length === 0 && downstream.children.length === 0) {
     return (
       <div className="dep-empty">
         <DepIcon />
@@ -329,82 +312,83 @@ function DependenciesTab({ service }: { service: Service }) {
     );
   }
 
-  const rows = Math.max(upstream.length, downstream.length);
-  const height = Math.max(rows > 1 ? 220 : 140, rows * ROW + PAD_TOP * 2 - 24);
-  const centerY = height / 2;
-  const columnY = (count: number, index: number) =>
-    count === 1 ? centerY : PAD_TOP + index * ((height - PAD_TOP * 2) / (count - 1));
-
   return (
     <>
-      <div className="dep-graph" style={{ height }}>
-        <svg
-          className="dep-edges"
-          viewBox={`0 0 420 ${height}`}
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          {upstream.map((entry, index) => (
-            <line
-              key={entry.id}
-              x1={70}
-              y1={columnY(upstream.length, index)}
-              x2={210}
-              y2={centerY}
-            />
-          ))}
-          {downstream.map((entry, index) => (
-            <line
-              key={entry.id}
-              x1={210}
-              y1={centerY}
-              x2={350}
-              y2={columnY(downstream.length, index)}
-            />
-          ))}
-        </svg>
-
-        {upstream.map((entry, index) => (
-          <DepNode
-            key={entry.id}
-            service={entry}
-            side="upstream"
-            y={columnY(upstream.length, index)}
-          />
-        ))}
-        <DepNode service={service} side="center" y={centerY} />
-        {downstream.map((entry, index) => (
-          <DepNode
-            key={entry.id}
-            service={entry}
-            side="downstream"
-            y={columnY(downstream.length, index)}
-          />
-        ))}
-      </div>
-      <div className="dep-legend">
-        <span>{upstream.length} upstream</span>
-        <span>{downstream.length} downstream</span>
-      </div>
+      <DependencySection title="Depends on" empty="Nothing — this is a leaf." tree={upstream} />
+      <DependencySection
+        title="Used by"
+        empty="Nothing in the catalogue depends on this."
+        tree={downstream}
+      />
     </>
   );
 }
 
-function DepNode({
-  service,
-  side,
-  y,
+function DependencySection({
+  title,
+  empty,
+  tree,
 }: {
-  service: Service;
-  side: 'upstream' | 'center' | 'downstream';
-  y: number;
+  title: string;
+  empty: string;
+  tree: TreeNode;
 }) {
+  // A shared dependency shows up on every path that reaches it, so count the
+  // distinct services rather than the rows on screen.
+  const total = new Set(flatten(tree).map((node) => node.service.id)).size;
+
   return (
-    <div className={`dep-node ${side}`} style={{ top: y }}>
-      <span className="dep-node-dot" style={{ background: TYPE_COLOR[service.type] }} />
-      <span className="dep-node-type">{service.type}</span>
-      <span className="dep-node-name">{service.name}</span>
-    </div>
+    <section className="dep-section">
+      <h4 className="section-title">
+        {title}
+        {total > 0 && <span className="dep-count">{total}</span>}
+      </h4>
+      {tree.children.length === 0 ? (
+        <p className="dep-section-empty">{empty}</p>
+      ) : (
+        <div className="dep-tree">
+          {tree.children.map((child) => (
+            <DepBranch key={child.service.id} node={child} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DepBranch({ node }: { node: TreeNode }) {
+  const [, setParams] = useSearchParams();
+
+  function open() {
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set('service', node.service.id);
+      return next;
+    });
+  }
+
+  return (
+    <>
+      <div className="dep-row" style={{ paddingLeft: (node.depth - 1) * 18 }}>
+        <span className="dep-rail" aria-hidden="true" />
+        <button type="button" className="dep-chip" onClick={open}>
+          <span className="dep-dot" style={{ background: TYPE_COLOR[node.service.type] }} />
+          <span className="dep-chip-name">{node.service.name}</span>
+          <span className="dep-chip-tier">T{node.service.tier}</span>
+        </button>
+        {node.cycle && <span className="dep-note">cycle</span>}
+        {node.truncated && <span className="dep-note">deeper</span>}
+      </div>
+      {node.children.map((child) => (
+        <DepBranch key={child.service.id} node={child} />
+      ))}
+      {node.overflow > 0 && (
+        <div className="dep-row" style={{ paddingLeft: node.depth * 18 }}>
+          <span className="dep-rail" aria-hidden="true" />
+          <span className="dep-more">+{node.overflow} more</span>
+        </div>
+      )}
+    </>
   );
 }
 

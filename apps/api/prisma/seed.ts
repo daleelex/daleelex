@@ -372,6 +372,20 @@ Use the admin fixture account (\`test-deletion-user@internal\`) in staging. Neve
   },
 ];
 
+// The same edges the sample catalog-info.yaml files declare, so a fresh clone
+// has a dependency graph to look at instead of an empty tab.
+const dependencies: Record<string, string[]> = {
+  'svc-auth-001': ['svc-pg-main-006'],
+  'svc-gw-002': ['svc-auth-001'],
+  'svc-users-003': ['svc-pg-main-006', 'svc-auth-001'],
+  'svc-notify-004': ['svc-pg-main-006', 'svc-users-003'],
+  'svc-billing-007': ['svc-pg-main-006', 'svc-users-003'],
+  'svc-analytics-008': ['svc-pg-main-006'],
+  'svc-web-009': ['svc-gw-002', 'svc-auth-001'],
+  'svc-recs-010': ['svc-search-005'],
+  'svc-admin-011': ['svc-gw-002', 'svc-users-003'],
+};
+
 async function main() {
   console.log('Seeding teams...');
   for (const team of teams) {
@@ -388,6 +402,14 @@ async function main() {
       where: { id: service.id },
       update: { ...service, links: { deleteMany: {}, create: links } },
       create: { ...service, links: { create: links } },
+    });
+  }
+
+  console.log('Seeding dependencies...');
+  for (const [serviceId, dependsOn] of Object.entries(dependencies)) {
+    await prisma.serviceDependency.deleteMany({ where: { serviceId } });
+    await prisma.serviceDependency.createMany({
+      data: dependsOn.map((dependsOnId) => ({ serviceId, dependsOnId })),
     });
   }
 
