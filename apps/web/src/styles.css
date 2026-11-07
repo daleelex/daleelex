@@ -21,8 +21,10 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   --sidebar-width: 260px;
-  /* Enforced by .topbar's min-height so full-height pages can subtract it. */
+  /* Each is enforced by that header's own min-height, so a page doing
+     viewport math against it cannot drift from what actually renders. */
   --topbar-h: 75px;
+  --settings-header-h: 90px;
 }
 
 [data-theme='light'] {

@@ -4,6 +4,19 @@
   cursor: pointer;
   text-align: left;
   font-family: var(--font-body);
+  /* Give up width before the page actions or the avatar do, so the right-hand
+     cluster always stays inside the main column. */
+  flex: 0 1 320px;
+  min-width: 44px;
+}
+
+.topbar > .top-right {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.topbar > .crumb {
+  flex-shrink: 0;
 }
 
 .search-trigger:hover {
