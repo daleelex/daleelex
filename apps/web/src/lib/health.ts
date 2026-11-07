@@ -102,32 +102,3 @@ export function percent(value: number, total: number) {
 export function stateWeight(state: HealthState) {
   return state === 'risk' ? 3 : state === 'watch' ? 2 : 1;
 }
-
-// SAMPLE DATA — not from a real metrics provider.
-// Replace with Prometheus/Grafana calls when a metrics backend is available.
-// Deterministic per serviceId so values don't flicker between renders.
-export function mockMetrics(serviceId: string) {
-  const seed = [...serviceId].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) & 0xffff, 0);
-  const rand = (n: number, max: number, min = 0) =>
-    min + (((seed * (n + 1) * 6271) & 0xffff) % (max - min));
-
-  const avail = 99.0 + rand(0, 10) / 10; // 99.0–99.9
-  const p95ms = 80 + rand(1, 300); // 80–380 ms
-  const incidents = rand(2, 4); // 0–3
-  const deploys = 4 + rand(3, 20); // 4–23
-
-  const sparkline = Array.from({ length: 14 }, (_, i) => {
-    const base = avail - 0.05;
-    const jitter = rand(i + 10, 10) / 100;
-    return Math.min(100, Math.max(base - 0.5, base + jitter));
-  });
-
-  return {
-    availability: `${avail.toFixed(1)}%`,
-    p95: `${p95ms} ms`,
-    incidents,
-    deploys,
-    sparkline,
-    availRaw: avail,
-  };
-}
