@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import type { Service } from '@daleelex/shared';
 import { ServiceCard } from '../components/ServiceCard';
 import { ServiceDrawer } from '../components/ServiceDrawer';
 import { RegisterServiceModal } from '../components/RegisterServiceModal';
-import { UserAvatar } from '../components/UserAvatar';
+import { TopBarActions } from '../lib/topbar';
 import { api } from '../api';
 import './ServicesPage.css';
 
@@ -18,10 +18,8 @@ type CatalogNotice = {
 
 export function ServicesPage() {
   const [params, setParams] = useSearchParams();
-  const [selected, setSelected] = useState<Service | null>(null);
   const [registering, setRegistering] = useState(false);
   const [notice, setNotice] = useState<CatalogNotice | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['services'],
@@ -34,22 +32,23 @@ export function ServicesPage() {
   const owner = params.get('owner') ?? 'All';
   const activeFilters = [search.trim(), tier !== 'All', owner !== 'All'].filter(Boolean).length;
 
+  // Selection lives in the URL so the command palette — and a pasted link —
+  // can open a service drawer from anywhere in the app.
+  const selected = services.find((s) => s.id === params.get('service')) ?? null;
+
+  function setSelected(service: Service | null) {
+    setParams((next) => {
+      const updated = new URLSearchParams(next);
+      if (service) updated.set('service', service.id);
+      else updated.delete('service');
+      return updated;
+    });
+  }
+
   const owners = useMemo(() => {
     const names = services.map((s) => s.owner?.name).filter((n): n is string => !!n);
     return ['All', ...Array.from(new Set(names)).sort()];
   }, [services]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        searchRef.current?.focus();
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -93,38 +92,12 @@ export function ServicesPage() {
 
   return (
     <>
-      <header className="topbar">
-        <div className="crumb">
-          <span>DaleelEx</span>
-          <ChevronRight />
-          <span className="current">Catalog</span>
-        </div>
-        <div className="top-right">
-          <div className="search">
-            <label className="sr-only" htmlFor="service-search">
-              Search services
-            </label>
-            <SearchIcon />
-            <input
-              ref={searchRef}
-              id="service-search"
-              type="search"
-              placeholder="Search by name, ID, tag..."
-              value={search}
-              onChange={(e) => updateFilter('q', e.target.value)}
-            />
-            <kbd className="kbd">⌘K</kbd>
-          </div>
-          <button className="register-btn" onClick={() => setRegistering(true)}>
-            <PlusIcon />
-            Register service
-          </button>
-          <button className="icon-btn" title="Notifications">
-            <BellIcon />
-          </button>
-          <UserAvatar />
-        </div>
-      </header>
+      <TopBarActions>
+        <button className="register-btn" onClick={() => setRegistering(true)}>
+          <PlusIcon />
+          Register service
+        </button>
+      </TopBarActions>
 
       <section className="hero">
         <div className="hero-kicker">
@@ -161,6 +134,19 @@ export function ServicesPage() {
       </section>
 
       <section className="filter-row">
+        <div className="filter-search">
+          <label className="sr-only" htmlFor="service-search">
+            Search services
+          </label>
+          <SearchIcon />
+          <input
+            id="service-search"
+            type="search"
+            placeholder="Filter by name, ID, tag…"
+            value={search}
+            onChange={(e) => updateFilter('q', e.target.value)}
+          />
+        </div>
         <div className="filter-group">
           <span className="filter-label">Tier</span>
           {TIERS.map((t) => (
@@ -232,7 +218,6 @@ export function ServicesPage() {
           setNotice({ kind: 'success', message: `${service.name} was removed from the catalog.` });
         }}
         onUpdateSuccess={(service) => {
-          setSelected(service);
           setNotice({ kind: 'success', message: `${service.name} was updated.` });
         }}
       />
@@ -284,37 +269,6 @@ function SearchIcon() {
     >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function BellIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  );
-}
-
-function ChevronRight() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }

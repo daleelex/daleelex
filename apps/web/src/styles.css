@@ -21,6 +21,10 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   --sidebar-width: 260px;
+  /* Each is enforced by that header's own min-height, so a page doing
+     viewport math against it cannot drift from what actually renders. */
+  --topbar-h: 75px;
+  --settings-header-h: 90px;
 }
 
 [data-theme='light'] {
@@ -135,6 +139,7 @@ input:focus {
   position: sticky;
   top: 0;
   z-index: 10;
+  min-height: var(--topbar-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -146,10 +151,9 @@ input:focus {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* FAB is fixed at left:16px, width:36px → right edge 52px; add 8px gap = 60px */
-.sidebar-closed .topbar,
-.sidebar-closed .health-topbar,
-.sidebar-closed .settings-topbar {
+/* FAB is fixed at left:16px, width:36px → right edge 52px; add 8px gap = 60px.
+   Only the shell topbar needs this — it is the one element the FAB overlaps. */
+.sidebar-closed .topbar {
   padding-left: 60px;
 }
 

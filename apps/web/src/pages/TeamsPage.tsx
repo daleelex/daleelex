@@ -1,15 +1,16 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUser } from '@clerk/react';
 import { useQuery } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
 import { CreateTeamModal } from '../components/CreateTeamModal';
 import { TeamDrawer } from '../components/TeamDrawer';
-import { UserAvatar } from '../components/UserAvatar';
+import { TopBarActions } from '../lib/topbar';
 import { api } from '../api';
 import './TeamsPage.css';
 
 export function TeamsPage() {
-  const [selected, setSelected] = useState<TeamWithStats | null>(null);
+  const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(false);
   const { user } = useUser();
   const isAdmin = user?.publicMetadata.role === 'admin';
@@ -19,6 +20,17 @@ export function TeamsPage() {
   });
 
   const teams = data?.data ?? [];
+  const selected = teams.find((team) => team.id === params.get('team')) ?? null;
+
+  function setSelected(team: TeamWithStats | null) {
+    setParams((next) => {
+      const updated = new URLSearchParams(next);
+      if (team) updated.set('team', team.id);
+      else updated.delete('team');
+      return updated;
+    });
+  }
+
   const totalServices = teams.reduce((sum, t) => sum + t.serviceCount, 0);
   const teamsWithHealth = teams.filter((team) => team.averageScorecardHealth !== null);
   const scoredServices = teamsWithHealth.reduce((sum, team) => sum + team.scoredServiceCount, 0);
@@ -34,22 +46,14 @@ export function TeamsPage() {
 
   return (
     <>
-      <header className="topbar">
-        <div className="crumb">
-          <span>DaleelEx</span>
-          <ChevronRight />
-          <span className="current">Teams</span>
-        </div>
-        <div className="top-right">
-          {isAdmin && (
-            <button className="add-team-btn" onClick={() => setCreating(true)}>
-              <PlusIcon />
-              Add team
-            </button>
-          )}
-          <UserAvatar />
-        </div>
-      </header>
+      {isAdmin && (
+        <TopBarActions>
+          <button className="add-team-btn" onClick={() => setCreating(true)}>
+            <PlusIcon />
+            Add team
+          </button>
+        </TopBarActions>
+      )}
 
       <section className="hero">
         <div className="crumb" style={{ fontSize: 11 }}>
@@ -251,21 +255,6 @@ function initials(name: string) {
     .map((w) => w[0])
     .join('')
     .toUpperCase();
-}
-
-function ChevronRight() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
 }
 
 function SlackIcon() {

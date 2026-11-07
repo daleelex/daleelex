@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { useTheme } from '../lib/theme';
+import { TopBarSlotProvider } from '../lib/topbar';
+import { TopBar } from './TopBar';
+import { CommandPalette } from './CommandPalette';
 import './Layout.css';
 
 const NAV_GROUPS = [
@@ -51,6 +54,21 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     return localStorage.getItem('daleelex-sidebar-open') !== 'false';
   });
+
+  const [actionsSlot, setActionsSlot] = useState<HTMLDivElement | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const { getToken } = useAuth();
   useQuery({
@@ -140,10 +158,6 @@ export function Layout() {
           })}
         </nav>
         <div className="sidebar-foot">
-          <div className="status-pill">
-            <span className="pulse-dot" />
-            All systems operational
-          </div>
           <button className="theme-toggle" onClick={toggleTheme}>
             {theme === 'light' ? <MoonIcon /> : <SunIcon />}
             <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
@@ -158,8 +172,13 @@ export function Layout() {
       )}
 
       <main className={`main${sidebarOpen ? '' : ' sidebar-closed'}`}>
-        <Outlet />
+        <TopBar onOpenSearch={() => setPaletteOpen(true)} actionsRef={setActionsSlot} />
+        <TopBarSlotProvider value={actionsSlot}>
+          <Outlet />
+        </TopBarSlotProvider>
       </main>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }
