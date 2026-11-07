@@ -242,39 +242,6 @@
   margin: 22px 0 10px;
 }
 
-/* Signal row */
-.signal-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.signal-cell {
-  background: var(--panel-2);
-  padding: 14px 16px;
-  border-radius: var(--radius);
-  position: relative;
-  overflow: hidden;
-}
-
-.signal-value {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  margin-top: 6px;
-  line-height: 1;
-}
-
-.signal-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 0 0 var(--radius) var(--radius);
-}
-
 /* Scorecard */
 .score-hero {
   display: flex;
@@ -665,87 +632,126 @@
 }
 
 /* ── Dependencies tab ───────────────────────────────────────────────────── */
-.dep-graph {
-  position: relative;
-  width: 100%;
+.dep-section + .dep-section {
+  margin-top: 22px;
+}
+
+.dep-count {
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.dep-section-empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dep-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
   background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
-.dep-edges {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.dep-edges line {
-  stroke: var(--line-strong);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-.dep-node {
-  position: absolute;
-  transform: translateY(-50%);
+.dep-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  width: 29.5%;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* The rail is what makes nesting read as a tree rather than as indentation. */
+.dep-rail {
+  width: 10px;
+  height: 1px;
+  background: var(--line-strong);
+  flex-shrink: 0;
+}
+
+.dep-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 10px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 120ms,
+    background 120ms;
 }
 
-.dep-node.upstream {
-  left: 1.9%;
-}
-
-.dep-node.center {
-  left: 33.3%;
-  width: 33.3%;
+.dep-chip:hover {
   background: var(--accent-soft);
   border-color: var(--accent);
 }
 
-.dep-node.downstream {
-  left: 68.6%;
+.dep-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.dep-node-dot {
+.dep-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.dep-node-type {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.dep-node-name {
-  font-size: 12px;
+.dep-chip-name {
+  font-size: 12.5px;
   color: var(--ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dep-legend {
-  display: flex;
-  gap: 14px;
-  margin-top: 10px;
+.dep-chip-tier {
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 9.5px;
   color: var(--muted);
+  flex-shrink: 0;
+}
+
+.dep-note,
+.dep-more {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ── Health signals ─────────────────────────────────────────────────────── */
+.signal-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--panel-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+}
+
+.signal-empty p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.signal-empty-link {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
 }
