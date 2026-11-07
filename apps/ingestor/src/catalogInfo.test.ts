@@ -22,6 +22,12 @@ spec:
   tags:
     - critical
     - security
+  links:
+    - url: https://runbook.internal/auth
+      title: Runbook
+      type: runbook
+  dependencies:
+    - svc-gw-005
 `;
 
 const MINIMAL = `
@@ -55,6 +61,8 @@ describe('parseCatalogInfo', () => {
       sloTarget: '99.95%',
       sloWindow: '30d',
       tags: ['critical', 'security'],
+      links: [{ url: 'https://runbook.internal/auth', title: 'Runbook', type: 'runbook' }],
+      dependencies: ['svc-gw-005'],
     });
   });
 
@@ -67,6 +75,8 @@ describe('parseCatalogInfo', () => {
       ownerRef: null,
       sloTarget: null,
       tags: [],
+      links: [],
+      dependencies: [],
       repository: 'acme/tiny',
     });
   });
@@ -143,6 +153,41 @@ spec:
 
     expect(service?.tags).toEqual([]);
     expect(warnings).toContain('spec.tags is not a list; ignoring it.');
+  });
+
+  it('refuses a link url that is not plain http(s)', () => {
+    const { service, warnings } = parseCatalogInfo(
+      `${MINIMAL}  links:\n    - url: javascript:alert(1)\n      title: Nope\n`,
+      'acme/tiny',
+    );
+
+    expect(service?.links).toEqual([]);
+    expect(warnings).toContain(
+      'spec.links[0].url must start with http:// or https://; ignoring it.',
+    );
+  });
+
+  it('records an unrecognised link type as other', () => {
+    const { service, warnings } = parseCatalogInfo(
+      `${MINIMAL}  links:\n    - url: https://wiki.internal/x\n      type: wiki\n`,
+      'acme/tiny',
+    );
+
+    expect(service?.links).toEqual([
+      { url: 'https://wiki.internal/x', title: null, type: 'other' },
+    ]);
+    expect(warnings).toContain(
+      'spec.links[0].type "wiki" is not a known link type; recording it as other.',
+    );
+  });
+
+  it('drops a duplicate dependency id', () => {
+    const { service } = parseCatalogInfo(
+      `${MINIMAL}  dependencies:\n    - svc-a-001\n    - svc-a-001\n    - svc-b-002\n`,
+      'acme/tiny',
+    );
+
+    expect(service?.dependencies).toEqual(['svc-a-001', 'svc-b-002']);
   });
 
   it('rejects an id that would not be a stable slug', () => {

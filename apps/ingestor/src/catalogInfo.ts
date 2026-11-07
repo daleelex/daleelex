@@ -1,5 +1,5 @@
 import { parse } from 'yaml';
-import type { ServiceLifecycle, ServiceTier, ServiceType } from '@daleelex/shared';
+import type { ServiceLifecycle, ServiceLink, ServiceTier, ServiceType } from '@daleelex/shared';
 
 export const API_VERSION = 'daleelex.io/v1';
 export const KIND = 'Service';
@@ -24,6 +24,16 @@ const KNOWN_SPEC = [
   'dependencies',
 ];
 const KNOWN_SLO = ['target', 'window'];
+const KNOWN_LINK = ['url', 'title', 'type'];
+const LINK_TYPES: LinkType[] = ['runbook', 'dashboard', 'docs', 'other'];
+
+export type LinkType = ServiceLink['type'];
+
+export interface ParsedLink {
+  url: string;
+  title: string | null;
+  type: LinkType;
+}
 
 export interface ParsedService {
   id: string;
@@ -39,6 +49,9 @@ export interface ParsedService {
   sloTarget: string | null;
   sloWindow: string | null;
   tags: string[];
+  links: ParsedLink[];
+  /** Upstream service ids, resolved against the catalogue by the caller. */
+  dependencies: string[];
 }
 
 export interface ParseResult {
@@ -137,10 +150,73 @@ export function parseCatalogInfo(source: string, repository: string): ParseResul
       sloTarget: optionalString(slo.target),
       sloWindow: optionalString(slo.window),
       tags: stringList(spec.tags, warnings),
+      links: links(spec.links, warnings),
+      dependencies: dependencies(spec.dependencies, warnings),
     },
     errors,
     warnings,
   };
+}
+
+function links(value: unknown, warnings: string[]): ParsedLink[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    warnings.push('spec.links is not a list; ignoring it.');
+    return [];
+  }
+
+  const parsed: ParsedLink[] = [];
+  for (const [index, entry] of value.entries()) {
+    const at = `spec.links[${index}]`;
+    if (!isRecord(entry)) {
+      warnings.push(`${at} is not a mapping; ignoring it.`);
+      continue;
+    }
+    warnings.push(...unknownKeys(entry, KNOWN_LINK, `${at}.`));
+
+    const url = optionalString(entry.url);
+    if (!url) {
+      warnings.push(`${at} has no url; ignoring it.`);
+      continue;
+    }
+    // These render as anchors in the portal, so anything that is not plain
+    // http(s) — javascript:, data: — never reaches the database.
+    if (!/^https?:\/\//i.test(url)) {
+      warnings.push(`${at}.url must start with http:// or https://; ignoring it.`);
+      continue;
+    }
+
+    const declared = optionalString(entry.type);
+    let type: LinkType = 'other';
+    if (declared && LINK_TYPES.includes(declared as LinkType)) {
+      type = declared as LinkType;
+    } else if (declared) {
+      warnings.push(`${at}.type "${declared}" is not a known link type; recording it as other.`);
+    }
+
+    parsed.push({ url, title: optionalString(entry.title), type });
+  }
+
+  return parsed;
+}
+
+function dependencies(value: unknown, warnings: string[]): string[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    warnings.push('spec.dependencies is not a list; ignoring it.');
+    return [];
+  }
+
+  const ids: string[] = [];
+  for (const entry of value) {
+    const id = optionalString(entry);
+    if (!id) {
+      warnings.push(`spec.dependencies has an entry that is not a service id; ignoring it.`);
+      continue;
+    }
+    if (!ids.includes(id)) ids.push(id);
+  }
+  return ids;
 }
 
 function unknownKeys(value: Record<string, unknown>, known: string[], prefix: string) {
