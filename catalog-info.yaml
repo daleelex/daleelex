@@ -21,3 +21,10 @@ spec:
   tags:
     - internal
     - portal
+  links:
+    - url: https://github.com/daleelex/daleelex/blob/master/ARCHITECTURE.md
+      title: Architecture
+      type: docs
+    - url: https://github.com/daleelex/daleelex/blob/master/docs/CICD.md
+      title: CI/CD
+      type: docs

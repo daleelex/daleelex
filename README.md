@@ -234,8 +234,10 @@ Behaviour worth knowing before you point it at a real organisation:
 - An `owner` that doesn't match a team imports the service **unowned**, with a warning, rather than dropping it.
 - A service id already managed in the portal is **not** taken over — remove it there first.
 - If two repositories claim the same id, the first alphabetically wins and the other is reported.
-- Links and dependencies are parsed but not yet written; removing a `catalog-info.yaml` does not yet
-  retire its service. Both are deliberate gaps, not oversights.
+- Links and dependencies are replaced wholesale on each run — neither has a stable identity in the
+  file, so they are not diffed.
+- A dependency on a service outside the catalogue is reported and dropped, not created as a stub.
+- Removing a `catalog-info.yaml` does not yet retire its service. That is a deliberate gap.
 
 DaleelEx registers itself: see [catalog-info.yaml](./catalog-info.yaml) at the repository root.
 
