@@ -21,6 +21,8 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   --sidebar-width: 260px;
+  /* Enforced by .topbar's min-height so full-height pages can subtract it. */
+  --topbar-h: 75px;
 }
 
 [data-theme='light'] {
@@ -135,6 +137,7 @@ input:focus {
   position: sticky;
   top: 0;
   z-index: 10;
+  min-height: var(--topbar-h);
   display: flex;
   align-items: center;
   justify-content: space-between;

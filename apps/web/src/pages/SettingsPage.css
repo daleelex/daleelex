@@ -34,7 +34,7 @@
   display: grid;
   grid-template-columns: 180px 1fr;
   gap: 0;
-  min-height: calc(100vh - 85px);
+  min-height: calc(100vh - var(--topbar-h) - 85px);
 }
 
 .settings-nav {
