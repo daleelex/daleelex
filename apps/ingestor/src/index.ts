@@ -101,13 +101,15 @@ async function syncCatalog(
     log('catalog.skipped', { repository, reasons });
   }
 
-  for (const service of plan.upserts) {
+  for (const { service, links, dependencies } of plan.upserts) {
     if (dryRun) {
       log('catalog.would-sync', {
         serviceId: service.id,
         repository: service.repository,
         name: service.name,
         ownerTeamId: service.ownerTeamId,
+        links: links.length,
+        dependencies,
       });
       continue;
     }
@@ -123,11 +125,32 @@ async function syncCatalog(
     log('catalog.synced', { serviceId: service.id, repository: service.repository });
   }
 
+  // Links and dependencies go in a second pass: a dependency's target row has
+  // to exist before the join row pointing at it can.
+  if (!dryRun) {
+    for (const { service, links, dependencies } of plan.upserts) {
+      await client.$transaction([
+        // Neither has a stable identity in the file, so each service's set is
+        // replaced wholesale rather than diffed.
+        client.link.deleteMany({ where: { serviceId: service.id } }),
+        client.link.createMany({
+          data: links.map((link) => ({ serviceId: service.id, ...link })),
+        }),
+        client.serviceDependency.deleteMany({ where: { serviceId: service.id } }),
+        client.serviceDependency.createMany({
+          data: dependencies.map((dependsOnId) => ({ serviceId: service.id, dependsOnId })),
+        }),
+      ]);
+    }
+  }
+
   log('catalog.completed', {
     dryRun,
     repositories: repositories.length,
     registered: files.length,
     synced: plan.upserts.length,
+    links: plan.upserts.reduce((total, record) => total + record.links.length, 0),
+    dependencies: plan.upserts.reduce((total, record) => total + record.dependencies.length, 0),
     skipped: plan.skipped.length,
     failed,
   });
