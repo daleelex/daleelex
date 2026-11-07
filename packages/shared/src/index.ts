@@ -33,6 +33,8 @@ export interface Service {
   sloWindow: string | null;
   tags: string[];
   links: ServiceLink[];
+  /** Upstream service ids this service declares in its catalog-info.yaml. */
+  dependencies: string[];
   createdAt: string;
   updatedAt: string;
   managementSource: ManagementSource;

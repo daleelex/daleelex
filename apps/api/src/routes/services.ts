@@ -37,6 +37,7 @@ function toServiceShape(row: Awaited<ReturnType<typeof prisma.service.findFirstO
       title: l.title,
       type: l.type as any,
     })),
+    dependencies: ((row as any).dependencies ?? []).map((d: any) => d.dependsOnId),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     managementSource: row.managementSource as 'portal' | 'repository',
@@ -247,6 +248,7 @@ export async function servicesRoute(app: FastifyInstance) {
       include: {
         owner: true,
         links: true,
+        dependencies: { select: { dependsOnId: true } },
       },
       orderBy: [{ tier: 'asc' }, { name: 'asc' }],
     });

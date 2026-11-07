@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { planCatalogSync } from './catalogSync.js';
 import type { ManagementSource } from '@daleelex/shared';
 
-function file(repository: string, overrides: Record<string, string> = {}) {
+function file(repository: string, overrides: Record<string, string> = {}, extraSpec = '') {
   const spec = {
     id: 'svc-one-001',
     name: 'One',
@@ -25,12 +25,16 @@ spec:
   tier: ${spec.tier}
   lifecycle: ${spec.lifecycle}
   owner: ${spec.owner}
-`,
+${extraSpec}`,
   };
 }
 
 const teams = new Set(['platform-identity']);
 const nothingExists = new Map<string, ManagementSource>();
+
+function warningsFor(plan: ReturnType<typeof planCatalogSync>, repository: string) {
+  return plan.warnings.find((entry) => entry.repository === repository)?.messages ?? [];
+}
 
 describe('planCatalogSync', () => {
   it('turns a valid file into an upsert with its owner linked', () => {
@@ -42,14 +46,15 @@ describe('planCatalogSync', () => {
 
     expect(plan.skipped).toEqual([]);
     expect(plan.warnings).toEqual([]);
-    expect(plan.upserts).toEqual([
+    expect(plan.upserts).toHaveLength(1);
+    expect(plan.upserts[0].service).toEqual(
       expect.objectContaining({
         id: 'svc-one-001',
         ownerTeamId: 'platform-identity',
         repository: 'acme/one',
         sourceSha: 'sha-acme/one',
       }),
-    ]);
+    );
   });
 
   it('imports a service whose owner is unknown, and says so', () => {
@@ -59,8 +64,8 @@ describe('planCatalogSync', () => {
       existing: nothingExists,
     });
 
-    expect(plan.upserts[0].ownerTeamId).toBeNull();
-    expect(plan.warnings[0].messages).toContain(
+    expect(plan.upserts[0].service.ownerTeamId).toBeNull();
+    expect(warningsFor(plan, 'acme/one')).toContain(
       'Owner "ghost-team" is not a known team; importing without an owner.',
     );
   });
@@ -84,7 +89,7 @@ describe('planCatalogSync', () => {
     });
 
     expect(plan.upserts).toHaveLength(1);
-    expect(plan.upserts[0].repository).toBe('acme/aaa');
+    expect(plan.upserts[0].service.repository).toBe('acme/aaa');
     expect(plan.skipped).toEqual([
       {
         repository: 'acme/zzz',
@@ -111,6 +116,80 @@ describe('planCatalogSync', () => {
       existing: new Map<string, ManagementSource>([['svc-one-001', 'repository']]),
     });
 
-    expect(plan.upserts[0]).toMatchObject({ id: 'svc-one-001', name: 'Renamed' });
+    expect(plan.upserts[0].service).toMatchObject({ id: 'svc-one-001', name: 'Renamed' });
+  });
+
+  it('carries the links the file declares', () => {
+    const plan = planCatalogSync({
+      files: [
+        file(
+          'acme/one',
+          {},
+          `  links:
+    - url: https://runbook.internal/one
+      title: Runbook
+      type: runbook
+    - url: https://grafana.internal/one
+`,
+        ),
+      ],
+      knownTeamIds: teams,
+      existing: nothingExists,
+    });
+
+    expect(plan.upserts[0].links).toEqual([
+      { url: 'https://runbook.internal/one', title: 'Runbook', type: 'runbook' },
+      { url: 'https://grafana.internal/one', title: null, type: 'other' },
+    ]);
+  });
+
+  it('resolves a dependency on a service another repository registers', () => {
+    const plan = planCatalogSync({
+      files: [
+        file('acme/one', {}, '  dependencies:\n    - svc-two-002\n'),
+        file('acme/two', { id: 'svc-two-002', name: 'Two' }),
+      ],
+      knownTeamIds: teams,
+      existing: nothingExists,
+    });
+
+    const one = plan.upserts.find((record) => record.service.id === 'svc-one-001');
+    expect(one?.dependencies).toEqual(['svc-two-002']);
+  });
+
+  it('resolves a dependency on a service that is already in the catalogue', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one', {}, '  dependencies:\n    - svc-seeded-009\n')],
+      knownTeamIds: teams,
+      existing: new Map<string, ManagementSource>([['svc-seeded-009', 'portal']]),
+    });
+
+    expect(plan.upserts[0].dependencies).toEqual(['svc-seeded-009']);
+  });
+
+  it('drops a dependency nothing in the catalogue provides, and says so', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one', {}, '  dependencies:\n    - svc-ghost-404\n')],
+      knownTeamIds: teams,
+      existing: nothingExists,
+    });
+
+    expect(plan.upserts[0].dependencies).toEqual([]);
+    expect(warningsFor(plan, 'acme/one')).toContain(
+      'Dependency "svc-ghost-404" is not in the catalogue; ignoring it.',
+    );
+  });
+
+  it('drops a service that depends on itself', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one', {}, '  dependencies:\n    - svc-one-001\n')],
+      knownTeamIds: teams,
+      existing: nothingExists,
+    });
+
+    expect(plan.upserts[0].dependencies).toEqual([]);
+    expect(warningsFor(plan, 'acme/one')).toContain(
+      'Service "svc-one-001" lists itself as a dependency; ignoring it.',
+    );
   });
 });
