@@ -16,9 +16,10 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@prisma/client": "^5.13.0",
     "@daleelex/shared": "workspace:*",
-    "prisma": "^5.13.0"
+    "@prisma/client": "^5.13.0",
+    "prisma": "^5.13.0",
+    "yaml": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",
