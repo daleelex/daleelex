@@ -146,10 +146,9 @@ input:focus {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* FAB is fixed at left:16px, width:36px → right edge 52px; add 8px gap = 60px */
-.sidebar-closed .topbar,
-.sidebar-closed .health-topbar,
-.sidebar-closed .settings-topbar {
+/* FAB is fixed at left:16px, width:36px → right edge 52px; add 8px gap = 60px.
+   Only the shell topbar needs this — it is the one element the FAB overlaps. */
+.sidebar-closed .topbar {
   padding-left: 60px;
 }
 
