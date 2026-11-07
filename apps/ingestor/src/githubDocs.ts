@@ -1,3 +1,5 @@
+import { assertRepository, githubJson, type Fetcher, type GitHubContext } from './github.js';
+
 export interface RepositoryDoc {
   path: string;
   title: string;
@@ -24,18 +26,20 @@ interface GitHubBlob {
 }
 
 export class GitHubDocsClient {
-  constructor(
-    private readonly token: string,
-    private readonly apiUrl = 'https://api.github.com',
-    private readonly fetcher: typeof fetch = fetch,
-  ) {}
+  private readonly ctx: GitHubContext;
+
+  constructor(token: string, apiUrl = 'https://api.github.com', fetcher: Fetcher = fetch) {
+    this.ctx = { token, apiUrl, fetcher };
+  }
 
   async fetchDocs(repository: string, ref = 'HEAD') {
     assertRepository(repository);
-    const commit = await this.get<GitHubCommit>(
+    const commit = await githubJson<GitHubCommit>(
+      this.ctx,
       `/repos/${repository}/commits/${encodeURIComponent(ref)}`,
     );
-    const tree = await this.get<GitHubTree>(
+    const tree = await githubJson<GitHubTree>(
+      this.ctx,
       `/repos/${repository}/git/trees/${commit.commit.tree.sha}?recursive=1`,
     );
 
@@ -51,7 +55,7 @@ export class GitHubDocsClient {
     );
 
     const docs = await mapWithConcurrency(blobs, 8, async (entry): Promise<RepositoryDoc> => {
-      const blob = await this.get<GitHubBlob>(entry.url);
+      const blob = await githubJson<GitHubBlob>(this.ctx, entry.url);
       if (blob.encoding !== 'base64') {
         throw new Error(`Unsupported GitHub blob encoding "${blob.encoding}" for ${entry.path}.`);
       }
@@ -68,23 +72,6 @@ export class GitHubDocsClient {
       sourceSha: commit.sha,
       docs: docs.sort((a, b) => a.path.localeCompare(b.path)),
     };
-  }
-
-  private async get<T>(pathOrUrl: string): Promise<T> {
-    const url = pathOrUrl.startsWith('https://') ? pathOrUrl : `${this.apiUrl}${pathOrUrl}`;
-    const response = await this.fetcher(url, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${this.token}`,
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`GitHub request failed (${response.status}) for ${url}.`);
-    }
-
-    return response.json() as Promise<T>;
   }
 }
 
@@ -119,10 +106,4 @@ async function mapWithConcurrency<T, R>(
 
   await Promise.all(workers);
   return results;
-}
-
-function assertRepository(repository: string) {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
-    throw new Error(`Invalid GitHub repository "${repository}". Expected "owner/repo".`);
-  }
 }
