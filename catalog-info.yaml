@@ -1,0 +1,23 @@
+# DaleelEx registers itself in its own catalogue. The ingestor reads this file
+# from GitHub on every run — change it here, by pull request, not in the portal.
+apiVersion: daleelex.io/v1
+kind: Service
+metadata:
+  id: svc-daleelex-portal
+  name: DaleelEx Portal
+  description: |
+    The internal developer portal itself: service catalogue, scorecards,
+    TechDocs and health, served from a Fastify API and a React SPA.
+spec:
+  type: web
+  tier: 2
+  lifecycle: beta
+  owner: platform-infra
+  language: TypeScript
+  repository: daleelex/daleelex
+  slo:
+    target: '99.5%'
+    window: 30d
+  tags:
+    - internal
+    - portal
