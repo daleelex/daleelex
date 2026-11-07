@@ -123,8 +123,10 @@ Each app loads a plain `.env` from its own directory (`apps/api/src/env.ts` does
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `DATABASE_URL` | yes | Same Postgres as the API. |
-| `GITHUB_TOKEN` | for docs sync | Token with read access to the repositories being scanned. |
+| `GITHUB_TOKEN` | for any sync | Token with read access to the repositories being scanned. |
 | `GITHUB_API_URL` | no | Defaults to `https://api.github.com`; override for GitHub Enterprise. |
+| `GITHUB_ORG` | for catalog sync | Organisation to scan for `catalog-info.yaml`. Unset disables catalog ingestion. |
+| `CATALOG_SYNC_REF` | no | Branch/tag/commit to read `catalog-info.yaml` from. Defaults to each repo's default branch. |
 | `DOCS_SYNC_REF` | no | Git ref to sync docs from. Defaults to `HEAD`. |
 
 ## Workspace structure
@@ -214,6 +216,28 @@ Rules that matter:
 - **Dependencies reference IDs, not names.**
 - **Unknown fields are a soft warning, not a hard error** — one team's experiment shouldn't break everyone else's page.
 - **Provenance is tracked.** Entities record whether they're portal-managed or repository-managed. Repository-managed entities must be changed at their source, so ingestion can't silently overwrite a portal edit.
+
+### Running ingestion
+
+Set `GITHUB_ORG` and run the ingestor. It lists every non-archived repository in the
+organisation, reads `catalog-info.yaml` from each (a repository without one is simply not
+registered), and upserts the services it finds as repository-managed.
+
+```bash
+pnpm docs:sync -- --dry-run   # report what would change, write nothing
+pnpm docs:sync                # apply, then sync TechDocs as before
+```
+
+Behaviour worth knowing before you point it at a real organisation:
+
+- A file that fails validation is reported and skipped; the rest of the run continues.
+- An `owner` that doesn't match a team imports the service **unowned**, with a warning, rather than dropping it.
+- A service id already managed in the portal is **not** taken over — remove it there first.
+- If two repositories claim the same id, the first alphabetically wins and the other is reported.
+- Links and dependencies are parsed but not yet written; removing a `catalog-info.yaml` does not yet
+  retire its service. Both are deliberate gaps, not oversights.
+
+DaleelEx registers itself: see [catalog-info.yaml](./catalog-info.yaml) at the repository root.
 
 ## API surface
 
