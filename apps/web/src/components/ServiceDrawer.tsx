@@ -168,7 +168,7 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSucce
           <div className="tab-content">
             {tab === 'overview' && <OverviewTab service={service} />}
             {tab === 'scorecard' && <ScorecardTab checks={checks} passed={passed} score={score} />}
-            {tab === 'dependencies' && <DependenciesTab />}
+            {tab === 'dependencies' && <DependenciesTab service={service} />}
             {tab === 'logs' && <ServiceLogsTab serviceId={service.id} />}
             {tab === 'docs' && <DocsTab serviceId={service.id} links={service.links} />}
           </div>
@@ -290,15 +290,120 @@ function ScorecardTab({
   );
 }
 
-function DependenciesTab() {
+const TYPE_COLOR: Record<Service['type'], string> = {
+  api: '#2FA99B',
+  db: '#3F7FC4',
+  web: '#4E94A6',
+  ml: '#8A6FCB',
+  tool: '#D89510',
+};
+
+// Keep the picture readable: beyond four a side it stops being a diagram.
+const MAX_PER_SIDE = 4;
+const PAD_TOP = 34;
+const ROW = 64;
+
+function DependenciesTab({ service }: { service: Service }) {
+  const { data } = useQuery({ queryKey: ['services'], queryFn: api.services });
+  const services = data?.data ?? [];
+  const byId = new Map(services.map((entry) => [entry.id, entry]));
+
+  const upstream = service.dependencies
+    .map((id) => byId.get(id))
+    .filter((entry): entry is Service => !!entry)
+    .slice(0, MAX_PER_SIDE);
+  const downstream = services
+    .filter((entry) => entry.dependencies.includes(service.id))
+    .slice(0, MAX_PER_SIDE);
+
+  if (upstream.length === 0 && downstream.length === 0) {
+    return (
+      <div className="dep-empty">
+        <DepIcon />
+        <p>No dependencies declared.</p>
+        <p className="dep-empty-sub">
+          Add a <code>dependencies</code> field to your <code>catalog-info.yaml</code> to see
+          upstream and downstream services here.
+        </p>
+      </div>
+    );
+  }
+
+  const rows = Math.max(upstream.length, downstream.length);
+  const height = Math.max(rows > 1 ? 220 : 140, rows * ROW + PAD_TOP * 2 - 24);
+  const centerY = height / 2;
+  const columnY = (count: number, index: number) =>
+    count === 1 ? centerY : PAD_TOP + index * ((height - PAD_TOP * 2) / (count - 1));
+
   return (
-    <div className="dep-empty">
-      <DepIcon />
-      <p>Dependency mapping coming soon.</p>
-      <p className="dep-empty-sub">
-        Add a <code>dependencies</code> field to your <code>catalog-info.yaml</code> to see upstream
-        and downstream services here.
-      </p>
+    <>
+      <div className="dep-graph" style={{ height }}>
+        <svg
+          className="dep-edges"
+          viewBox={`0 0 420 ${height}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {upstream.map((entry, index) => (
+            <line
+              key={entry.id}
+              x1={70}
+              y1={columnY(upstream.length, index)}
+              x2={210}
+              y2={centerY}
+            />
+          ))}
+          {downstream.map((entry, index) => (
+            <line
+              key={entry.id}
+              x1={210}
+              y1={centerY}
+              x2={350}
+              y2={columnY(downstream.length, index)}
+            />
+          ))}
+        </svg>
+
+        {upstream.map((entry, index) => (
+          <DepNode
+            key={entry.id}
+            service={entry}
+            side="upstream"
+            y={columnY(upstream.length, index)}
+          />
+        ))}
+        <DepNode service={service} side="center" y={centerY} />
+        {downstream.map((entry, index) => (
+          <DepNode
+            key={entry.id}
+            service={entry}
+            side="downstream"
+            y={columnY(downstream.length, index)}
+          />
+        ))}
+      </div>
+      <div className="dep-legend">
+        <span>{upstream.length} upstream</span>
+        <span>{downstream.length} downstream</span>
+      </div>
+    </>
+  );
+}
+
+function DepNode({
+  service,
+  side,
+  y,
+}: {
+  service: Service;
+  side: 'upstream' | 'center' | 'downstream';
+  y: number;
+}) {
+  return (
+    <div className={`dep-node ${side}`} style={{ top: y }}>
+      <span className="dep-node-dot" style={{ background: TYPE_COLOR[service.type] }} />
+      <span className="dep-node-type">{service.type}</span>
+      <span className="dep-node-name">{service.name}</span>
     </div>
   );
 }
