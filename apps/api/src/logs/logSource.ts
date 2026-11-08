@@ -24,6 +24,7 @@ export interface LogSource {
 
 export interface LogViewer {
   id: string;
+  isAdmin: boolean;
 }
 
 export interface LogService {
@@ -32,16 +33,26 @@ export interface LogService {
 }
 
 /**
- * Authorization seam for log access. The MVP policy permits every authenticated
- * user; ownership-aware enforcement belongs here before a real backend is wired.
+ * Authorization seam for log access. Admins only, for now: real logs can carry
+ * secrets and customer data, and the schema has no user-to-team membership yet, so
+ * "the owning team can see its own logs" cannot be checked. Once membership exists,
+ * widen this to members of `service.ownerTeamId` — the route needs no change.
  */
-export function canViewLogs(_user: LogViewer, _service: LogService): boolean {
-  return true;
+export function canViewLogs(user: LogViewer, _service: LogService): boolean {
+  return user.isAdmin;
 }
 
 export class InvalidLogCursorError extends Error {
   constructor(message = 'The log cursor is invalid for this query.') {
     super(message);
     this.name = 'InvalidLogCursorError';
+  }
+}
+
+/** The log backend could not answer — unreachable, or it rejected the query. */
+export class LogSourceUnavailableError extends Error {
+  constructor(message = 'The log backend is unavailable.') {
+    super(message);
+    this.name = 'LogSourceUnavailableError';
   }
 }

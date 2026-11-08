@@ -68,12 +68,13 @@ describe('MockLogSource', () => {
 });
 
 describe('canViewLogs', () => {
-  it('currently allows any authenticated viewer for any service', () => {
-    expect(
-      canViewLogs(
-        { id: 'user-outside-owner-team' },
-        { id: 'svc-payments', ownerTeamId: 'team-payments' },
-      ),
-    ).toBe(true);
+  const service = { id: 'svc-payments', ownerTeamId: 'team-payments' };
+
+  it('allows administrators', () => {
+    expect(canViewLogs({ id: 'admin-1', isAdmin: true }, service)).toBe(true);
+  });
+
+  it('denies everyone else until team membership exists', () => {
+    expect(canViewLogs({ id: 'user-1', isAdmin: false }, service)).toBe(false);
   });
 });

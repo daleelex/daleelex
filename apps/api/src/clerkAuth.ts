@@ -63,11 +63,8 @@ export async function requireClerkAdmin(req: FastifyRequest, reply: FastifyReply
   await requireClerkUser(req, reply);
   if (reply.sent || !req.clerkUserId) return;
 
-  const secretKey = process.env[SECRET_KEY_ENV]!;
-
   try {
-    const user = await createClerkClient({ secretKey }).users.getUser(req.clerkUserId);
-    if (user.publicMetadata.role !== 'admin') {
+    if (!(await isClerkAdmin(req.clerkUserId))) {
       return sendApiError(
         req,
         reply,
@@ -86,4 +83,15 @@ export async function requireClerkAdmin(req: FastifyRequest, reply: FastifyReply
       'Administrator authorization could not be verified.',
     );
   }
+}
+
+/**
+ * Whether a verified Clerk user holds the admin role. Only call this after
+ * requireClerkUser has run — it relies on the secret key that check guarantees.
+ * Throws if Clerk cannot be reached; callers decide how to report that.
+ */
+export async function isClerkAdmin(clerkUserId: string): Promise<boolean> {
+  const secretKey = process.env[SECRET_KEY_ENV]!;
+  const user = await createClerkClient({ secretKey }).users.getUser(clerkUserId);
+  return user.publicMetadata.role === 'admin';
 }
