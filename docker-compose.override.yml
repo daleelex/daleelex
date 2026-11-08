@@ -93,3 +93,15 @@ services:
       - /repo/node_modules
     environment:
       - NODE_ENV=development
+
+  # Dev-only Loki for trying the real Logs tab. Opt in by setting
+  # LOKI_URL=http://loki:3100 in the repo-root .env; without it the api keeps serving
+  # mock lines and this container just idles. Published on 3100 so lines can be pushed
+  # from the host with POST /loki/api/v1/push. Storage is in-container, so
+  # pushed lines are gone after `docker compose down`.
+  loki:
+    image: grafana/loki:3.4.2
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - '3100:3100'
+    networks: [daleelex]
