@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  InvalidLogCursorError,
-  LogSourceUnavailableError,
-  type LogQuery,
-} from './logSource.js';
+import { InvalidLogCursorError, LogSourceUnavailableError, type LogQuery } from './logSource.js';
 import { buildLogQL, LokiLogSource } from './lokiLogSource.js';
 
 const baseQuery: LogQuery = {
