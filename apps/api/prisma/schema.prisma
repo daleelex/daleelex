@@ -30,6 +30,7 @@ model Team {
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   services Service[]
+  members  TeamMembership[]
 
   @@map("teams")
 }
@@ -142,7 +143,24 @@ model User {
   lastSeenAt DateTime? @map("last_seen_at")
   createdAt  DateTime  @default(now()) @map("created_at")
 
+  memberships TeamMembership[]
+
   @@map("users")
+}
+
+// Who belongs to which team. Managed by admins in the portal; it gates
+// owning-team access to service logs.
+model TeamMembership {
+  teamId    String   @map("team_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([teamId, userId])
+  @@index([userId])
+  @@map("team_memberships")
 }
 
 model IntegrationConfig {
