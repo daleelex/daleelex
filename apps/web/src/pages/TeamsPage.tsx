@@ -118,6 +118,7 @@ export function TeamsPage() {
 
       <TeamDrawer
         team={selected}
+        isAdmin={isAdmin}
         onClose={() => setSelected(null)}
         onUpdateSuccess={(updated) => setSelected(updated)}
       />

@@ -3,18 +3,20 @@ import { useAuth } from '@clerk/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
 import { api } from '../api';
+import { TeamMembersTab } from './TeamMembersTab';
 import './TeamDrawer.css';
 
-type Tab = 'overview' | 'services' | 'scorecard';
-const TABS: Tab[] = ['overview', 'services', 'scorecard'];
+type Tab = 'overview' | 'services' | 'members' | 'scorecard';
+const TABS: Tab[] = ['overview', 'services', 'members', 'scorecard'];
 
 interface Props {
   team: TeamWithStats | null;
+  isAdmin: boolean;
   onClose: () => void;
   onUpdateSuccess?: (team: TeamWithStats) => void;
 }
 
-export function TeamDrawer({ team, onClose, onUpdateSuccess }: Props) {
+export function TeamDrawer({ team, isAdmin, onClose, onUpdateSuccess }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
@@ -147,6 +149,7 @@ export function TeamDrawer({ team, onClose, onUpdateSuccess }: Props) {
           <div className="tab-content">
             {tab === 'overview' && <TeamOverviewTab team={team} />}
             {tab === 'services' && <TeamServicesTab team={team} />}
+            {tab === 'members' && <TeamMembersTab teamId={team.id} isAdmin={isAdmin} />}
             {tab === 'scorecard' && <TeamScorecardTab team={team} />}
           </div>
         </div>

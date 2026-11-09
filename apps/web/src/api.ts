@@ -21,6 +21,8 @@ import type {
   UpdateServiceDocRequest,
   TeamWithStats,
   ServiceLogListResponse,
+  TeamMember,
+  TeamMemberListResponse,
 } from '@daleelex/shared';
 
 const BASE = '/api/v1';
@@ -166,6 +168,12 @@ export const api = {
     patch<Service>(`/services/${id}`, body, token),
   updateTeam: (id: string, body: UpdateTeamRequest, token?: string) =>
     patch<TeamWithStats>(`/teams/${id}`, body, token),
+  teamMembers: (teamId: string, token: string) =>
+    getWithAuth<TeamMemberListResponse>(`/teams/${encodeURIComponent(teamId)}/members`, token),
+  addTeamMember: (teamId: string, email: string, token: string) =>
+    postWithAuth<TeamMember>(`/teams/${encodeURIComponent(teamId)}/members`, { email }, token),
+  removeTeamMember: (teamId: string, userId: string, token: string) =>
+    del(`/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}`, token),
   deleteService: (id: string, token?: string) => del(`/services/${id}`, token),
   me: (token: string) => getWithAuth<MeResponse>('/me', token),
 };
