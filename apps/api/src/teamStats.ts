@@ -1,4 +1,5 @@
 import type { ManagementSource, ServiceTier, ServiceType, TeamWithStats } from '@daleelex/shared';
+import { weightedScore } from './scorecard.js';
 
 export interface TeamRow {
   id: string;
@@ -51,11 +52,6 @@ export function buildTeamStats(
   return teams.map((team) => {
     const services = team.services.map((service) => {
       const results = latestByService.get(service.id) ?? [];
-      const totalWeight = results.reduce((sum, result) => sum + result.check.weight, 0);
-      const passedWeight = results.reduce(
-        (sum, result) => sum + (result.status === 'pass' ? result.check.weight : 0),
-        0,
-      );
       const ownershipResult = results.find((result) => result.checkId === 'owner-assigned');
 
       return {
@@ -63,7 +59,9 @@ export function buildTeamStats(
         name: service.name,
         type: service.type as ServiceType,
         tier: service.tier as ServiceTier,
-        scorecardHealth: totalWeight > 0 ? Math.round((passedWeight / totalWeight) * 100) : null,
+        scorecardHealth: weightedScore(
+          results.map((result) => ({ status: result.status, weight: result.check.weight })),
+        ),
         hasOwnershipGap: ownershipResult?.status === 'fail',
       };
     });

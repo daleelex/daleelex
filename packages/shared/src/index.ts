@@ -45,6 +45,27 @@ export interface ServiceListResponse {
   total: number;
 }
 
+export type ScorecardStatus = 'pass' | 'fail' | 'skip';
+export type ScorecardCategory = 'basics' | 'observability' | 'security' | 'reliability';
+
+export interface ScorecardCheckResult {
+  checkId: string;
+  label: string;
+  category: ScorecardCategory;
+  weight: number;
+  status: ScorecardStatus;
+  message: string | null;
+  /** When this outcome was first recorded; unchanged results are not rewritten. */
+  since: string;
+}
+
+export interface ServiceScorecardResponse {
+  serviceId: string;
+  /** Weighted share of applicable checks passing, 0-100. Null when none apply or none have run. */
+  score: number | null;
+  results: ScorecardCheckResult[];
+}
+
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
 export interface ServiceLogEntry {

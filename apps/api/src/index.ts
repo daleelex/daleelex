@@ -9,6 +9,7 @@ import { docsRoute } from './routes/docs.js';
 import { integrationsRoute } from './routes/integrations.js';
 import { meRoute } from './routes/me.js';
 import { serviceLogsRoute } from './routes/serviceLogs.js';
+import { serviceScorecardRoute } from './routes/serviceScorecard.js';
 import { MockLogSource } from './logs/mockLogSource.js';
 import { LokiLogSource } from './logs/lokiLogSource.js';
 
@@ -25,6 +26,7 @@ app.register(teamsRoute, { prefix: '/api/v1' });
 app.register(docsRoute, { prefix: '/api/v1' });
 app.register(integrationsRoute, { prefix: '/api/v1' });
 app.register(meRoute, { prefix: '/api/v1' });
+app.register(serviceScorecardRoute, { prefix: '/api/v1' });
 // Real logs when a Loki is configured; otherwise the mock, so local dev without Loki
 // still has a working Logs tab. Logged so nobody mistakes mock lines for real ones.
 const logSource = process.env.LOKI_URL
