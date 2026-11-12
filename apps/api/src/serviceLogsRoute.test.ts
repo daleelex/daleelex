@@ -4,12 +4,14 @@ import { LogSourceUnavailableError, type LogSource } from './logs/logSource.js';
 
 const mocks = vi.hoisted(() => ({
   serviceFindFirst: vi.fn(),
+  membershipFindUnique: vi.fn(),
   isClerkAdmin: vi.fn(),
 }));
 
 vi.mock('./db.js', () => ({
   prisma: {
     service: { findFirst: mocks.serviceFindFirst },
+    teamMembership: { findUnique: mocks.membershipFindUnique },
   },
 }));
 
@@ -65,10 +67,67 @@ describe('service logs route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.serviceFindFirst.mockResolvedValue({ id: 'svc-1', ownerTeamId: 'team-1' });
+    mocks.membershipFindUnique.mockResolvedValue(null);
     mocks.isClerkAdmin.mockResolvedValue(true);
   });
 
-  it('forbids signed-in users who are not administrators', async () => {
+  it('lets members of the owning team read logs without asking Clerk', async () => {
+    mocks.membershipFindUnique.mockResolvedValue({ teamId: 'team-1' });
+    mocks.isClerkAdmin.mockRejectedValue(new Error('Clerk is down'));
+
+    const response = await (
+      await buildApp()
+    ).inject({
+      method: 'GET',
+      url: `/api/v1/services/svc-1/logs?${validQuery}`,
+      headers: { authorization: 'Bearer test-token' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(mocks.membershipFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { teamId_userId: { teamId: 'team-1', userId: 'user-1' } },
+      }),
+    );
+    expect(mocks.isClerkAdmin).not.toHaveBeenCalled();
+    expect(queryLogs).toHaveBeenCalled();
+  });
+
+  it('lets administrators who are not members read logs', async () => {
+    const response = await (
+      await buildApp()
+    ).inject({
+      method: 'GET',
+      url: `/api/v1/services/svc-1/logs?${validQuery}`,
+      headers: { authorization: 'Bearer test-token' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(mocks.isClerkAdmin).toHaveBeenCalledWith('user-1');
+  });
+
+  it('keeps logs for a service with no owner admin-only', async () => {
+    mocks.serviceFindFirst.mockResolvedValue({ id: 'svc-1', ownerTeamId: null });
+    mocks.isClerkAdmin.mockResolvedValue(false);
+
+    const response = await (
+      await buildApp()
+    ).inject({
+      method: 'GET',
+      url: `/api/v1/services/svc-1/logs?${validQuery}`,
+      headers: { authorization: 'Bearer test-token' },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toMatchObject({
+      code: 'logs_forbidden',
+      message: 'Logs for a service with no owning team are visible to administrators only.',
+    });
+    expect(mocks.membershipFindUnique).not.toHaveBeenCalled();
+    expect(queryLogs).not.toHaveBeenCalled();
+  });
+
+  it('forbids signed-in users who are neither members nor administrators', async () => {
     mocks.isClerkAdmin.mockResolvedValue(false);
 
     const response = await (
