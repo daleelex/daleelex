@@ -21,6 +21,7 @@ import type {
   UpdateServiceDocRequest,
   TeamWithStats,
   ServiceLogListResponse,
+  ServiceScorecardResponse,
 } from '@daleelex/shared';
 
 const BASE = '/api/v1';
@@ -138,6 +139,8 @@ export const api = {
   stats: () => get<StatsResponse>('/stats'),
   services: () => get<ServiceListResponse>('/services'),
   teams: () => get<TeamListResponse>('/teams'),
+  serviceScorecard: (serviceId: string) =>
+    get<ServiceScorecardResponse>(`/services/${encodeURIComponent(serviceId)}/scorecard`),
   techDocsIndex: () => get<TechDocsIndexResponse>('/docs'),
   serviceDocs: (serviceId: string) => get<ServiceDocListResponse>(`/services/${serviceId}/docs`),
   serviceDoc: (serviceId: string, docId: number) =>
