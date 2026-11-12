@@ -7,6 +7,7 @@ import { planCatalogSync } from './catalogSync.js';
 import { GitHubRepositoryClient } from './githubRepositories.js';
 import { checks } from './checks/index.js';
 import { changedResults, runChecks, type StoredResult } from './scorecard.js';
+import { parseIntervalMinutes } from './schedule.js';
 
 let prisma: PrismaClient | undefined;
 
@@ -16,15 +17,62 @@ function log(event: string, fields: Record<string, unknown> = {}) {
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
-  const githubToken = process.env.GITHUB_TOKEN;
+  const intervalMinutes = parseIntervalMinutes(process.env.INGEST_INTERVAL_MINUTES);
+  const dryRun = process.argv.includes('--dry-run');
+
   if (!databaseUrl) {
     log('ingestor.skipped', { message: 'Set DATABASE_URL to enable the ingestor.' });
+    // A scheduled worker with nothing to connect to is misconfigured. Exiting
+    // cleanly would look like a healthy run to whatever supervises it.
+    if (intervalMinutes !== null) process.exitCode = 1;
     return;
   }
 
   prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   const client = prisma;
-  const dryRun = process.argv.includes('--dry-run');
+
+  if (intervalMinutes === null || dryRun) {
+    if ((await runOnce(client, dryRun)) > 0) process.exitCode = 1;
+    return;
+  }
+
+  // Scheduled mode: stay up and repeat. A supervisor's stop signal has to cut
+  // the wait short, or a deploy would hang until the next run was due.
+  let stopping = false;
+  let wake: (() => void) | undefined;
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => {
+      stopping = true;
+      wake?.();
+    });
+  }
+
+  log('ingestor.scheduled', { intervalMinutes });
+  while (!stopping) {
+    try {
+      const failures = await runOnce(client, false);
+      log('ingestor.run-completed', { failures });
+    } catch (error) {
+      // One bad run (database restarting, GitHub down) must not end the
+      // schedule; the next run is the retry.
+      log('ingestor.run-failed', { message: errorMessage(error) });
+    }
+    if (stopping) break;
+
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, intervalMinutes * 60_000);
+      wake = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+    });
+  }
+  log('ingestor.stopped');
+}
+
+/** One full pass: catalogue, documentation, scorecards. Returns the failure count. */
+async function runOnce(client: PrismaClient, dryRun: boolean) {
+  const githubToken = process.env.GITHUB_TOKEN;
   const apiUrl = process.env.GITHUB_API_URL;
 
   const org = process.env.GITHUB_ORG;
@@ -49,8 +97,7 @@ async function main() {
   if (dryRun) {
     log('techdocs.skipped', { message: 'Dry run; documentation sync not attempted.' });
     log('scorecard.skipped', { message: 'Dry run; checks not run.' });
-    if (failures > 0) process.exitCode = 1;
-    return;
+    return failures;
   }
 
   if (githubToken) {
@@ -63,7 +110,7 @@ async function main() {
     client,
     githubToken ? new GitHubRepositoryClient(githubToken, apiUrl) : null,
   );
-  if (failures > 0) process.exitCode = 1;
+  return failures;
 }
 
 /**
