@@ -128,6 +128,7 @@ Each app loads a plain `.env` from its own directory (`apps/api/src/env.ts` does
 | `GITHUB_ORG` | for catalog sync | Organisation to scan for `catalog-info.yaml`. Unset disables catalog ingestion. |
 | `CATALOG_SYNC_REF` | no | Branch/tag/commit to read `catalog-info.yaml` from. Defaults to each repo's default branch. |
 | `DOCS_SYNC_REF` | no | Git ref to sync docs from. Defaults to `HEAD`. |
+| `INGEST_INTERVAL_MINUTES` | no | Minutes between runs. Unset runs once and exits, which is what `pnpm docs:sync` wants; production sets `60` so the ingestor stays up and repeats. |
 
 ## Workspace structure
 
