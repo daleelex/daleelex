@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // "native" covers wherever generate runs (dev Macs, the x86-64 CI runner);
   // the arm64 target is the production VM. Without it, `prisma generate` in
   // cd.yml only bundles the runner's own query engine and every DB-touching
@@ -53,11 +53,12 @@ model Service {
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  owner        Team?               @relation(fields: [ownerTeamId], references: [id])
-  links        Link[]
-  docs         ServiceDoc[]
-  dependencies ServiceDependency[] @relation("ServiceDeps")
-  dependents   ServiceDependency[] @relation("ServiceDependents")
+  owner            Team?               @relation(fields: [ownerTeamId], references: [id])
+  links            Link[]
+  docs             ServiceDoc[]
+  scorecardResults ScorecardResult[]
+  dependencies     ServiceDependency[] @relation("ServiceDeps")
+  dependents       ServiceDependency[] @relation("ServiceDependents")
 
   @@index([deletedAt, tier])
   @@index([deletedAt, ownerTeamId])
@@ -109,7 +110,8 @@ model ScorecardResult {
   evidence  Json?
   ranAt     DateTime @map("ran_at")
 
-  check ScorecardCheck @relation(fields: [checkId], references: [id])
+  service Service        @relation(fields: [serviceId], references: [id])
+  check   ScorecardCheck @relation(fields: [checkId], references: [id])
 
   @@index([serviceId, checkId, ranAt(sort: Desc)])
   @@map("scorecard_results")
