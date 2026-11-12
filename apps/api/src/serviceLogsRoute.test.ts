@@ -1,9 +1,10 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LogSource } from './logs/logSource.js';
+import { LogSourceUnavailableError, type LogSource } from './logs/logSource.js';
 
 const mocks = vi.hoisted(() => ({
   serviceFindFirst: vi.fn(),
+  isClerkAdmin: vi.fn(),
 }));
 
 vi.mock('./db.js', () => ({
@@ -29,6 +30,7 @@ vi.mock('./clerkAuth.js', () => ({
     }
     request.clerkUserId = 'user-1';
   },
+  isClerkAdmin: mocks.isClerkAdmin,
 }));
 
 import { serviceLogsRoute } from './routes/serviceLogs.js';
@@ -63,6 +65,58 @@ describe('service logs route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.serviceFindFirst.mockResolvedValue({ id: 'svc-1', ownerTeamId: 'team-1' });
+    mocks.isClerkAdmin.mockResolvedValue(true);
+  });
+
+  it('forbids signed-in users who are not administrators', async () => {
+    mocks.isClerkAdmin.mockResolvedValue(false);
+
+    const response = await (
+      await buildApp()
+    ).inject({
+      method: 'GET',
+      url: `/api/v1/services/svc-1/logs?${validQuery}`,
+      headers: { authorization: 'Bearer test-token' },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe('logs_forbidden');
+    expect(mocks.isClerkAdmin).toHaveBeenCalledWith('user-1');
+    expect(queryLogs).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the admin role cannot be checked', async () => {
+    mocks.isClerkAdmin.mockRejectedValue(new Error('Clerk is down'));
+
+    const response = await (
+      await buildApp()
+    ).inject({
+      method: 'GET',
+      url: `/api/v1/services/svc-1/logs?${validQuery}`,
+      headers: { authorization: 'Bearer test-token' },
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json().error.code).toBe('admin_authorization_unavailable');
+    expect(queryLogs).not.toHaveBeenCalled();
+  });
+
+  it('reports a failing log backend as 502', async () => {
+    queryLogs.mockRejectedValueOnce(new LogSourceUnavailableError('Loki is down.'));
+
+    const response = await (
+      await buildApp()
+    ).inject({
+      method: 'GET',
+      url: `/api/v1/services/svc-1/logs?${validQuery}`,
+      headers: { authorization: 'Bearer test-token' },
+    });
+
+    expect(response.statusCode).toBe(502);
+    expect(response.json().error).toMatchObject({
+      code: 'log_source_unavailable',
+      message: 'Loki is down.',
+    });
   });
 
   it('requires an authenticated Clerk user', async () => {

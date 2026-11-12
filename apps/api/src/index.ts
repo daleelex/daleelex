@@ -10,6 +10,7 @@ import { integrationsRoute } from './routes/integrations.js';
 import { meRoute } from './routes/me.js';
 import { serviceLogsRoute } from './routes/serviceLogs.js';
 import { MockLogSource } from './logs/mockLogSource.js';
+import { LokiLogSource } from './logs/lokiLogSource.js';
 
 const app = Fastify({ logger: true });
 
@@ -24,7 +25,16 @@ app.register(teamsRoute, { prefix: '/api/v1' });
 app.register(docsRoute, { prefix: '/api/v1' });
 app.register(integrationsRoute, { prefix: '/api/v1' });
 app.register(meRoute, { prefix: '/api/v1' });
-app.register(serviceLogsRoute, { prefix: '/api/v1', logSource: new MockLogSource() });
+// Real logs when a Loki is configured; otherwise the mock, so local dev without Loki
+// still has a working Logs tab. Logged so nobody mistakes mock lines for real ones.
+const logSource = process.env.LOKI_URL
+  ? new LokiLogSource({
+      baseUrl: process.env.LOKI_URL,
+      serviceLabel: process.env.LOKI_SERVICE_LABEL || undefined,
+    })
+  : new MockLogSource();
+app.log.info(`Service logs backend: ${process.env.LOKI_URL ? 'loki' : 'mock'}`);
+app.register(serviceLogsRoute, { prefix: '/api/v1', logSource });
 
 try {
   await app.listen({ port: 3000, host: '0.0.0.0' });

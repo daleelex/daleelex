@@ -1,9 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import type { ServiceLogListResponse } from '@daleelex/shared';
 import { sendApiError } from '../apiError.js';
-import { requireClerkUser } from '../clerkAuth.js';
+import { isClerkAdmin, requireClerkUser } from '../clerkAuth.js';
 import { prisma } from '../db.js';
-import { canViewLogs, InvalidLogCursorError, type LogSource } from '../logs/logSource.js';
+import {
+  canViewLogs,
+  InvalidLogCursorError,
+  LogSourceUnavailableError,
+  type LogSource,
+} from '../logs/logSource.js';
 
 interface ServiceLogsRouteOptions {
   logSource: LogSource;
@@ -80,14 +85,28 @@ export async function serviceLogsRoute(app: FastifyInstance, options: ServiceLog
         );
       }
 
-      const viewer = { id: req.clerkUserId! };
+      let isAdmin: boolean;
+      try {
+        isAdmin = await isClerkAdmin(req.clerkUserId!);
+      } catch (err) {
+        req.log.error({ err, clerkUserId: req.clerkUserId }, 'Clerk admin lookup failed');
+        return sendApiError(
+          req,
+          reply,
+          503,
+          'admin_authorization_unavailable',
+          'Log access could not be verified.',
+        );
+      }
+
+      const viewer = { id: req.clerkUserId!, isAdmin };
       if (!canViewLogs(viewer, service)) {
         return sendApiError(
           req,
           reply,
           403,
           'logs_forbidden',
-          'You are not allowed to view logs for this service.',
+          'Service logs are currently visible to administrators only.',
         );
       }
 
@@ -105,6 +124,10 @@ export async function serviceLogsRoute(app: FastifyInstance, options: ServiceLog
       } catch (error) {
         if (error instanceof InvalidLogCursorError) {
           return sendApiError(req, reply, 422, 'invalid_cursor', error.message);
+        }
+        if (error instanceof LogSourceUnavailableError) {
+          req.log.error({ err: error }, 'Log backend query failed');
+          return sendApiError(req, reply, 502, 'log_source_unavailable', error.message);
         }
         throw error;
       }
