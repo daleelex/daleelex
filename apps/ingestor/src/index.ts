@@ -1,9 +1,12 @@
 import './env.js';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import type { ManagementSource } from '@daleelex/shared';
 import { GitHubDocsClient } from './githubDocs.js';
 import { GitHubCatalogClient } from './githubCatalog.js';
 import { planCatalogSync } from './catalogSync.js';
+import { GitHubRepositoryClient } from './githubRepositories.js';
+import { checks } from './checks/index.js';
+import { changedResults, runChecks, type StoredResult } from './scorecard.js';
 
 let prisma: PrismaClient | undefined;
 
@@ -14,10 +17,8 @@ function log(event: string, fields: Record<string, unknown> = {}) {
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   const githubToken = process.env.GITHUB_TOKEN;
-  if (!databaseUrl || !githubToken) {
-    log('ingestor.skipped', {
-      message: 'Set DATABASE_URL and GITHUB_TOKEN to enable repository sync.',
-    });
+  if (!databaseUrl) {
+    log('ingestor.skipped', { message: 'Set DATABASE_URL to enable the ingestor.' });
     return;
   }
 
@@ -28,7 +29,11 @@ async function main() {
 
   const org = process.env.GITHUB_ORG;
   let failures = 0;
-  if (org) {
+  if (!githubToken) {
+    log('github.disabled', {
+      message: 'Set GITHUB_TOKEN to sync the catalogue and documentation from repositories.',
+    });
+  } else if (org) {
     failures += await syncCatalog(
       client,
       new GitHubCatalogClient(githubToken, apiUrl),
@@ -43,11 +48,21 @@ async function main() {
 
   if (dryRun) {
     log('techdocs.skipped', { message: 'Dry run; documentation sync not attempted.' });
+    log('scorecard.skipped', { message: 'Dry run; checks not run.' });
     if (failures > 0) process.exitCode = 1;
     return;
   }
 
-  failures += await syncTechDocs(client, new GitHubDocsClient(githubToken, apiUrl));
+  if (githubToken) {
+    failures += await syncTechDocs(client, new GitHubDocsClient(githubToken, apiUrl));
+  }
+  // Last, so checks see the catalogue this run just wrote. Most checks read
+  // only the catalogue, so they run without a token too; the ones that need
+  // GitHub skip themselves.
+  failures += await syncScorecards(
+    client,
+    githubToken ? new GitHubRepositoryClient(githubToken, apiUrl) : null,
+  );
   if (failures > 0) process.exitCode = 1;
 }
 
@@ -228,6 +243,88 @@ async function syncTechDocs(client: PrismaClient, github: GitHubDocsClient) {
 
   log('techdocs.completed', { synced, failed });
   return failed;
+}
+
+/**
+ * Runs the registered checks against every service in the catalogue, portal-
+ * managed ones included, and records the outcomes that changed.
+ */
+async function syncScorecards(client: PrismaClient, github: GitHubRepositoryClient | null) {
+  // The code is the source of truth for what a check is; the table only adds
+  // the `enabled` switch, which is why updates leave that column alone.
+  for (const { id, label, category, weight } of checks) {
+    await client.scorecardCheck.upsert({
+      where: { id },
+      create: { id, label, category, weight },
+      update: { label, category, weight },
+    });
+  }
+  // A check deleted from the code can never report again; without this its
+  // last result would count towards scores forever.
+  await client.scorecardCheck.updateMany({
+    where: { id: { notIn: checks.map((check) => check.id) } },
+    data: { enabled: false },
+  });
+
+  const [enabled, services, latest] = await Promise.all([
+    client.scorecardCheck.findMany({ where: { enabled: true }, select: { id: true } }),
+    client.service.findMany({
+      where: { deletedAt: null },
+      select: {
+        id: true,
+        ownerTeamId: true,
+        repository: true,
+        sloTarget: true,
+        sloWindow: true,
+        links: { select: { type: true, url: true } },
+      },
+    }),
+    // Same shape of query as the API uses to read scores: DISTINCT ON stays on
+    // the (service_id, check_id, ran_at DESC) index.
+    client.$queryRaw<StoredResult[]>`
+      SELECT DISTINCT ON (service_id, check_id)
+        service_id AS "serviceId",
+        check_id   AS "checkId",
+        status,
+        message
+      FROM scorecard_results
+      ORDER BY service_id, check_id, ran_at DESC
+    `,
+  ]);
+
+  const enabledIds = new Set(enabled.map((check) => check.id));
+  const ranAt = new Date();
+  const { results, errors } = await runChecks(
+    checks.filter((check) => enabledIds.has(check.id)),
+    services,
+    github,
+  );
+
+  for (const error of errors) log('scorecard.check-failed', { ...error });
+
+  const changed = changedResults(latest, results);
+  if (changed.length > 0) {
+    await client.scorecardResult.createMany({
+      data: changed.map(({ serviceId, checkId, status, message, evidence }) => ({
+        serviceId,
+        checkId,
+        status,
+        message,
+        evidence: evidence as Prisma.InputJsonValue | undefined,
+        ranAt,
+      })),
+    });
+  }
+
+  log('scorecard.completed', {
+    services: services.length,
+    checks: enabledIds.size,
+    evaluated: results.length,
+    changed: changed.length,
+    failed: errors.length,
+  });
+
+  return errors.length;
 }
 
 function errorMessage(error: unknown) {
