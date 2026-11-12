@@ -9,47 +9,16 @@ import { TopBar } from './TopBar';
 import { CommandPalette } from './CommandPalette';
 import './Layout.css';
 
-const NAV_GROUPS = [
-  {
-    section: 'Workspace',
-    items: [
-      { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
-      { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: null, end: false },
-      { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
-      { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
-    ],
-  },
-  {
-    section: 'Operations',
-    items: [
-      {
-        to: '/health',
-        label: 'Health & SLO',
-        icon: <HealthIcon />,
-        countKey: null,
-        end: false,
-      },
-      {
-        to: '/settings',
-        label: 'Settings',
-        icon: <SettingsIcon />,
-        countKey: null,
-        end: false,
-      },
-    ],
-  },
+const NAV_ITEMS = [
+  { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
+  { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: null, end: false },
+  { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
+  { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
+  { to: '/health', label: 'Health & SLO', icon: <HealthIcon />, countKey: null, end: false },
 ] as const;
 
 export function Layout() {
   const [theme, setTheme] = useTheme();
-
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('daleelex-nav-collapsed') ?? '{}');
-    } catch {
-      return {};
-    }
-  });
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     return localStorage.getItem('daleelex-sidebar-open') !== 'false';
@@ -94,14 +63,6 @@ export function Layout() {
     setTheme(theme === 'light' ? 'dark' : 'light');
   }
 
-  function toggleSection(section: string) {
-    setCollapsed((prev) => {
-      const next = { ...prev, [section]: !prev[section] };
-      localStorage.setItem('daleelex-nav-collapsed', JSON.stringify(next));
-      return next;
-    });
-  }
-
   function toggleSidebar() {
     setSidebarOpen((prev) => {
       const next = !prev;
@@ -121,43 +82,31 @@ export function Layout() {
         </div>
         <div className="sidebar-sep" />
         <nav className="nav">
-          {NAV_GROUPS.map((group) => {
-            const isOpen = !collapsed[group.section];
-            return (
-              <div key={group.section}>
-                <button
-                  className="nav-section-btn"
-                  onClick={() => toggleSection(group.section)}
-                  aria-expanded={isOpen}
-                >
-                  {group.section}
-                  <ChevronDownIcon open={isOpen} />
-                </button>
-                <div className={`nav-group-items${isOpen ? ' open' : ''}`}>
-                  <div className="nav-group-inner">
-                    {group.items.map((item) => {
-                      const count = item.countKey === null ? null : navCounts[item.countKey];
+          {NAV_ITEMS.map((item) => {
+            const count = item.countKey === null ? null : navCounts[item.countKey];
 
-                      return (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          end={item.end}
-                          className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                        >
-                          {item.icon}
-                          <span className="label">{item.label}</span>
-                          {count !== null && <span className="nav-count">{count}</span>}
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+              >
+                {item.icon}
+                <span className="label">{item.label}</span>
+                {count !== null && <span className="nav-count">{count}</span>}
+              </NavLink>
             );
           })}
         </nav>
         <div className="sidebar-foot">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+          >
+            <SettingsIcon />
+            <span className="label">Settings</span>
+          </NavLink>
           <button className="theme-toggle" onClick={toggleTheme}>
             {theme === 'light' ? <MoonIcon /> : <SunIcon />}
             <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
@@ -307,25 +256,6 @@ function MoonIcon() {
       strokeWidth="2"
     >
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-function ChevronDownIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      style={{
-        transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-        transition: 'transform 200ms ease',
-        flexShrink: 0,
-      }}
-    >
-      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
