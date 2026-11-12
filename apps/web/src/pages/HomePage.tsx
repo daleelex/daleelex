@@ -7,56 +7,8 @@ import { computeHealth, STATE_LABEL, type HealthState } from '../lib/health';
 import { api } from '../api';
 import './HomePage.css';
 
-// SAMPLE DATA — not from a real activity/audit feed.
-// Replace with a real events API when available.
-const SAMPLE_ACTIVITY = [
-  {
-    kind: 'deploy' as const,
-    title: 'auth-gateway',
-    detail: 'v2.14.1',
-    team: 'Platform Identity',
-    ts: '2h ago',
-  },
-  {
-    kind: 'score' as const,
-    title: 'billing-service',
-    detail: 'score ↑ 85',
-    team: 'Payments',
-    ts: '5h ago',
-  },
-  {
-    kind: 'docs' as const,
-    title: 'users-api',
-    detail: 'README updated',
-    team: 'Core Product',
-    ts: '8h ago',
-  },
-  {
-    kind: 'incident' as const,
-    title: 'search-engine',
-    detail: 'P2 resolved',
-    team: 'Discovery',
-    ts: '1d ago',
-  },
-  {
-    kind: 'lifecycle' as const,
-    title: 'legacy-importer',
-    detail: '→ deprecated',
-    team: 'Data Platform',
-    ts: '2d ago',
-  },
-];
-
-const ACTIVITY_META: Record<
-  (typeof SAMPLE_ACTIVITY)[number]['kind'],
-  { glyph: string; color: string }
-> = {
-  deploy: { glyph: '⤴', color: 'var(--accent)' },
-  score: { glyph: '✓', color: 'var(--ok)' },
-  incident: { glyph: '!', color: 'var(--danger)' },
-  docs: { glyph: '❏', color: 'var(--accent-2)' },
-  lifecycle: { glyph: '◐', color: 'var(--warn)' },
-};
+// Enough to act on without scrolling; the Health page has the full list.
+const ATTENTION_LIMIT = 6;
 
 function greeting() {
   const h = new Date().getHours();
@@ -66,7 +18,7 @@ function greeting() {
 export function HomePage() {
   const [selected, setSelected] = useState<Service | null>(null);
 
-  const { data } = useQuery({ queryKey: ['services'], queryFn: api.services });
+  const { data, isLoading } = useQuery({ queryKey: ['services'], queryFn: api.services });
   const services = data?.data ?? [];
   const health = useMemo(() => computeHealth(services), [services]);
 
@@ -75,21 +27,28 @@ export function HomePage() {
     [services],
   );
 
+  const attention = health.rows.filter((row) => row.state !== 'healthy');
+
   const kpis = [
     {
-      label: 'Total Services',
+      label: 'Services',
       value: health.total,
-      sub: `across ${teamCount} teams`,
+      sub: `across ${teamCount} ${teamCount === 1 ? 'team' : 'teams'}`,
       accent: false,
     },
-    { label: 'Tier-1 Critical', value: health.tier1Total, sub: 'SLO ≥ 99.9%', accent: false },
     {
-      label: 'In Production',
+      label: 'Tier 1',
+      value: health.tier1Total,
+      sub: `${health.tier1Ready} fully described`,
+      accent: false,
+    },
+    {
+      label: 'In production',
       value: health.withProduction,
       sub: `${health.productionCoverage}% of catalog`,
       accent: false,
     },
-    { label: 'Readiness', value: health.readinessScore, sub: 'avg scorecard', accent: true },
+    { label: 'Readiness', value: health.readinessScore, sub: 'out of 100', accent: true },
   ];
 
   const coverageBars = [
@@ -103,29 +62,17 @@ export function HomePage() {
   return (
     <>
       <div className="home-body">
-        {/* Hero banner */}
-        <div className="home-hero">
-          <div className="home-hero-glow" />
-          <div className="home-hero-kicker">Developer Portal</div>
-          <h1 className="home-hero-title">
-            {greeting()}.<br />
-            <em>Here's your platform.</em>
-          </h1>
-          <p className="home-hero-sub">
-            Every service your company runs — who owns it, how healthy it is, and where its docs
-            live. Find anything in one place and ship with confidence.
-          </p>
-          <div className="home-hero-actions">
-            <Link to="/services" className="hero-btn-primary">
-              Browse the catalog <ArrowRight />
-            </Link>
-            <Link to="/health" className="hero-btn-ghost">
-              Health board
-            </Link>
-          </div>
-        </div>
+        <header className="home-head">
+          <h1 className="home-title">{greeting()}.</h1>
+          {!isLoading && (
+            <p className="home-sub">
+              {attention.length === 0
+                ? 'Every service in the catalog is fully described.'
+                : `${attention.length} of ${health.total} services need attention.`}
+            </p>
+          )}
+        </header>
 
-        {/* KPI row */}
         <div className="home-kpi-row">
           {kpis.map((k) => (
             <div key={k.label} className={`stat-cell${k.accent ? ' accent' : ''}`}>
@@ -138,97 +85,42 @@ export function HomePage() {
           ))}
         </div>
 
-        {/* Body grid */}
         <div className="home-grid">
-          {/* Left column */}
-          <div className="home-col">
-            {/* Catalog coverage */}
-            <CatalogCoverage bars={coverageBars} readiness={health.readinessScore} />
-
-            {/* Recent activity — sample data */}
-            <div className="home-panel">
-              <div className="home-panel-head">
-                <h2 className="home-panel-title">Recent activity</h2>
-                <span className="home-panel-badge">sample</span>
-              </div>
-              <div className="activity-feed">
-                {SAMPLE_ACTIVITY.map((a, i) => {
-                  const meta = ACTIVITY_META[a.kind];
-                  return (
-                    <div key={i} className="activity-row">
-                      <div
-                        className="activity-glyph"
-                        style={{
-                          color: meta.color,
-                          background: `color-mix(in srgb, ${meta.color} 16%, transparent)`,
-                        }}
-                      >
-                        {meta.glyph}
-                      </div>
-                      <div className="activity-body">
-                        <div className="activity-title">
-                          <span className="activity-name">{a.title}</span>
-                          <span className="activity-detail">{a.detail}</span>
-                        </div>
-                        <div className="activity-team">{a.team}</div>
-                      </div>
-                      <div className="activity-ts">{a.ts}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Right column */}
-          <div className="home-col">
-            {/* Needs attention */}
-            <div className="home-panel">
+          <div className="home-panel">
+            <div className="home-panel-head">
               <h2 className="home-panel-title">Needs attention</h2>
-              {health.needsAttention.length === 0 ? (
-                <p className="home-empty-state">All services are healthy.</p>
-              ) : (
-                <div className="attention-list">
-                  {health.needsAttention.map((row) => (
-                    <button
-                      key={row.service.id}
-                      className="attention-item"
-                      onClick={() => setSelected(row.service)}
-                    >
-                      <div className="attention-info">
-                        <div className="attention-name">{row.service.name}</div>
-                        <div className="attention-sub">
-                          Tier {row.service.tier} · {row.gaps[0] ?? ''}
-                        </div>
-                      </div>
-                      <StatePill state={row.state} />
-                    </button>
-                  ))}
-                </div>
+              {attention.length > ATTENTION_LIMIT && (
+                <Link to="/health" className="home-panel-link">
+                  View all {attention.length}
+                </Link>
               )}
             </div>
-
-            {/* Quick links */}
-            <div className="home-panel">
-              <h2 className="home-panel-title">Quick links</h2>
-              <div className="quick-links-grid">
-                <QuickLink
-                  icon={<PlusIcon />}
-                  label="Register a service"
-                  sub="catalog-info.yaml"
-                  to="/services"
-                />
-                <QuickLink
-                  icon={<GridIcon />}
-                  label="Browse catalog"
-                  sub="12 services"
-                  to="/services"
-                />
-                <QuickLink icon={<HeartbeatIcon />} label="Health & SLO" sub="board" to="/health" />
-                <QuickLink icon={<DocIcon />} label="TechDocs" sub="203 pages" to="/docs" />
+            {attention.length === 0 ? (
+              <p className="home-empty-state">
+                {isLoading ? 'Loading services…' : 'Nothing needs attention.'}
+              </p>
+            ) : (
+              <div className="attention-list">
+                {attention.slice(0, ATTENTION_LIMIT).map((row) => (
+                  <button
+                    key={row.service.id}
+                    className="attention-item"
+                    onClick={() => setSelected(row.service)}
+                  >
+                    <div className="attention-info">
+                      <div className="attention-name">{row.service.name}</div>
+                      <div className="attention-sub">
+                        Tier {row.service.tier} · {row.gaps.join(' · ')}
+                      </div>
+                    </div>
+                    <StatePill state={row.state} />
+                  </button>
+                ))}
               </div>
-            </div>
+            )}
           </div>
+
+          <CatalogCoverage bars={coverageBars} />
         </div>
       </div>
 
@@ -237,15 +129,7 @@ export function HomePage() {
   );
 }
 
-/* ── Sub-components ─────────────────────────────────────────────────────── */
-
-function CatalogCoverage({
-  bars,
-  readiness,
-}: {
-  bars: { label: string; pct: number; color: string }[];
-  readiness: number;
-}) {
+function CatalogCoverage({ bars }: { bars: { label: string; pct: number; color: string }[] }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
@@ -254,10 +138,7 @@ function CatalogCoverage({
 
   return (
     <div className="home-panel">
-      <div className="home-panel-head">
-        <h2 className="home-panel-title">Catalog coverage</h2>
-        <span className="coverage-readiness">readiness {readiness}/100</span>
-      </div>
+      <h2 className="home-panel-title">Catalog coverage</h2>
       <div className="coverage-bars">
         {bars.map((b) => (
           <div key={b.label} className="coverage-bar-row">
@@ -283,102 +164,4 @@ function CatalogCoverage({
 
 function StatePill({ state }: { state: HealthState }) {
   return <span className={`state-pill ${state}`}>{STATE_LABEL[state]}</span>;
-}
-
-function QuickLink({
-  icon,
-  label,
-  sub,
-  to,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  sub: string;
-  to: string;
-}) {
-  return (
-    <Link to={to} className="quick-link-btn">
-      <div className="quick-link-icon">{icon}</div>
-      <div className="quick-link-label">{label}</div>
-      <div className="quick-link-sub">{sub}</div>
-    </Link>
-  );
-}
-
-/* ── Icons ──────────────────────────────────────────────────────────────── */
-function ArrowRight() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.25"
-    >
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  );
-}
-function PlusIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-function GridIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-    </svg>
-  );
-}
-function HeartbeatIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
-  );
-}
-function DocIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-    </svg>
-  );
 }
