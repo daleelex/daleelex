@@ -66,8 +66,6 @@ export function ServicesPage() {
     });
   }, [services, search, tier, owner]);
 
-  const stats = useMemo(() => computeStats(services), [services]);
-
   function updateFilter(key: 'q' | 'tier' | 'owner', value: string) {
     setParams((next) => {
       const updated = new URLSearchParams(next);
@@ -99,19 +97,6 @@ export function ServicesPage() {
         </button>
       </TopBarActions>
 
-      <section className="hero">
-        <div className="hero-kicker">
-          <span>Software catalogue</span>
-        </div>
-        <h1 className="page-title">
-          Every service you ship, <em>in one place.</em>
-        </h1>
-        <p className="page-sub">
-          Browse, track, and own the systems that run your business. From authentication to
-          payments, ownership is clear, health is visible, and documentation stays one click away.
-        </p>
-      </section>
-
       {notice && (
         <div className={`catalog-notice ${notice.kind}`} role="status">
           <span>{notice.message}</span>
@@ -120,18 +105,6 @@ export function ServicesPage() {
           </button>
         </div>
       )}
-
-      <section className="stats">
-        {stats.map((cell, i) => (
-          <div key={i} className={`stat-cell${cell.accent ? ' accent' : ''}`}>
-            <div className="stat-label">{cell.label}</div>
-            <div className="stat-inner">
-              <div className="stat-value">{cell.value}</div>
-            </div>
-            <div className="stat-sub">{cell.sub}</div>
-          </div>
-        ))}
-      </section>
 
       <section className="filter-row">
         <div className="filter-search">
@@ -204,13 +177,6 @@ export function ServicesPage() {
           ))}
       </section>
 
-      <footer className="foot">
-        <span className="mono">DALEELEX v0.5 {new Date().getFullYear()}</span>
-        <span>
-          Built on <code>catalog-info.yaml</code>
-        </span>
-      </footer>
-
       <ServiceDrawer
         service={selected}
         onClose={() => setSelected(null)}
@@ -224,20 +190,6 @@ export function ServicesPage() {
       {registering && <RegisterServiceModal onClose={() => setRegistering(false)} />}
     </>
   );
-}
-
-function computeStats(services: Service[]) {
-  const total = services.length;
-  const tier1 = services.filter((s) => s.tier === 1).length;
-  const production = services.filter((s) => s.lifecycle === 'production').length;
-  const teams = new Set(services.map((s) => s.ownerTeamId).filter(Boolean)).size;
-  const prodPercent = total > 0 ? Math.round((production / total) * 100) : 0;
-  return [
-    { label: 'Total services', value: total, sub: 'across all teams', accent: false },
-    { label: 'Tier 1 critical', value: tier1, sub: 'require SLO ≥ 99.9%', accent: false },
-    { label: 'In production', value: production, sub: `${prodPercent}% of catalog`, accent: false },
-    { label: 'Teams', value: teams, sub: 'owning services', accent: true },
-  ];
 }
 
 function PlusIcon() {

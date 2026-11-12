@@ -23,8 +23,6 @@ const LIFECYCLE_COLOR: Record<string, string> = {
 
 export function ServiceCard({ service, onClick }: Props) {
   const cat = CAT_COLORS[service.type] ?? CAT_COLORS.api;
-  const visibleTags = service.tags.slice(0, 2);
-  const hiddenTagCount = Math.max(service.tags.length - visibleTags.length, 0);
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (!onClick) {
@@ -62,33 +60,10 @@ export function ServiceCard({ service, onClick }: Props) {
       <h3 className="card-title">{service.name}</h3>
       <div className="card-id">{service.id}</div>
 
-      {service.description && <p className="card-desc">{service.description}</p>}
-
       <div className="card-meta">
-        <div>
-          <div className="meta-label">Owner</div>
-          <div className="meta-value">{service.owner?.name ?? '—'}</div>
-        </div>
-        <div>
-          <div className="meta-label">Language</div>
-          <div className="meta-value">{service.language ?? 'Unspecified'}</div>
-        </div>
-      </div>
-
-      <div className="card-foot">
-        <div className="card-foot-item">
-          <div>
-            <div className="meta-label">SLO target</div>
-            <div className="meta-value">{service.sloTarget ?? '—'}</div>
-          </div>
-        </div>
-        <div className="card-foot-item">
-          {visibleTags.map((tag) => (
-            <span key={tag} className="tag">
-              {tag}
-            </span>
-          ))}
-          {hiddenTagCount > 0 && <span className="tag muted">+{hiddenTagCount}</span>}
+        <div className="meta-label">Owner</div>
+        <div className={`meta-value${service.owner ? '' : ' unowned'}`}>
+          {service.owner?.name ?? 'Unowned'}
         </div>
       </div>
     </article>
