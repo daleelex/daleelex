@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
@@ -10,7 +10,19 @@ import type {
 import { DocMarkdown } from '../components/DocMarkdown';
 import { UploadDocsModal } from '../components/UploadDocsModal';
 import { EditDocModal } from '../components/EditDocModal';
+import { timeAgo } from '../lib/time';
+// For the shared tier badge.
+import '../components/ServiceCard.css';
 import './TechDocsPage.css';
+
+// How many doc links a library card lists before it summarises the rest.
+const LIBRARY_DOC_LIMIT = 4;
+
+interface OutlineItem {
+  id: string;
+  text: string;
+  level: 2 | 3;
+}
 
 export function TechDocsPage() {
   const queryClient = useQueryClient();
@@ -61,6 +73,37 @@ export function TechDocsPage() {
 
   const selectedEntry = entries.find((e) => e.service.id === selectedServiceId);
   const selectedDoc = selectedEntry?.docs.find((d) => d.id === selectedDocId);
+  const docCount = entries.reduce((sum, entry) => sum + entry.docs.length, 0);
+
+  const siblings = selectedEntry?.docs ?? [];
+  const position = siblings.findIndex((d) => d.id === selectedDocId);
+  const previousDoc = position > 0 ? siblings[position - 1] : null;
+  const nextDoc = position >= 0 && position < siblings.length - 1 ? siblings[position + 1] : null;
+
+  // The outline is read from the rendered headings rather than parsed from the
+  // Markdown, so it always matches what is on screen.
+  const proseRef = useRef<HTMLDivElement>(null);
+  const [outline, setOutline] = useState<OutlineItem[]>([]);
+  useEffect(() => {
+    const headings = proseRef.current?.querySelectorAll('h2, h3') ?? [];
+    setOutline(
+      Array.from(headings, (heading, i) => {
+        heading.id = `doc-section-${i}`;
+        return {
+          id: heading.id,
+          text: heading.textContent ?? '',
+          level: heading.tagName === 'H2' ? 2 : 3,
+        };
+      }),
+    );
+  }, [docContent]);
+
+  function jumpTo(id: string) {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
 
   function selectDoc(serviceId: string, docId: number) {
     setSearchParams({ service: serviceId, doc: String(docId) });
@@ -85,7 +128,7 @@ export function TechDocsPage() {
   }
 
   return (
-    <div className="techdocs-page">
+    <div className={`techdocs-page${selectedServiceId && selectedDocId ? ' has-doc' : ''}`}>
       <aside className="techdocs-nav">
         <div className="techdocs-nav-head">
           <div className="techdocs-title-row">
@@ -100,7 +143,10 @@ export function TechDocsPage() {
               Upload
             </button>
           </div>
-          <p className="techdocs-nav-sub">{entries.length} services with docs</p>
+          <p className="techdocs-nav-sub">
+            {docCount} {docCount === 1 ? 'doc' : 'docs'} · {entries.length}{' '}
+            {entries.length === 1 ? 'service' : 'services'}
+          </p>
           <input
             className="techdocs-search"
             type="search"
@@ -138,19 +184,71 @@ export function TechDocsPage() {
             </button>
           </div>
         )}
-        {!selectedServiceId && (
-          <div className="techdocs-welcome">
-            <WelcomeIcon />
-            <h2 className="techdocs-welcome-title">Pick a doc to read</h2>
-            <p className="techdocs-welcome-sub">
-              Select a service from the left to browse its documentation.
-            </p>
+        {!(selectedServiceId && selectedDocId) && (
+          <div className="techdocs-library">
+            <header className="techdocs-library-head">
+              <h1 className="techdocs-library-title">TechDocs</h1>
+              <p className="techdocs-library-sub">
+                {isLoading
+                  ? 'Loading documentation…'
+                  : indexError
+                    ? 'Documentation could not be loaded. Check the API.'
+                    : entries.length === 0
+                      ? 'No documentation yet. Upload a Markdown file to get started.'
+                      : 'Runbooks, overviews and guides, kept next to the services they describe.'}
+              </p>
+            </header>
+
+            {!isLoading && !indexError && entries.length > 0 && filtered.length === 0 && (
+              <p className="techdocs-library-sub">No docs match “{search.trim()}”.</p>
+            )}
+
+            <div className="techdocs-library-grid">
+              {filtered.map((entry) => (
+                <section key={entry.service.id} className="library-card">
+                  <div className="library-card-head">
+                    <h2 className="library-card-title">{entry.service.name}</h2>
+                    <span className={`tier-badge tier-${entry.service.tier}`}>
+                      T{entry.service.tier}
+                    </span>
+                  </div>
+                  <div className="library-card-id">{entry.service.id}</div>
+                  <div className="library-card-docs">
+                    {entry.docs.slice(0, LIBRARY_DOC_LIMIT).map((doc) => (
+                      <button
+                        key={doc.id}
+                        className="library-doc"
+                        onClick={() => selectDoc(entry.service.id, doc.id)}
+                      >
+                        <PageIcon />
+                        <span>{doc.title}</span>
+                        <ChevronIcon />
+                      </button>
+                    ))}
+                  </div>
+                  {entry.docs.length > LIBRARY_DOC_LIMIT && (
+                    <div className="library-card-more">
+                      +{entry.docs.length - LIBRARY_DOC_LIMIT} more in the sidebar
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
           </div>
         )}
 
         {selectedServiceId && selectedDocId && (
           <>
             <div className="techdocs-content-head">
+              <button
+                className="techdocs-back"
+                type="button"
+                onClick={() => setSearchParams({})}
+                aria-label="Back to all docs"
+              >
+                <ChevronIcon flipped />
+                All docs
+              </button>
               <div className="techdocs-content-heading">
                 <div className="techdocs-content-meta">
                   <div className="techdocs-breadcrumb">
@@ -165,7 +263,18 @@ export function TechDocsPage() {
                     )}
                   </div>
                   {selectedDoc && (
-                    <div className="techdocs-content-path">{displayDocPath(selectedDoc.path)}</div>
+                    <div className="techdocs-content-path">
+                      <span>{displayDocPath(selectedDoc.path)}</span>
+                      {docContent && (
+                        // fetchedAt moves on every sync, upload and edit.
+                        <span>
+                          {docContent.sourceRepository
+                            ? `Synced from ${docContent.sourceRepository}`
+                            : 'Updated'}{' '}
+                          {timeAgo(docContent.fetchedAt)}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
                 {selectedDoc &&
@@ -196,15 +305,60 @@ export function TechDocsPage() {
               </div>
             </div>
 
-            <div className="techdocs-content-body">
-              {contentLoading && <div className="techdocs-spinner">Loading…</div>}
-              {contentError && (
-                <div className="techdocs-spinner">Failed to load this document.</div>
-              )}
-              {!contentLoading && docContent && (
-                <div className="techdocs-prose">
-                  <DocMarkdown doc={docContent} />
-                </div>
+            {/* Keyed so each doc starts at the top instead of the last scroll position. */}
+            <div className="techdocs-content-body" key={`${selectedServiceId}-${selectedDocId}`}>
+              <div className="techdocs-reader">
+                <article className="techdocs-paper">
+                  {contentLoading && <div className="techdocs-spinner">Loading…</div>}
+                  {contentError && (
+                    <div className="techdocs-spinner">Failed to load this document.</div>
+                  )}
+                  {!contentLoading && docContent && (
+                    <div className="techdocs-prose" ref={proseRef}>
+                      <DocMarkdown doc={docContent} />
+                    </div>
+                  )}
+                </article>
+
+                {(previousDoc || nextDoc) && (
+                  <nav className="techdocs-pager" aria-label="More docs for this service">
+                    {previousDoc ? (
+                      <button
+                        className="techdocs-pager-link"
+                        onClick={() => selectDoc(selectedServiceId, previousDoc.id)}
+                      >
+                        <span className="techdocs-pager-label">Previous</span>
+                        <span className="techdocs-pager-title">{previousDoc.title}</span>
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    {nextDoc && (
+                      <button
+                        className="techdocs-pager-link next"
+                        onClick={() => selectDoc(selectedServiceId, nextDoc.id)}
+                      >
+                        <span className="techdocs-pager-label">Next</span>
+                        <span className="techdocs-pager-title">{nextDoc.title}</span>
+                      </button>
+                    )}
+                  </nav>
+                )}
+              </div>
+
+              {outline.length > 1 && (
+                <nav className="techdocs-outline" aria-label="On this page">
+                  <div className="techdocs-outline-title">On this page</div>
+                  {outline.map((item) => (
+                    <button
+                      key={item.id}
+                      className={`techdocs-outline-link level-${item.level}`}
+                      onClick={() => jumpTo(item.id)}
+                    >
+                      {item.text}
+                    </button>
+                  ))}
+                </nav>
               )}
             </div>
           </>
@@ -248,8 +402,8 @@ function ServiceDocGroup({
   return (
     <div className={`doc-group${isActive ? ' doc-group-active' : ''}`}>
       <div className="doc-group-service">
-        <span className={`doc-group-tier tier-${entry.service.tier}`}>T{entry.service.tier}</span>
         <span className="doc-group-name">{entry.service.name}</span>
+        <span className={`tier-badge tier-${entry.service.tier}`}>T{entry.service.tier}</span>
         <span className="doc-group-count">{entry.docs.length}</span>
       </div>
       <div className="doc-group-pages">
@@ -327,21 +481,18 @@ function EditIcon() {
   );
 }
 
-function WelcomeIcon() {
+function ChevronIcon({ flipped = false }: { flipped?: boolean }) {
   return (
     <svg
-      width="48"
-      height="48"
+      width="13"
+      height="13"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="var(--line-strong)"
-      strokeWidth="1.25"
+      stroke="currentColor"
+      strokeWidth="2"
+      style={{ flexShrink: 0, transform: flipped ? 'scaleX(-1)' : undefined }}
     >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10 9 9 9 8 9" />
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }
