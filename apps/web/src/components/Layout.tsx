@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
-import { useTheme } from '../lib/theme';
 import { TopBarSlotProvider } from '../lib/topbar';
 import { TopBar } from './TopBar';
 import { CommandPalette } from './CommandPalette';
@@ -11,27 +10,37 @@ import './Layout.css';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
-  { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: null, end: false },
+  { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: 'services', end: false },
   { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
   { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
   { to: '/health', label: 'Health & SLO', icon: <HealthIcon />, countKey: null, end: false },
 ] as const;
 
 export function Layout() {
-  const [theme, setTheme] = useTheme();
-
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+  // Desktop: the sidebar is either full width or an icon rail — it never
+  // disappears, so navigation is always one click away.
+  const [expanded, setExpanded] = useState<boolean>(() => {
     return localStorage.getItem('daleelex-sidebar-open') !== 'false';
   });
+  // Narrow screens: the sidebar is an off-canvas drawer instead.
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const [actionsSlot, setActionsSlot] = useState<HTMLDivElement | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const { pathname } = useLocation();
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setPaletteOpen((prev) => !prev);
+      }
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
       }
     }
 
@@ -54,33 +63,32 @@ export function Layout() {
     queryFn: api.stats,
   });
 
-  const navCounts: Record<'teams' | 'docs', number | null> = {
+  const navCounts: Record<'services' | 'teams' | 'docs', number | null> = {
+    services: statsQuery.data?.serviceCount ?? null,
     teams: statsQuery.data?.teamCount ?? null,
     docs: statsQuery.data?.docCount ?? null,
   };
 
-  function toggleTheme() {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  }
-
-  function toggleSidebar() {
-    setSidebarOpen((prev) => {
+  function toggleExpanded() {
+    setExpanded((prev) => {
       const next = !prev;
       localStorage.setItem('daleelex-sidebar-open', String(next));
       return next;
     });
   }
 
+  const sidebarClass = `sidebar${expanded ? '' : ' rail'}${mobileOpen ? ' mobile-open' : ''}`;
+
   return (
     <div className="root">
-      <aside className={`sidebar${sidebarOpen ? '' : ' closed'}`}>
-        <div className="brand">
+      {mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={sidebarClass} aria-label="Primary">
+        <NavLink to="/" className="brand" aria-label="DaleelEx home">
+          <BrandMark />
           <span className="brand-wordmark">DaleelEx</span>
-          <button className="brand-close" onClick={toggleSidebar} title="Close sidebar">
-            <CloseIcon />
-          </button>
-        </div>
-        <div className="sidebar-sep" />
+        </NavLink>
+
         <nav className="nav">
           {NAV_ITEMS.map((item) => {
             const count = item.countKey === null ? null : navCounts[item.countKey];
@@ -90,6 +98,8 @@ export function Layout() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                title={expanded ? undefined : item.label}
+                aria-label={item.label}
                 className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
               >
                 {item.icon}
@@ -99,29 +109,36 @@ export function Layout() {
             );
           })}
         </nav>
+
         <div className="sidebar-foot">
           <NavLink
             to="/settings"
+            title={expanded ? undefined : 'Settings'}
+            aria-label="Settings"
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             <SettingsIcon />
             <span className="label">Settings</span>
           </NavLink>
-          <button className="theme-toggle" onClick={toggleTheme}>
-            {theme === 'light' ? <MoonIcon /> : <SunIcon />}
-            <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
+          <button
+            className="nav-item sidebar-collapse"
+            onClick={toggleExpanded}
+            aria-expanded={expanded}
+            aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            <CollapseIcon flipped={!expanded} />
+            <span className="label">Collapse</span>
           </button>
         </div>
       </aside>
 
-      {!sidebarOpen && (
-        <button className="hamburger-fab" onClick={toggleSidebar} title="Open sidebar">
-          <HamburgerIcon />
-        </button>
-      )}
-
-      <main className={`main${sidebarOpen ? '' : ' sidebar-closed'}`}>
-        <TopBar onOpenSearch={() => setPaletteOpen(true)} actionsRef={setActionsSlot} />
+      <main className="main">
+        <TopBar
+          onOpenSearch={() => setPaletteOpen(true)}
+          onOpenNav={() => setMobileOpen(true)}
+          actionsRef={setActionsSlot}
+        />
         <TopBarSlotProvider value={actionsSlot}>
           <Outlet />
         </TopBarSlotProvider>
@@ -132,11 +149,46 @@ export function Layout() {
   );
 }
 
-function HomeIcon() {
+// "Daleel" is a guide — the mark is a compass needle.
+function BrandMark() {
+  return (
+    <svg className="brand-mark" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+      <rect width="30" height="30" rx="9" fill="url(#brand-mark-fill)" />
+      <path d="M20.5 9.5l-3.4 7.6-7.6 3.4 3.4-7.6z" fill="#fff" />
+      <circle cx="15" cy="15" r="1.6" fill="#0a3743" />
+      <defs>
+        <linearGradient id="brand-mark-fill" x1="0" y1="0" x2="30" y2="30">
+          <stop stopColor="#3ec9b8" />
+          <stop offset="1" stopColor="#1f5fa5" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function CollapseIcon({ flipped }: { flipped: boolean }) {
   return (
     <svg
       width="15"
       height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      style={{ transform: flipped ? 'scaleX(-1)' : undefined, flexShrink: 0 }}
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+      <polyline points="16 9 13 12 16 15" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -150,8 +202,8 @@ function HomeIcon() {
 function CatalogIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -165,8 +217,8 @@ function CatalogIcon() {
 function TeamsIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -182,8 +234,8 @@ function TeamsIcon() {
 function DocsIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -197,8 +249,8 @@ function DocsIcon() {
 function HealthIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -211,8 +263,8 @@ function HealthIcon() {
 function SettingsIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -220,73 +272,6 @@ function SettingsIcon() {
     >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  );
-}
-function SunIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1" x2="12" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" />
-      <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-    </svg>
-  );
-}
-function MoonIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-function HamburgerIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }

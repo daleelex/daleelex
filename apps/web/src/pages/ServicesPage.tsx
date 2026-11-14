@@ -3,13 +3,31 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import type { Service } from '@daleelex/shared';
 import { ServiceCard } from '../components/ServiceCard';
+import { ServiceTable } from '../components/ServiceTable';
 import { ServiceDrawer } from '../components/ServiceDrawer';
 import { RegisterServiceModal } from '../components/RegisterServiceModal';
 import { TopBarActions } from '../lib/topbar';
+import { toServiceHealth, stateWeight, STATE_LABEL, type ServiceHealth } from '../lib/health';
 import { api } from '../api';
 import './ServicesPage.css';
 
 const TIERS = ['All', 'Tier 1', 'Tier 2', 'Tier 3'] as const;
+
+const SORTS = {
+  name: 'Name',
+  tier: 'Tier',
+  health: 'Needs attention first',
+  updated: 'Recently updated',
+} as const;
+type SortKey = keyof typeof SORTS;
+
+const COMPARATORS: Record<SortKey, (a: ServiceHealth, b: ServiceHealth) => number> = {
+  name: (a, b) => a.service.name.localeCompare(b.service.name),
+  tier: (a, b) => a.service.tier - b.service.tier || COMPARATORS.name(a, b),
+  health: (a, b) =>
+    stateWeight(b.state) - stateWeight(a.state) || a.score - b.score || COMPARATORS.tier(a, b),
+  updated: (a, b) => b.service.updatedAt.localeCompare(a.service.updatedAt),
+};
 
 type CatalogNotice = {
   kind: 'success' | 'error';
@@ -26,10 +44,13 @@ export function ServicesPage() {
     queryFn: api.services,
   });
 
-  const services = data?.data ?? [];
+  const services = useMemo(() => data?.data ?? [], [data]);
   const search = params.get('q') ?? '';
   const tier = params.get('tier') ? `Tier ${params.get('tier')}` : 'All';
   const owner = params.get('owner') ?? 'All';
+  const sortParam = params.get('sort') ?? '';
+  const sort: SortKey = sortParam in SORTS ? (sortParam as SortKey) : 'name';
+  const view = params.get('view') === 'table' ? 'table' : 'grid';
   const activeFilters = [search.trim(), tier !== 'All', owner !== 'All'].filter(Boolean).length;
 
   // Selection lives in the URL so the command palette — and a pasted link —
@@ -66,6 +87,31 @@ export function ServicesPage() {
     });
   }, [services, search, tier, owner]);
 
+  // Health is derived per service, so sorting by it means sorting the rows.
+  const rows = useMemo(
+    () => filtered.map(toServiceHealth).sort(COMPARATORS[sort]),
+    [filtered, sort],
+  );
+
+  const summary = useMemo(() => {
+    const counts = { healthy: 0, watch: 0, risk: 0 };
+    for (const service of services) counts[toServiceHealth(service).state] += 1;
+    return counts;
+  }, [services]);
+
+  // View and sort are preferences, not filters: they survive "Clear".
+  function setPreference(key: 'sort' | 'view', value: string, fallback: string) {
+    setParams(
+      (next) => {
+        const updated = new URLSearchParams(next);
+        if (value === fallback) updated.delete(key);
+        else updated.set(key, value);
+        return updated;
+      },
+      { replace: true },
+    );
+  }
+
   function updateFilter(key: 'q' | 'tier' | 'owner', value: string) {
     setParams((next) => {
       const updated = new URLSearchParams(next);
@@ -85,7 +131,11 @@ export function ServicesPage() {
   }
 
   function resetFilters() {
-    setParams(new URLSearchParams());
+    setParams((next) => {
+      const updated = new URLSearchParams(next);
+      for (const key of ['q', 'tier', 'owner']) updated.delete(key);
+      return updated;
+    });
   }
 
   return (
@@ -97,6 +147,23 @@ export function ServicesPage() {
         </button>
       </TopBarActions>
 
+      <header className="catalog-head">
+        <h1 className="catalog-title">Catalog</h1>
+        {!isLoading && !isError && (
+          <ul className="catalog-summary" aria-label="Catalog health">
+            <li>
+              <strong>{services.length}</strong> {services.length === 1 ? 'service' : 'services'}
+            </li>
+            {(['healthy', 'watch', 'risk'] as const).map((state) => (
+              <li key={state}>
+                <span className={`state-dot ${state}`} aria-hidden="true" />
+                <strong>{summary[state]}</strong> {STATE_LABEL[state].toLowerCase()}
+              </li>
+            ))}
+          </ul>
+        )}
+      </header>
+
       {notice && (
         <div className={`catalog-notice ${notice.kind}`} role="status">
           <span>{notice.message}</span>
@@ -106,7 +173,7 @@ export function ServicesPage() {
         </div>
       )}
 
-      <section className="filter-row">
+      <section className="filter-row" aria-label="Filters">
         <div className="filter-search">
           <label className="sr-only" htmlFor="service-search">
             Search services
@@ -153,28 +220,80 @@ export function ServicesPage() {
             Clear {activeFilters}
           </button>
         )}
-        <div className="count-label">
-          {isLoading ? '—' : `${filtered.length} of ${services.length} services`}
+
+        <div className="filter-end">
+          <div className="count-label">
+            {isLoading ? '—' : `${rows.length} of ${services.length}`}
+          </div>
+          <select
+            className="filter-select"
+            value={sort}
+            onChange={(e) => setPreference('sort', e.target.value, 'name')}
+            aria-label="Sort services"
+          >
+            {Object.entries(SORTS).map(([key, label]) => (
+              <option key={key} value={key}>
+                Sort: {label}
+              </option>
+            ))}
+          </select>
+          <div className="view-toggle" role="group" aria-label="View">
+            <button
+              className={view === 'grid' ? 'active' : ''}
+              onClick={() => setPreference('view', 'grid', 'grid')}
+              aria-pressed={view === 'grid'}
+              aria-label="Grid view"
+              title="Grid view"
+            >
+              <GridIcon />
+            </button>
+            <button
+              className={view === 'table' ? 'active' : ''}
+              onClick={() => setPreference('view', 'table', 'grid')}
+              aria-pressed={view === 'table'}
+              aria-label="Table view"
+              title="Table view"
+            >
+              <RowsIcon />
+            </button>
+          </div>
         </div>
       </section>
 
-      <section className="grid">
-        {isLoading && <div className="empty">Loading services…</div>}
-        {isError && <div className="empty">Failed to load services. Check the API.</div>}
-        {!isLoading && !isError && filtered.length === 0 && (
-          <div className="empty">
-            <strong>No services match these filters.</strong>
-            <span>Try widening your search or clearing the active filters.</span>
-            <button className="empty-action" onClick={resetFilters}>
-              Reset filters
-            </button>
+      <section className="catalog-results">
+        {isLoading && <div className="catalog-empty">Loading services…</div>}
+        {isError && <div className="catalog-empty">Failed to load services. Check the API.</div>}
+        {!isLoading && !isError && rows.length === 0 && (
+          <div className="catalog-empty">
+            <strong>
+              {services.length === 0
+                ? 'No services registered yet.'
+                : 'No services match these filters.'}
+            </strong>
+            {services.length > 0 && (
+              <>
+                <span>Try widening your search or clearing the active filters.</span>
+                <button className="empty-action" onClick={resetFilters}>
+                  Reset filters
+                </button>
+              </>
+            )}
           </div>
         )}
-        {!isLoading &&
-          !isError &&
-          filtered.map((service) => (
-            <ServiceCard key={service.id} service={service} onClick={() => setSelected(service)} />
-          ))}
+        {!isLoading && !isError && rows.length > 0 && view === 'grid' && (
+          <div className="catalog-grid">
+            {rows.map((row) => (
+              <ServiceCard
+                key={row.service.id}
+                health={row}
+                onClick={() => setSelected(row.service)}
+              />
+            ))}
+          </div>
+        )}
+        {!isLoading && !isError && rows.length > 0 && view === 'table' && (
+          <ServiceTable rows={rows} onOpen={setSelected} />
+        )}
       </section>
 
       <ServiceDrawer
@@ -237,6 +356,41 @@ function CloseIcon() {
     >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function RowsIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
     </svg>
   );
 }
