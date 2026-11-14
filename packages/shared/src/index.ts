@@ -244,3 +244,23 @@ export interface JenkinsTestResponse {
   message: string;
   version: string | null;
 }
+
+export interface LokiConfigResponse {
+  baseUrl: string | null;
+  /** The stream label that carries the catalog service ID. */
+  serviceLabel: string;
+  /** Where the active config comes from; `none` means the Logs tab serves mock lines. */
+  source: 'db' | 'env' | 'none';
+}
+
+export interface LokiConfigRequest {
+  baseUrl: string;
+  serviceLabel?: string;
+}
+
+export interface LokiTestResponse {
+  ok: boolean;
+  message: string;
+  /** Whether Loki currently has streams carrying the service label; null if unknown. */
+  labelFound: boolean | null;
+}

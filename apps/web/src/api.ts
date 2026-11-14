@@ -10,6 +10,9 @@ import type {
   JenkinsConfigResponse,
   JenkinsConfigRequest,
   JenkinsTestResponse,
+  LokiConfigRequest,
+  LokiConfigResponse,
+  LokiTestResponse,
   CreateServiceRequest,
   CreateTeamRequest,
   Service,
@@ -92,6 +95,25 @@ async function postWithAuth<T>(path: string, body: unknown, token: string): Prom
   return res.json() as Promise<T>;
 }
 
+/** PUT or DELETE that answers with a JSON body (unlike `del`, which expects 204). */
+async function sendWithAuth<T>(
+  method: 'PUT' | 'DELETE',
+  path: string,
+  token: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!res.ok) throw await toApiError(res);
+  return res.json() as Promise<T>;
+}
+
 async function patch<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: 'PATCH',
@@ -161,6 +183,13 @@ export const api = {
     put<JenkinsConfigResponse>('/integrations/jenkins', body),
   testJenkinsConnection: (body: JenkinsConfigRequest) =>
     post<JenkinsTestResponse>('/integrations/jenkins/test', body),
+  lokiConfig: (token: string) => getWithAuth<LokiConfigResponse>('/integrations/loki', token),
+  saveLokiConfig: (body: LokiConfigRequest, token: string) =>
+    sendWithAuth<LokiConfigResponse>('PUT', '/integrations/loki', token, body),
+  deleteLokiConfig: (token: string) =>
+    sendWithAuth<LokiConfigResponse>('DELETE', '/integrations/loki', token),
+  testLokiConnection: (body: LokiConfigRequest, token: string) =>
+    postWithAuth<LokiTestResponse>('/integrations/loki/test', body, token),
   createService: (body: CreateServiceRequest, token?: string) =>
     token ? postWithAuth<Service>('/services', body, token) : post<Service>('/services', body),
   createTeam: (body: CreateTeamRequest, token: string) =>

@@ -269,6 +269,10 @@ All routes are served under the `/api/v1` prefix.
 | `PUT` | `/integrations/jenkins` | — | Update Jenkins configuration. |
 | `POST` | `/integrations/jenkins/test` | — | Test a Jenkins connection. |
 | `GET` | `/integrations/jenkins/health` | — | Jenkins reachability for the Health & SLO page. |
+| `GET` | `/integrations/loki` | admin | Current Loki configuration and where it comes from. |
+| `PUT` | `/integrations/loki` | admin | Save the Loki URL and service label. |
+| `DELETE` | `/integrations/loki` | admin | Remove the saved Loki configuration. |
+| `POST` | `/integrations/loki/test` | admin | Test a Loki connection. |
 
 Errors use one envelope everywhere ([apiError.ts](apps/api/src/apiError.ts)):
 
@@ -323,6 +327,12 @@ pnpm docs:sync
 ```
 
 Each sync reads documents at a stable commit, updates changed pages, and removes pages that no longer exist in the repository. Repository-relative links and images resolve against that same commit when rendered in the portal.
+
+## Loki integration
+
+Each service's Logs tab reads from Grafana Loki. An administrator connects it under **Settings → Integrations → Loki** by entering the Loki URL and the stream label that carries the catalog service ID (`service_id` by default); the change applies immediately, without restarting the API. `LOKI_URL` and `LOKI_SERVICE_LABEL` in the API's environment act as a fallback when nothing is saved. With neither, the Logs tab shows generated sample lines. Loki authentication is not supported yet.
+
+See [docs/LOGS.md](./docs/LOGS.md) for how services label their logs, how to try it locally, and troubleshooting.
 
 ## Jenkins integration
 

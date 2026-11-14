@@ -251,6 +251,12 @@
   color: var(--danger);
 }
 
+.test-result.warn {
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+  color: var(--warn);
+}
+
 .test-result strong {
   font-weight: 600;
 }
@@ -399,4 +405,26 @@
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+/* Integration status note (e.g. "logs are sample data") */
+
+.integration-note {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.integration-note code {
+  font-size: 12px;
+}
+
+.btn-disconnect {
+  margin-left: auto;
+  color: var(--danger);
 }
