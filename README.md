@@ -258,6 +258,7 @@ All routes are served under the `/api/v1` prefix.
 | `GET` | `/teams` | — | List teams. |
 | `POST` | `/teams` | admin | Create a team. |
 | `PATCH` | `/teams/:id` | admin | Update a team. |
+| `DELETE` | `/teams/:id` | admin | Delete a portal-managed team that owns no services. |
 | `GET` | `/docs` | — | TechDocs index across services. |
 | `GET` | `/services/:id/docs` | — | Documents for one service. |
 | `GET` | `/services/:id/docs/:docId` | — | One document. |
