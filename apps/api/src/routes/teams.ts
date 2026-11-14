@@ -198,6 +198,75 @@ export async function teamsRoute(app: FastifyInstance) {
     },
   );
 
+  app.delete<{ Params: { id: string } }>(
+    '/teams/:id',
+    {
+      preHandler: requireClerkAdmin,
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', minLength: 1 } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params;
+      const outcome = await prisma.$transaction(async (tx) => {
+        // services.owner_team_id is ON DELETE SET NULL, so a team deleted while it still owns
+        // services would silently leave them unowned. Locking the team row makes the
+        // "owns nothing" check and the delete atomic: assigning a service to this team needs
+        // a key-share lock on the same row, so it either commits before the check below or
+        // waits and then fails against the missing team.
+        const [team] = await tx.$queryRaw<{ managementSource: string }[]>`
+          SELECT management_source AS "managementSource"
+          FROM teams
+          WHERE id = ${id}
+          FOR UPDATE
+        `;
+        if (!team) return { kind: 'not_found' } as const;
+        if (team.managementSource === 'repository') return { kind: 'repository_managed' } as const;
+
+        // Soft-deleted services don't block the delete; the foreign key clears their owner.
+        const services = await tx.service.findMany({
+          where: { ownerTeamId: id, deletedAt: null },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        });
+        if (services.length > 0) return { kind: 'has_services', services } as const;
+
+        await tx.team.delete({ where: { id } });
+        return { kind: 'deleted' } as const;
+      });
+
+      switch (outcome.kind) {
+        case 'not_found':
+          return sendApiError(req, reply, 404, 'team_not_found', `Team "${id}" not found.`);
+        case 'repository_managed':
+          return sendApiError(
+            req,
+            reply,
+            409,
+            'repository_managed_team',
+            'This team is managed in its source repository.',
+          );
+        case 'has_services': {
+          const count = outcome.services.length;
+          return sendApiError(
+            req,
+            reply,
+            409,
+            'team_has_services',
+            `This team still owns ${count} ${count === 1 ? 'service' : 'services'}. Reassign or delete them first.`,
+            { services: outcome.services },
+          );
+        }
+        case 'deleted':
+          return reply.code(204).send();
+      }
+    },
+  );
+
   app.get('/teams', async (): Promise<TeamListResponse> => {
     const [teams, scorecardResults, unownedServiceCount] = await Promise.all([
       prisma.team.findMany({
