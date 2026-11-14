@@ -89,8 +89,8 @@ export function Layout() {
             className="brand-logo"
             src="/logo-on-dark.png"
             alt="DaleelEx"
-            width="132"
-            height="50"
+            width="133"
+            height="46"
           />
           <img className="brand-mark" src="/logo-mark.png" alt="" width="36" height="36" />
         </NavLink>
