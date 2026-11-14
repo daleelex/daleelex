@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: 'services', end: false },
   { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
   { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
-  { to: '/health', label: 'Health & SLO', icon: <HealthIcon />, countKey: null, end: false },
+  { to: '/health', label: 'Readiness', icon: <HealthIcon />, countKey: null, end: false },
 ] as const;
 
 export function Layout() {
