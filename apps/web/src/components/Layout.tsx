@@ -85,8 +85,8 @@ export function Layout() {
 
       <aside className={sidebarClass} aria-label="Primary">
         <NavLink to="/" className="brand" aria-label="DaleelEx home">
-          <BrandMark />
-          <span className="brand-wordmark">DaleelEx</span>
+          <img className="brand-logo" src="/logo-on-dark.png" alt="DaleelEx" width="132" height="50" />
+          <img className="brand-mark" src="/logo-mark.png" alt="" width="36" height="36" />
         </NavLink>
 
         <nav className="nav">
@@ -146,23 +146,6 @@ export function Layout() {
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
-  );
-}
-
-// "Daleel" is a guide — the mark is a compass needle.
-function BrandMark() {
-  return (
-    <svg className="brand-mark" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
-      <rect width="30" height="30" rx="9" fill="url(#brand-mark-fill)" />
-      <path d="M20.5 9.5l-3.4 7.6-7.6 3.4 3.4-7.6z" fill="#fff" />
-      <circle cx="15" cy="15" r="1.6" fill="#0a3743" />
-      <defs>
-        <linearGradient id="brand-mark-fill" x1="0" y1="0" x2="30" y2="30">
-          <stop stopColor="#3ec9b8" />
-          <stop offset="1" stopColor="#1f5fa5" />
-        </linearGradient>
-      </defs>
-    </svg>
   );
 }
 
