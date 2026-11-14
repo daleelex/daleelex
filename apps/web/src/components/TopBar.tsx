@@ -8,7 +8,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/services': 'Catalog',
   '/teams': 'Teams',
   '/docs': 'TechDocs',
-  '/health': 'Health & SLO',
+  '/health': 'Readiness',
   '/settings': 'Settings',
 };
 

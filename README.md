@@ -30,7 +30,7 @@ Internal developer portal and service catalogue. Engineers use it to find every 
 | **Dependencies** | Services declare the services they depend on, by stable ID. |
 | **Scorecards** | Weighted checks (README present, owner assigned, SLO defined, runbook linked, …) roll up into a health score per service. |
 | **TechDocs** | Markdown docs published from a service's own repo (`docs/**/*.md`), or uploaded through the portal. |
-| **Health & SLO** | SLO targets and windows per service, plus integration status (e.g. Jenkins). |
+| **Readiness** | A checklist per service: SLO target, owner, runbook, dashboard, lifecycle. Declared in the catalog, not measured. |
 | **Logs** | Paged service logs behind a stable query contract, so the backing log source can be swapped without changing the UI. |
 
 ## Architecture
