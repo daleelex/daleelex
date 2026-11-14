@@ -85,7 +85,13 @@ export function Layout() {
 
       <aside className={sidebarClass} aria-label="Primary">
         <NavLink to="/" className="brand" aria-label="DaleelEx home">
-          <img className="brand-logo" src="/logo-on-dark.png" alt="DaleelEx" width="132" height="50" />
+          <img
+            className="brand-logo"
+            src="/logo-on-dark.png"
+            alt="DaleelEx"
+            width="132"
+            height="50"
+          />
           <img className="brand-mark" src="/logo-mark.png" alt="" width="36" height="36" />
         </NavLink>
 
