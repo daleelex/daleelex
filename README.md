@@ -332,6 +332,8 @@ Each sync reads documents at a stable commit, updates changed pages, and removes
 
 Each service's Logs tab reads from Grafana Loki. An administrator connects it under **Settings → Integrations → Loki** by entering the Loki URL and the stream label that carries the catalog service ID (`service_id` by default); the change applies immediately, without restarting the API. `LOKI_URL` and `LOKI_SERVICE_LABEL` in the API's environment act as a fallback when nothing is saved. With neither, the Logs tab shows generated sample lines. Loki authentication is not supported yet.
 
+See [docs/LOGS.md](./docs/LOGS.md) for how services label their logs, how to try it locally, and troubleshooting.
+
 ## Jenkins integration
 
 The API can report the health of a Jenkins instance. Set `JENKINS_BASE_URL`, `JENKINS_USERNAME`, and `JENKINS_API_TOKEN` in `apps/api/.env` (or the root `.env` when running under Compose) and point them at an existing instance. The Health & SLO page shows the resulting connection status via `GET /api/v1/integrations/jenkins/health`.
