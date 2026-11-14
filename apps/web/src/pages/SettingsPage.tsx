@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useUser } from '@clerk/react';
-import type { JenkinsTestResponse, LokiTestResponse } from '@daleelex/shared';
+import type { JenkinsTestResponse, LokiConfigResponse, LokiTestResponse } from '@daleelex/shared';
 import { api } from '../api';
 import { useTheme } from '../lib/theme';
 import './SettingsPage.css';
@@ -152,6 +152,11 @@ function JenkinsSection() {
     queryKey: ['integrations', 'jenkins', 'config'],
     queryFn: api.jenkinsConfig,
   });
+  // "Connected" has to mean Jenkins answered, not merely that a config is saved.
+  const { data: health, isError: healthFailed } = useQuery({
+    queryKey: ['integrations', 'jenkins', 'health'],
+    queryFn: api.jenkinsHealth,
+  });
 
   const [baseUrl, setBaseUrl] = useState('');
   const [username, setUsername] = useState('');
@@ -214,13 +219,25 @@ function JenkinsSection() {
           <p>Connect to your Jenkins instance to surface CI build status in the portal.</p>
         </div>
         <div className="integration-badge">
-          {config?.source === 'db' ? (
-            <span className="badge-connected">Connected</span>
-          ) : config?.source === 'env' ? (
-            <span className="badge-env">Via env vars</span>
-          ) : (
-            <span className="badge-none">Not configured</span>
-          )}
+          <IntegrationBadge
+            source={config?.source ?? 'none'}
+            check={
+              healthFailed
+                ? { state: 'failed', label: 'Status unknown' }
+                : !health
+                  ? { state: 'checking' }
+                  : health.status === 'ok'
+                    ? { state: 'ok' }
+                    : {
+                        state: 'failed',
+                        label:
+                          health.status === 'auth_required'
+                            ? 'Credentials rejected'
+                            : 'Unreachable',
+                        detail: health.message,
+                      }
+            }
+          />
         </div>
       </div>
 
@@ -332,6 +349,33 @@ function JenkinsSection() {
   );
 }
 
+type IntegrationCheck =
+  { state: 'checking' } | { state: 'ok' } | { state: 'failed'; label: string; detail?: string };
+
+/** The header badge: a saved config only reads "Connected" once the backend answered. */
+function IntegrationBadge({
+  source,
+  check,
+}: {
+  source: 'db' | 'env' | 'none';
+  check: IntegrationCheck;
+}) {
+  if (source === 'none') return <span className="badge-none">Not configured</span>;
+  if (check.state === 'checking') return <span className="badge-none">Checking...</span>;
+  if (check.state === 'failed') {
+    return (
+      <span className="badge-error" title={check.detail}>
+        {check.label}
+      </span>
+    );
+  }
+  return source === 'env' ? (
+    <span className="badge-env">Via env vars</span>
+  ) : (
+    <span className="badge-connected">Connected</span>
+  );
+}
+
 const DEFAULT_LOKI_LABEL = 'service_id';
 
 function LokiSection() {
@@ -389,6 +433,19 @@ function LokiForm() {
     queryFn: () => withToken(api.lokiConfig),
   });
 
+  // Probes the Loki in use (not the form's draft), so the badge reports whether it
+  // answers rather than whether a config happens to be saved.
+  const activeUrl = config?.baseUrl ?? null;
+  const activeLabel = config?.serviceLabel;
+  const status = useQuery({
+    queryKey: ['integrations', 'loki', 'status', activeUrl, activeLabel],
+    queryFn: () =>
+      withToken((token) =>
+        api.testLokiConnection({ baseUrl: activeUrl!, serviceLabel: activeLabel }, token),
+      ),
+    enabled: activeUrl !== null,
+  });
+
   const [baseUrl, setBaseUrl] = useState('');
   const [serviceLabel, setServiceLabel] = useState(DEFAULT_LOKI_LABEL);
   const [testResult, setTestResult] = useState<LokiTestResponse | null>(null);
@@ -405,21 +462,36 @@ function LokiForm() {
 
   const testMutation = useMutation({
     mutationFn: () => withToken((token) => api.testLokiConnection(body(), token)),
-    onSuccess: setTestResult,
+    onSuccess: (result) => {
+      saveMutation.reset();
+      setTestResult(result);
+    },
     onError: () => setTestResult(null),
   });
 
-  const onSaved = () => {
+  // The server normalizes what it stores (trimmed, no trailing slash), so the form and
+  // the cached config both take its answer rather than keeping what was typed.
+  const applyConfig = (next: LokiConfigResponse) => {
+    queryClient.setQueryData(['integrations', 'loki', 'config'], next);
+    setBaseUrl(next.baseUrl ?? '');
+    setServiceLabel(next.serviceLabel);
     // Logs already on screen came from the previous backend.
-    queryClient.invalidateQueries({ queryKey: ['integrations', 'loki'] });
     queryClient.invalidateQueries({ queryKey: ['service-logs'] });
   };
 
+  // A saved Loki replaces the log backend for every service at once, so one that does
+  // not answer is not saved. Resolves to null when the connection test fails.
   const saveMutation = useMutation({
-    mutationFn: () => withToken((token) => api.saveLokiConfig(body(), token)),
-    onSuccess: () => {
+    mutationFn: () =>
+      withToken(async (token) => {
+        const test = await api.testLokiConnection(body(), token);
+        setTestResult(test);
+        return test.ok ? api.saveLokiConfig(body(), token) : null;
+      }),
+    onSuccess: (next) => {
+      if (!next) return;
       disconnectMutation.reset();
-      onSaved();
+      applyConfig(next);
     },
   });
 
@@ -428,9 +500,7 @@ function LokiForm() {
     onSuccess: (next) => {
       saveMutation.reset();
       setTestResult(null);
-      setBaseUrl(next.baseUrl ?? '');
-      setServiceLabel(next.serviceLabel);
-      onSaved();
+      applyConfig(next);
     },
   });
 
@@ -462,13 +532,18 @@ function LokiForm() {
     <>
       <LokiHead
         badge={
-          config.source === 'db' ? (
-            <span className="badge-connected">Connected</span>
-          ) : config.source === 'env' ? (
-            <span className="badge-env">Via env vars</span>
-          ) : (
-            <span className="badge-none">Not configured</span>
-          )
+          <IntegrationBadge
+            source={config.source}
+            check={
+              status.isError
+                ? { state: 'failed', label: 'Status unknown' }
+                : !status.data
+                  ? { state: 'checking' }
+                  : status.data.ok
+                    ? { state: 'ok' }
+                    : { state: 'failed', label: 'Not connected', detail: status.data.message }
+            }
+          />
         }
       />
 
@@ -526,7 +601,13 @@ function LokiForm() {
               !testResult.ok ? 'fail' : testResult.labelFound === false ? 'warn' : 'ok'
             }`}
           >
-            <strong>{testResult.ok ? 'Connection successful' : 'Connection failed'}</strong>
+            <strong>
+              {testResult.ok
+                ? 'Connection successful'
+                : saveMutation.isSuccess
+                  ? 'Not saved: connection failed'
+                  : 'Connection failed'}
+            </strong>
             <span>{testResult.message}</span>
           </div>
         )}
@@ -536,7 +617,7 @@ function LokiForm() {
             <span>{(testMutation.error as Error).message}</span>
           </div>
         )}
-        {saveMutation.isSuccess && (
+        {saveMutation.data && (
           <div className="test-result ok">
             <strong>Saved</strong>
             <span>The Logs tab now reads from this Loki.</span>
@@ -552,7 +633,7 @@ function LokiForm() {
           <div className="test-result ok">
             <strong>Disconnected</strong>
             <span>
-              {config.source === 'env'
+              {disconnectMutation.data?.source === 'env'
                 ? 'The Logs tab is back on the Loki from the server environment.'
                 : 'The Logs tab is back on sample lines.'}
             </span>

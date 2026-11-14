@@ -136,6 +136,7 @@
 
 .badge-connected,
 .badge-env,
+.badge-error,
 .badge-none {
   display: inline-block;
   padding: 4px 10px;
@@ -152,6 +153,11 @@
 .badge-env {
   background: var(--accent-2-soft);
   color: var(--accent-2);
+}
+
+.badge-error {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
 }
 
 .badge-none {

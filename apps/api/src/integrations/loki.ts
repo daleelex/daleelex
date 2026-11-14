@@ -1,6 +1,6 @@
 import type { LokiConfigResponse, LokiTestResponse } from '@daleelex/shared';
 import { prisma } from '../db.js';
-import type { LogSource } from '../logs/logSource.js';
+import { LogSourceUnavailableError, type LogSource } from '../logs/logSource.js';
 import { LokiLogSource } from '../logs/lokiLogSource.js';
 import { MockLogSource } from '../logs/mockLogSource.js';
 
@@ -16,12 +16,6 @@ export class LokiConfigError extends Error {
     super(message);
     this.name = 'LokiConfigError';
   }
-}
-
-interface ResolvedLokiConfig {
-  baseUrl: string | null;
-  serviceLabel: string;
-  source: 'db' | 'env' | 'none';
 }
 
 /** A saved config wins; LOKI_URL is the fallback; with neither, logs are mock. */
@@ -71,9 +65,19 @@ export async function testLokiConnection(
   try {
     response = await fetchImpl(`${normalizedBaseUrl}/loki/api/v1/labels`, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      // Never follow a redirect: the admin vouched for this URL, not wherever it points.
+      redirect: 'manual',
     });
   } catch {
     return { ok: false, message: 'Loki could not be reached at that URL.', labelFound: null };
+  }
+
+  if (response.status >= 300 && response.status < 400) {
+    return {
+      ok: false,
+      message: 'That URL redirects elsewhere. Enter the URL Loki is actually served from.',
+      labelFound: null,
+    };
   }
 
   if (response.status === 401 || response.status === 403) {
@@ -120,7 +124,19 @@ export function createLogSourceResolver(): () => Promise<LogSource> {
   let cached: { key: string; source: LogSource } | null = null;
 
   return async () => {
-    const config = await getLokiConfig();
+    let config: LokiConfigResponse;
+    try {
+      config = await getLokiConfig();
+    } catch {
+      // The saved config is unreadable. Keep serving from the backend already in use,
+      // else the env one. Never the mock: sample lines must not stand in for real logs
+      // just because the database blinked.
+      if (cached) return cached.source;
+      config = envConfig();
+      if (!config.baseUrl) {
+        throw new LogSourceUnavailableError('The log backend configuration could not be read.');
+      }
+    }
     if (!config.baseUrl) return mock;
 
     const key = `${config.baseUrl}\n${config.serviceLabel}`;
@@ -164,20 +180,25 @@ export function normalizeServiceLabel(value: string | undefined | null): string 
   return label;
 }
 
-function envConfig(): ResolvedLokiConfig {
+function envConfig(): LokiConfigResponse {
   const baseUrl = process.env.LOKI_URL?.trim();
   if (!baseUrl) return { baseUrl: null, serviceLabel: DEFAULT_SERVICE_LABEL, source: 'none' };
   return {
     baseUrl: baseUrl.replace(/\/+$/, ''),
-    serviceLabel: process.env.LOKI_SERVICE_LABEL?.trim() || DEFAULT_SERVICE_LABEL,
+    serviceLabel: validLabelOrDefault(process.env.LOKI_SERVICE_LABEL?.trim()),
     source: 'env',
   };
 }
 
 function readServiceLabel(settings: unknown): string {
-  const label =
+  return validLabelOrDefault(
     settings && typeof settings === 'object'
       ? (settings as { serviceLabel?: unknown }).serviceLabel
-      : undefined;
+      : undefined,
+  );
+}
+
+/** The label goes into LogQL unquoted, so nothing but a valid label name gets through. */
+function validLabelOrDefault(label: unknown): string {
   return typeof label === 'string' && LABEL_NAME.test(label) ? label : DEFAULT_SERVICE_LABEL;
 }
