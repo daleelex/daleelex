@@ -31,6 +31,7 @@ import {
   normalizeServiceLabel,
   testLokiConnection,
 } from './integrations/loki.js';
+import { LogSourceUnavailableError } from './logs/logSource.js';
 import { LokiLogSource } from './logs/lokiLogSource.js';
 import { MockLogSource } from './logs/mockLogSource.js';
 
@@ -73,6 +74,13 @@ describe('Loki config resolution', () => {
       serviceLabel: 'app',
       source: 'env',
     });
+  });
+
+  it('ignores an env label that is not a valid Loki label name', async () => {
+    vi.stubEnv('LOKI_URL', 'http://loki:3100');
+    vi.stubEnv('LOKI_SERVICE_LABEL', 'service-id"} or {x="');
+
+    expect((await getLokiConfig()).serviceLabel).toBe('service_id');
   });
 
   it('prefers the saved config over the environment', async () => {
@@ -124,6 +132,24 @@ describe('createLogSourceResolver', () => {
     mocks.findUnique.mockResolvedValue(null);
     expect(await resolve()).toBeInstanceOf(MockLogSource);
   });
+
+  it('keeps the backend in use when the saved config becomes unreadable', async () => {
+    const resolve = createLogSourceResolver();
+    mocks.findUnique.mockResolvedValue({ baseUrl: 'http://loki:3100', settings: null });
+    const first = await resolve();
+
+    mocks.findUnique.mockRejectedValue(new Error('db down'));
+    expect(await resolve()).toBe(first);
+  });
+
+  it('uses LOKI_URL, never the mock, when the config cannot be read at all', async () => {
+    mocks.findUnique.mockRejectedValue(new Error('db down'));
+
+    await expect(createLogSourceResolver()()).rejects.toBeInstanceOf(LogSourceUnavailableError);
+
+    vi.stubEnv('LOKI_URL', 'http://env-loki:3100');
+    expect(await createLogSourceResolver()()).toBeInstanceOf(LokiLogSource);
+  });
 });
 
 describe('testLokiConnection', () => {
@@ -159,6 +185,18 @@ describe('testLokiConnection', () => {
 
     const notLoki = vi.fn().mockResolvedValue(new Response('<html>', { status: 200 }));
     expect((await testLokiConnection('http://loki:3100', undefined, notLoki)).ok).toBe(false);
+  });
+
+  it('does not follow a redirect', async () => {
+    const redirect = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 302, headers: { location: 'http://x/' } }));
+
+    const result = await testLokiConnection('http://loki:3100', undefined, redirect);
+
+    expect(redirect.mock.calls[0][1]).toMatchObject({ redirect: 'manual' });
+    expect(result).toMatchObject({ ok: false, labelFound: null });
+    expect(result.message).toContain('redirects');
   });
 
   it('does not fetch at all for an invalid URL', async () => {

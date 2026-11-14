@@ -137,6 +137,8 @@ export class LokiLogSource implements LogSource {
     try {
       response = await this.fetch(`${this.baseUrl}/loki/api/v1/query_range?${params}`, {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        // A redirect is not followed; it surfaces below as a rejected query.
+        redirect: 'manual',
       });
     } catch {
       throw new LogSourceUnavailableError('The log backend could not be reached.');
