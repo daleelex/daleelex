@@ -152,6 +152,8 @@ model IntegrationConfig {
   baseUrl        String?  @map("base_url")
   username       String?
   encryptedToken String?  @map("encrypted_token")
+  /// Provider-specific, non-secret options (e.g. Loki's service label).
+  settings       Json?
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("integration_configs")
