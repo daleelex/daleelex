@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/react';
+import { useAuth, useUser } from '@clerk/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TeamWithStats } from '@daleelex/shared';
 import { api } from '../api';
@@ -17,10 +17,13 @@ interface Props {
 export function TeamDrawer({ team, onClose, onUpdateSuccess }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [name, setName] = useState('');
   const [slackChannel, setSlackChannel] = useState('');
   const [onCallSchedule, setOnCallSchedule] = useState('');
   const { getToken } = useAuth();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata.role === 'admin';
   const queryClient = useQueryClient();
   const updateMutation = useMutation({
     mutationFn: async () =>
@@ -42,6 +45,24 @@ export function TeamDrawer({ team, onClose, onUpdateSuccess }: Props) {
       onUpdateSuccess?.(updated);
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (target: TeamWithStats) =>
+      api.deleteTeam(target.id, (await getToken()) ?? undefined),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['teams'] }),
+        queryClient.invalidateQueries({ queryKey: ['services'] }),
+      ]);
+      onClose();
+    },
+  });
+  const resetDelete = deleteMutation.reset;
+
+  useEffect(() => {
+    setConfirmingDelete(false);
+    resetDelete();
+  }, [team?.id, resetDelete]);
 
   useEffect(() => {
     setTab('overview');
@@ -70,12 +91,57 @@ export function TeamDrawer({ team, onClose, onUpdateSuccess }: Props) {
             <CloseIcon />
           </button>
           <div style={{ flex: 1 }} />
-          {team.managementSource === 'portal' && (
-            <button className="ghost-btn" onClick={() => setEditing((value) => !value)}>
-              {editing ? 'Cancel' : 'Edit'}
-            </button>
+          {confirmingDelete ? (
+            team.serviceCount > 0 ? (
+              <div className="delete-confirm">
+                <span className="delete-confirm-label">
+                  Reassign or delete its {team.serviceCount}{' '}
+                  {team.serviceCount === 1 ? 'service' : 'services'} first.
+                </span>
+                <button className="ghost-btn" onClick={() => setConfirmingDelete(false)}>
+                  OK
+                </button>
+              </div>
+            ) : (
+              <div className="delete-confirm">
+                <span className="delete-confirm-label">Delete this team?</span>
+                <button
+                  className="ghost-btn delete-confirm-yes"
+                  onClick={() => deleteMutation.mutate(team)}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                </button>
+                <button
+                  className="ghost-btn"
+                  onClick={() => setConfirmingDelete(false)}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancel
+                </button>
+              </div>
+            )
+          ) : (
+            team.managementSource === 'portal' && (
+              <>
+                <button className="ghost-btn" onClick={() => setEditing((value) => !value)}>
+                  {editing ? 'Cancel' : 'Edit'}
+                </button>
+                {isAdmin && (
+                  <button className="ghost-btn" onClick={() => setConfirmingDelete(true)}>
+                    <TrashIcon /> Delete
+                  </button>
+                )}
+              </>
+            )
           )}
         </div>
+
+        {deleteMutation.error && (
+          <div className="drawer-alert error" role="alert">
+            {(deleteMutation.error as Error).message}
+          </div>
+        )}
 
         <div className="drawer-body">
           <div className="team-drawer-hero">
@@ -366,6 +432,25 @@ function CloseIcon() {
     >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4h6v2" />
     </svg>
   );
 }

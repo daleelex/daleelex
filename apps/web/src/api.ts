@@ -170,5 +170,6 @@ export const api = {
   updateTeam: (id: string, body: UpdateTeamRequest, token?: string) =>
     patch<TeamWithStats>(`/teams/${id}`, body, token),
   deleteService: (id: string, token?: string) => del(`/services/${id}`, token),
+  deleteTeam: (id: string, token?: string) => del(`/teams/${encodeURIComponent(id)}`, token),
   me: (token: string) => getWithAuth<MeResponse>('/me', token),
 };
