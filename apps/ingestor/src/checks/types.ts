@@ -14,6 +14,19 @@ export interface CheckService {
 export interface RepositoryProbe {
   /** False when the repository is missing or hidden from the ingestor's token. */
   exists(repository: string): Promise<boolean>;
+  /** Whether GitHub recognises a README in the repository's default branch. */
+  hasReadme(repository: string): Promise<boolean>;
+  /**
+   * Open Dependabot alerts of high or critical severity. Null when GitHub
+   * will not say: alerts are disabled, or the token may not read them.
+   */
+  openVulnerabilityAlerts(repository: string): Promise<VulnerabilityAlerts | null>;
+}
+
+export interface VulnerabilityAlerts {
+  count: number;
+  /** True when there are more alerts than the one page that was counted. */
+  more: boolean;
 }
 
 export interface CheckContext {

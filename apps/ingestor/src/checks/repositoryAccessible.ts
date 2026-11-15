@@ -1,6 +1,5 @@
+import { REPOSITORY } from './repository.js';
 import type { Check } from './types.js';
-
-const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 
 export const repositoryAccessible: Check = {
   id: 'repository-accessible',

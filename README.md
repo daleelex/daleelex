@@ -28,7 +28,7 @@ Internal developer portal and service catalogue. Engineers use it to find every 
 | **Service catalogue** | Every service with its type, tier, lifecycle, language, repository, tags, and links. Services register themselves via a `catalog-info.yaml` in their own repo, or are created directly in the portal. |
 | **Ownership** | Teams own services. Each service shows its owning team; each team page shows what it runs. |
 | **Dependencies** | Services declare the services they depend on, by stable ID. |
-| **Scorecards** | Weighted checks (README present, owner assigned, SLO defined, runbook linked, …) roll up into a health score per service. |
+| **Scorecards** | Weighted checks (README present, owner assigned, repository accessible, SLO defined, runbook linked, no open high-severity Dependabot alerts) roll up into a health score per service. |
 | **TechDocs** | Markdown docs published from a service's own repo (`docs/**/*.md`), or uploaded through the portal. |
 | **Readiness** | A checklist per service: SLO target, owner, runbook, dashboard, lifecycle. Declared in the catalog, not measured. |
 | **Logs** | Paged service logs behind a stable query contract, so the backing log source can be swapped without changing the UI. |
@@ -123,7 +123,7 @@ Each app loads a plain `.env` from its own directory (`apps/api/src/env.ts` does
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `DATABASE_URL` | yes | Same Postgres as the API. |
-| `GITHUB_TOKEN` | for any sync | Token with read access to the repositories being scanned. |
+| `GITHUB_TOKEN` | for any sync | Token with read access to the repositories being scanned. The vulnerability scorecard check also needs read access to Dependabot alerts; without it that check is skipped, not failed. |
 | `GITHUB_API_URL` | no | Defaults to `https://api.github.com`; override for GitHub Enterprise. |
 | `GITHUB_ORG` | for catalog sync | Organisation to scan for `catalog-info.yaml`. Unset disables catalog ingestion. |
 | `CATALOG_SYNC_REF` | no | Branch/tag/commit to read `catalog-info.yaml` from. Defaults to each repo's default branch. |

@@ -20,7 +20,11 @@ const bare: CheckService = {
   links: [{ type: 'dashboard', url: 'https://grafana.internal/d/bare' }],
 };
 
-const reachable: RepositoryProbe = { exists: async () => true };
+const reachable: RepositoryProbe = {
+  exists: async () => true,
+  hasReadme: async () => true,
+  openVulnerabilityAlerts: async () => ({ count: 0, more: false }),
+};
 
 function statuses(results: { serviceId: string; checkId: string; status: string }[], id: string) {
   return Object.fromEntries(
@@ -34,27 +38,32 @@ describe('registered checks', () => {
 
     expect(errors).toEqual([]);
     expect(statuses(results, complete.id)).toEqual({
+      'readme-present': 'pass',
       'owner-assigned': 'pass',
       'repository-accessible': 'pass',
       'slo-defined': 'pass',
       'runbook-linked': 'pass',
+      'vulnerability-scan-clean': 'pass',
     });
   });
 
-  it('fail what is missing and skip the repository check when there is no repository', async () => {
+  it('fail what is missing and skip the repository checks when there is no repository', async () => {
     const { results } = await runChecks(checks, [bare], reachable);
 
     expect(statuses(results, bare.id)).toEqual({
+      'readme-present': 'skip',
       'owner-assigned': 'fail',
       'repository-accessible': 'skip',
       'slo-defined': 'fail',
       'runbook-linked': 'fail',
+      'vulnerability-scan-clean': 'skip',
     });
   });
 
   it('fail a repository GitHub cannot show us, without asking about a malformed one', async () => {
     const asked: string[] = [];
     const hidden: RepositoryProbe = {
+      ...reachable,
       exists: async (repository) => {
         asked.push(repository);
         return false;
@@ -72,11 +81,66 @@ describe('registered checks', () => {
     expect(asked).toEqual(['platform/auth-gateway']);
   });
 
-  it('skip the repository check when there is no GitHub token to ask with', async () => {
+  it('skip every repository check when there is no GitHub token to ask with', async () => {
     const { results, errors } = await runChecks(checks, [complete], null);
 
     expect(errors).toEqual([]);
-    expect(statuses(results, complete.id)['repository-accessible']).toBe('skip');
+    expect(statuses(results, complete.id)).toEqual(
+      expect.objectContaining({
+        'readme-present': 'skip',
+        'repository-accessible': 'skip',
+        'vulnerability-scan-clean': 'skip',
+      }),
+    );
+  });
+
+  it('fail a repository with no README', async () => {
+    const { results } = await runChecks(checks, [complete], {
+      ...reachable,
+      hasReadme: async () => false,
+    });
+
+    expect(statuses(results, complete.id)['readme-present']).toBe('fail');
+  });
+
+  it('fail on open high-severity alerts and say how many', async () => {
+    const { results } = await runChecks(checks, [complete], {
+      ...reachable,
+      openVulnerabilityAlerts: async () => ({ count: 3, more: false }),
+    });
+
+    const result = results.find((r) => r.checkId === 'vulnerability-scan-clean');
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'fail',
+        message: '3 open high or critical Dependabot alerts.',
+      }),
+    );
+  });
+
+  it('skip the vulnerability check, rather than pass it, when GitHub will not share alerts', async () => {
+    const { results } = await runChecks(checks, [complete], {
+      ...reachable,
+      openVulnerabilityAlerts: async () => null,
+    });
+
+    expect(statuses(results, complete.id)['vulnerability-scan-clean']).toBe('skip');
+  });
+
+  it('do not charge a malformed repository twice', async () => {
+    const { results } = await runChecks(
+      checks,
+      [{ ...complete, repository: 'not a repository' }],
+      reachable,
+    );
+
+    expect(statuses(results, complete.id)).toEqual(
+      expect.objectContaining({
+        'readme-present': 'skip',
+        'repository-accessible': 'fail',
+        'vulnerability-scan-clean': 'skip',
+      }),
+    );
   });
 
   it('have unique ids and weights within 1-10', () => {
@@ -91,6 +155,7 @@ describe('registered checks', () => {
 describe('runChecks', () => {
   it('reports a check that throws as an error and still runs the others', async () => {
     const down: RepositoryProbe = {
+      ...reachable,
       exists: async () => {
         throw new Error('GitHub request failed (503)');
       },
@@ -106,9 +171,11 @@ describe('runChecks', () => {
       },
     ]);
     expect(Object.keys(statuses(results, complete.id))).toEqual([
+      'readme-present',
       'owner-assigned',
       'slo-defined',
       'runbook-linked',
+      'vulnerability-scan-clean',
     ]);
   });
 });
