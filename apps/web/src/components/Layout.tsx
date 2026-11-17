@@ -11,6 +11,13 @@ import './Layout.css';
 const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
   { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: 'services', end: false },
+  {
+    to: '/dependencies',
+    label: 'Dependencies',
+    icon: <GraphIcon />,
+    countKey: null,
+    end: false,
+  },
   { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
   { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
   { to: '/health', label: 'Readiness', icon: <HealthIcon />, countKey: null, end: false },
@@ -232,6 +239,23 @@ function DocsIcon() {
     >
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
+    </svg>
+  );
+}
+function GraphIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <rect x="2" y="9" width="6" height="6" rx="1.5" />
+      <rect x="16" y="3" width="6" height="6" rx="1.5" />
+      <rect x="16" y="15" width="6" height="6" rx="1.5" />
+      <path d="M8 12h3a2 2 0 0 0 2-2V8a2 2 0 0 1 2-2h1M13 14v2a2 2 0 0 0 2 2h1" />
     </svg>
   );
 }
