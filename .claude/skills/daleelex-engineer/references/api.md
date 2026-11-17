@@ -54,7 +54,18 @@ GET    /api/v1/teams                       List
 GET    /api/v1/teams/:id                   Detail + member services
 POST   /api/v1/teams                       Create a portal-managed team (admin only)
 DELETE /api/v1/teams/:id                   Delete a portal-managed team (admin only)
+
+GET    /api/v1/teams/:id/members           List members (signed-in users)
+POST   /api/v1/teams/:id/members           Add a member by email (admin only)
+DELETE /api/v1/teams/:id/members/:userId   Remove a member (admin only)
 ```
+
+Membership is admin-managed in the portal for every team, whatever manages the team itself;
+`catalog-info.yaml` says nothing about people. `POST` takes `{ email }` and matches it
+case-insensitively against `users`, which are created on first sign-in, so someone who has never
+signed in returns `404 user_not_found`. Adding an existing member returns `409 team_member_exists`;
+removing a non-member returns `404 team_member_not_found`. Membership grants access to the logs of
+services the team owns.
 
 `POST /api/v1/teams` accepts an immutable lowercase slug `id` (1-100 characters), a required
 `name` (1-200 non-whitespace characters), and optional nullable `slackChannel` and

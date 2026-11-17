@@ -181,6 +181,24 @@ export interface UpdateServiceRequest {
   tags: string[];
 }
 
+export interface TeamMember {
+  userId: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+  addedAt: string;
+}
+
+export interface TeamMemberListResponse {
+  data: TeamMember[];
+  total: number;
+}
+
+export interface AddTeamMemberRequest {
+  /** Email of a user who has signed in to DaleelEx at least once. */
+  email: string;
+}
+
 export interface UpdateTeamRequest {
   name: string;
   slackChannel: string | null;

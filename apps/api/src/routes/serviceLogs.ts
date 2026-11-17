@@ -8,6 +8,7 @@ import {
   InvalidLogCursorError,
   LogSourceUnavailableError,
   type LogSource,
+  type LogViewer,
 } from '../logs/logSource.js';
 
 interface ServiceLogsRouteOptions {
@@ -86,28 +87,45 @@ export async function serviceLogsRoute(app: FastifyInstance, options: ServiceLog
         );
       }
 
-      let isAdmin: boolean;
-      try {
-        isAdmin = await isClerkAdmin(req.clerkUserId!);
-      } catch (err) {
-        req.log.error({ err, clerkUserId: req.clerkUserId }, 'Clerk admin lookup failed');
-        return sendApiError(
-          req,
-          reply,
-          503,
-          'admin_authorization_unavailable',
-          'Log access could not be verified.',
-        );
+      // Membership is one indexed lookup; only the owning team matters, so that is
+      // the only one fetched. Members are let through without asking Clerk at all,
+      // which also keeps them reading logs while Clerk is unreachable.
+      const membership = service.ownerTeamId
+        ? await prisma.teamMembership.findUnique({
+            where: { teamId_userId: { teamId: service.ownerTeamId, userId: req.clerkUserId! } },
+            select: { teamId: true },
+          })
+        : null;
+      let viewer: LogViewer = {
+        id: req.clerkUserId!,
+        isAdmin: false,
+        teamIds: membership ? [membership.teamId] : [],
+      };
+
+      if (!canViewLogs(viewer, service)) {
+        try {
+          viewer = { ...viewer, isAdmin: await isClerkAdmin(viewer.id) };
+        } catch (err) {
+          req.log.error({ err, clerkUserId: req.clerkUserId }, 'Clerk admin lookup failed');
+          return sendApiError(
+            req,
+            reply,
+            503,
+            'admin_authorization_unavailable',
+            'Log access could not be verified.',
+          );
+        }
       }
 
-      const viewer = { id: req.clerkUserId!, isAdmin };
       if (!canViewLogs(viewer, service)) {
         return sendApiError(
           req,
           reply,
           403,
           'logs_forbidden',
-          'Service logs are currently visible to administrators only.',
+          service.ownerTeamId
+            ? "Service logs are visible to the owning team's members and administrators."
+            : 'Logs for a service with no owning team are visible to administrators only.',
         );
       }
 

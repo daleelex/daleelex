@@ -69,12 +69,35 @@ describe('MockLogSource', () => {
 
 describe('canViewLogs', () => {
   const service = { id: 'svc-payments', ownerTeamId: 'team-payments' };
+  const unowned = { id: 'svc-orphan', ownerTeamId: null };
 
   it('allows administrators', () => {
-    expect(canViewLogs({ id: 'admin-1', isAdmin: true }, service)).toBe(true);
+    expect(canViewLogs({ id: 'admin-1', isAdmin: true, teamIds: [] }, service)).toBe(true);
   });
 
-  it('denies everyone else until team membership exists', () => {
-    expect(canViewLogs({ id: 'user-1', isAdmin: false }, service)).toBe(false);
+  it('allows members of the owning team', () => {
+    expect(
+      canViewLogs(
+        { id: 'user-1', isAdmin: false, teamIds: ['team-search', 'team-payments'] },
+        service,
+      ),
+    ).toBe(true);
+  });
+
+  it('denies members of other teams', () => {
+    expect(canViewLogs({ id: 'user-1', isAdmin: false, teamIds: ['team-search'] }, service)).toBe(
+      false,
+    );
+  });
+
+  it('denies users with no team', () => {
+    expect(canViewLogs({ id: 'user-1', isAdmin: false, teamIds: [] }, service)).toBe(false);
+  });
+
+  it('keeps services with no owner admin-only', () => {
+    expect(canViewLogs({ id: 'user-1', isAdmin: false, teamIds: ['team-payments'] }, unowned)).toBe(
+      false,
+    );
+    expect(canViewLogs({ id: 'admin-1', isAdmin: true, teamIds: [] }, unowned)).toBe(true);
   });
 });

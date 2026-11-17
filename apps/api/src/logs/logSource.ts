@@ -25,6 +25,8 @@ export interface LogSource {
 export interface LogViewer {
   id: string;
   isAdmin: boolean;
+  /** Teams the viewer belongs to. Callers may pass only the ones relevant to the check. */
+  teamIds: readonly string[];
 }
 
 export interface LogService {
@@ -33,13 +35,13 @@ export interface LogService {
 }
 
 /**
- * Authorization seam for log access. Admins only, for now: real logs can carry
- * secrets and customer data, and the schema has no user-to-team membership yet, so
- * "the owning team can see its own logs" cannot be checked. Once membership exists,
- * widen this to members of `service.ownerTeamId` — the route needs no change.
+ * Authorization seam for log access. Real logs can carry secrets and customer data,
+ * so access is narrow: admins, plus members of the service's owning team. A service
+ * with no owner has no team to grant access through, so it stays admin-only.
  */
-export function canViewLogs(user: LogViewer, _service: LogService): boolean {
-  return user.isAdmin;
+export function canViewLogs(user: LogViewer, service: LogService): boolean {
+  if (user.isAdmin) return true;
+  return service.ownerTeamId !== null && user.teamIds.includes(service.ownerTeamId);
 }
 
 export class InvalidLogCursorError extends Error {
