@@ -129,6 +129,7 @@ async function syncCatalog(
   const ref = process.env.CATALOG_SYNC_REF;
   const repositories = await github.listRepositories(org);
   const files = [];
+  const unreadable = new Set<string>();
   let failed = 0;
 
   for (const repository of repositories) {
@@ -137,13 +138,16 @@ async function syncCatalog(
       if (file) files.push(file);
     } catch (error) {
       failed += 1;
+      unreadable.add(repository);
       log('catalog.failed', { repository, message: errorMessage(error) });
     }
   }
 
   const [teams, existing] = await Promise.all([
     client.team.findMany({ select: { id: true } }),
-    client.service.findMany({ select: { id: true, managementSource: true } }),
+    client.service.findMany({
+      select: { id: true, managementSource: true, repository: true, deletedAt: true },
+    }),
   ]);
 
   const plan = planCatalogSync({
@@ -152,6 +156,12 @@ async function syncCatalog(
     existing: new Map(
       existing.map((service) => [service.id, service.managementSource as ManagementSource]),
     ),
+    retirable: new Map(
+      existing
+        .filter((service) => service.managementSource === 'repository' && !service.deletedAt)
+        .map((service) => [service.id, service.repository]),
+    ),
+    unreadable,
   });
 
   for (const { repository, messages } of plan.warnings) {
@@ -206,11 +216,29 @@ async function syncCatalog(
     }
   }
 
+  if (plan.retirementsHeld) log('catalog.retirement-held', { message: plan.retirementsHeld });
+  for (const { id, repository } of plan.retirements) {
+    log(dryRun ? 'catalog.would-retire' : 'catalog.retired', { serviceId: id, repository });
+  }
+  if (!dryRun && plan.retirements.length > 0) {
+    // Soft delete, as the portal's own delete does: scorecard history survives,
+    // and a repository that declares the service again brings it back.
+    await client.service.updateMany({
+      where: {
+        id: { in: plan.retirements.map((retirement) => retirement.id) },
+        managementSource: 'repository',
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   log('catalog.completed', {
     dryRun,
     repositories: repositories.length,
     registered: files.length,
     synced: plan.upserts.length,
+    retired: plan.retirements.length,
     links: plan.upserts.reduce((total, record) => total + record.links.length, 0),
     dependencies: plan.upserts.reduce((total, record) => total + record.dependencies.length, 0),
     skipped: plan.skipped.length,

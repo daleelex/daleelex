@@ -238,7 +238,13 @@ Behaviour worth knowing before you point it at a real organisation:
 - Links and dependencies are replaced wholesale on each run — neither has a stable identity in the
   file, so they are not diffed.
 - A dependency on a service outside the catalogue is reported and dropped, not created as a stub.
-- Removing a `catalog-info.yaml` does not yet retire its service. That is a deliberate gap.
+- A repository-managed service that no repository declares any more — its `catalog-info.yaml` was
+  removed, or the repository archived or deleted — is retired: soft-deleted, so it leaves the
+  portal but keeps its history, and returns if a repository declares it again.
+- A service is only retired when the run could tell it was gone. A file that failed to download or
+  to validate keeps its service, and a run that finds no catalog files at all retires nothing,
+  since that points at the token or `GITHUB_ORG` rather than at every service being withdrawn.
+- Portal-managed services are never retired by ingestion.
 
 DaleelEx registers itself: see [catalog-info.yaml](./catalog-info.yaml) at the repository root.
 
