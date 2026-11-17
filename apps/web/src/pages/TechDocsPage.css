@@ -1,6 +1,6 @@
 .techdocs-page {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 288px minmax(0, 1fr);
   height: calc(100vh - var(--topbar-h));
   overflow: hidden;
 }
@@ -15,14 +15,14 @@
 }
 
 .techdocs-nav-head {
-  padding: 28px 20px 16px;
+  padding: 22px 20px 16px;
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
 
 .techdocs-nav-title {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 400;
   letter-spacing: -0.02em;
   margin: 0 0 2px;
@@ -98,47 +98,34 @@
 
 /* Service doc groups */
 .doc-group {
-  margin-bottom: 2px;
+  padding: 4px 0 8px;
+}
+
+.doc-group + .doc-group {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
 
 .doc-group-service {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 20px;
+  padding: 8px 20px 6px;
 }
 
 .doc-group-name {
   flex: 1;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink);
+  font: 500 10.5px var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.doc-group-tier {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 2px 5px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.doc-group-tier.tier-1 {
-  background: rgba(209, 59, 49, 0.12);
-  color: #d13b31;
-}
-.doc-group-tier.tier-2 {
-  background: rgba(216, 149, 16, 0.14);
-  color: #b87c0a;
-}
-.doc-group-tier.tier-3 {
-  background: var(--panel-2);
-  color: var(--muted);
+.doc-group-active .doc-group-name {
+  color: var(--ink);
 }
 
 .doc-group-count {
@@ -154,28 +141,32 @@
 .doc-group-pages {
   display: flex;
   flex-direction: column;
-  padding: 0 8px 4px 32px;
+  gap: 1px;
+  padding: 0 10px;
 }
 
 .doc-page-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 10px;
-  font-size: 12.5px;
+  gap: 9px;
+  padding: 7px 10px;
+  font-size: 13px;
   color: var(--ink-2);
   background: none;
   border: none;
   border-radius: var(--radius-sm);
   text-align: left;
-  cursor: pointer;
   font-family: var(--font-body);
   transition:
     background 100ms,
     color 100ms;
-  white-space: nowrap;
+}
+
+.doc-page-item span {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .doc-page-item:hover {
@@ -186,7 +177,17 @@
 .doc-page-item.active {
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.doc-page-item:focus-visible,
+.library-doc:focus-visible,
+.techdocs-back:focus-visible,
+.techdocs-pager-link:focus-visible,
+.techdocs-outline-link:focus-visible,
+.techdocs-upload-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Right content pane */
@@ -217,36 +218,127 @@
   border: 0;
 }
 
-.techdocs-welcome {
+/* Library: what the page shows before a doc is picked */
+.techdocs-library {
   flex: 1;
+  overflow-y: auto;
+  padding: 28px 36px 48px;
+}
+
+.techdocs-library-head {
+  margin-bottom: 22px;
+}
+
+.techdocs-library-title {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 6px;
+}
+
+.techdocs-library-sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.techdocs-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: start;
+  max-width: 1100px;
+}
+
+.library-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 12px 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.library-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 8px;
+}
+
+.library-card-title {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.library-card-id {
+  font: 400 11px var(--font-mono);
+  color: var(--muted);
+  padding: 3px 8px 0;
+}
+
+.library-card-docs {
   display: flex;
   flex-direction: column;
+  gap: 1px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.library-doc {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: var(--muted);
-  padding: 48px;
-}
-
-.techdocs-welcome-title {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 400;
+  gap: 9px;
+  padding: 8px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
   color: var(--ink-2);
-  margin: 0;
+  font: 500 13px var(--font-body);
+  text-align: left;
+  transition:
+    background 100ms,
+    color 100ms;
 }
 
-.techdocs-welcome-sub {
-  font-size: 14px;
+.library-doc span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-doc svg:last-child {
   color: var(--muted);
-  margin: 0;
-  text-align: center;
-  max-width: 320px;
-  line-height: 1.6;
+  opacity: 0;
+  transition: opacity 100ms;
+}
+
+.library-doc:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.library-doc:hover svg:last-child {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.library-card-more {
+  font: 400 11px var(--font-mono);
+  color: var(--muted);
+  padding: 8px 8px 2px;
 }
 
 .techdocs-content-head {
-  padding: 24px 48px 16px;
+  padding: 16px 36px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
   flex-shrink: 0;
@@ -280,11 +372,28 @@
 }
 
 .techdocs-content-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--muted);
   margin-top: 4px;
   letter-spacing: 0.03em;
+}
+
+/* Only needed where the doc list is hidden behind the reader. */
+.techdocs-back {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 10px -4px;
+  padding: 4px 8px 4px 4px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font: 600 12.5px var(--font-body);
 }
 
 .techdocs-edit-button {
@@ -315,7 +424,110 @@
 .techdocs-content-body {
   flex: 1;
   overflow-y: auto;
-  padding: 40px 48px 80px;
+  display: grid;
+  grid-template-columns: minmax(0, 800px) 200px;
+  justify-content: center;
+  align-items: start;
+  gap: 36px;
+  padding: 28px 36px 64px;
+}
+
+.techdocs-reader {
+  min-width: 0;
+}
+
+/* The doc sits on its own surface, like a page on a desk. */
+.techdocs-paper {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 40px 48px 48px;
+}
+
+.techdocs-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.techdocs-pager-link {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: left;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms;
+}
+
+.techdocs-pager-link.next {
+  grid-column: 2;
+  text-align: right;
+}
+
+.techdocs-pager-link:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.techdocs-pager-label {
+  font: 500 10px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.techdocs-pager-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.techdocs-outline {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--topbar-h) - 160px);
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+}
+
+.techdocs-outline-title {
+  font: 500 10px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 2px 14px 8px;
+}
+
+.techdocs-outline-link {
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  color: var(--ink-2);
+  font: 400 12.5px/1.4 var(--font-body);
+  text-align: left;
+  transition: color 100ms;
+}
+
+.techdocs-outline-link.level-3 {
+  padding-left: 26px;
+  color: var(--muted);
+}
+
+.techdocs-outline-link:hover {
+  color: var(--accent);
 }
 
 .techdocs-spinner {
@@ -325,7 +537,6 @@
 
 /* Markdown prose */
 .techdocs-prose {
-  max-width: 720px;
   font-size: 15px;
   line-height: 1.75;
   color: var(--ink-2);
@@ -342,6 +553,16 @@
   margin-top: 36px;
   margin-bottom: 12px;
   line-height: 1.25;
+  /* Leave air above a heading the outline scrolls to. */
+  scroll-margin-top: 20px;
+}
+
+.techdocs-prose > :first-child {
+  margin-top: 0;
+}
+
+.techdocs-prose > :last-child {
+  margin-bottom: 0;
 }
 
 .techdocs-prose h1 {
@@ -393,13 +614,12 @@
 }
 
 .techdocs-prose pre {
-  background: var(--panel);
+  background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 18px 20px;
   overflow-x: auto;
   margin: 0 0 20px;
-  box-shadow: var(--shadow-sm);
 }
 
 .techdocs-prose pre code {
@@ -433,13 +653,13 @@
 
 .techdocs-prose table {
   width: 100%;
-  border-collapse: collapse;
   font-size: 14px;
   margin-bottom: 20px;
-  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
+  border-spacing: 0;
+  border-collapse: separate;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
 .techdocs-prose th {
@@ -478,4 +698,43 @@
   margin: 20px 0;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .techdocs-content-body {
+    grid-template-columns: minmax(0, 800px);
+  }
+  .techdocs-outline {
+    display: none;
+  }
+}
+
+/* One pane at a time: the doc list, or the doc. */
+@media (max-width: 900px) {
+  .techdocs-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .techdocs-nav {
+    border-right: none;
+  }
+  .techdocs-page.has-doc .techdocs-nav,
+  .techdocs-page:not(.has-doc) .techdocs-content {
+    display: none;
+  }
+  .techdocs-back {
+    display: inline-flex;
+  }
+  .techdocs-content-head {
+    padding: 12px 18px;
+  }
+  .techdocs-content-body {
+    padding: 16px 12px 40px;
+  }
+  .techdocs-paper {
+    padding: 24px 20px 28px;
+  }
+  .techdocs-prose h1 {
+    font-size: 30px;
+  }
 }

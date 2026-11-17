@@ -152,14 +152,20 @@ Runs **on the VM**, not the runner. In order:
 1. `ln -sfn /opt/daleelex/shared/api.env <release>/api/.env` — symlinks the
    persistent, VM-owned secrets file into this release. Both Prisma's CLI and
    `apps/api/src/env.ts`'s own loader read a plain `.env` from the process's cwd, so
-   this one symlink covers both.
+   this one symlink covers both. The ingestor gets the same treatment at
+   `<release>/ingestor/.env`: it links `/opt/daleelex/shared/ingestor.env` when that
+   file exists and falls back to `api.env` when it does not. Without a `.env` the
+   ingestor has no `DATABASE_URL` and does nothing.
 2. `cd <release>/api && ./node_modules/.bin/prisma migrate deploy` — applies any
    pending migrations, using the just-symlinked `DATABASE_URL`.
 3. `ln -sfn <release> /opt/daleelex/current` — the atomic swap. The previous release
    stays on disk untouched (see §7, rollback).
-4. `pm2 startOrReload /opt/daleelex/current/ecosystem.config.cjs` — starts
-   `daleelex-api` and `daleelex-ingestor` if they're not running, or gracefully
-   reloads them if they are. `pm2 save` persists the process list.
+4. `pm2 delete daleelex-ingestor`, then
+   `pm2 startOrReload /opt/daleelex/current/ecosystem.config.cjs` — starts
+   `daleelex-api` if it's not running, or gracefully reloads it if it is, and
+   registers the ingestor fresh. The ingestor is deleted first because pm2 only
+   re-reads `env` on a reload; options such as `autorestart` stick from whenever the
+   app was first registered. `pm2 save` persists the process list.
 5. Prunes old releases: keeps the 5 most recent under `/opt/daleelex/releases/`,
    deletes the rest.
 6. Health-checks: curls `http://localhost:3000/api/v1/health` in a retry loop for up
@@ -252,11 +258,12 @@ actually rotated.
 ```
 /opt/daleelex/
 ├── shared/
-│   └── api.env              # persistent secrets, never touched by CD
+│   ├── api.env              # persistent secrets, never touched by CD
+│   └── ingestor.env         # optional; the ingestor uses api.env when absent
 ├── releases/
 │   ├── <sha>/
 │   │   ├── api/              # pnpm deploy --prod output + symlinked .env
-│   │   ├── ingestor/         # pnpm deploy --prod output
+│   │   ├── ingestor/         # pnpm deploy --prod output + symlinked .env
 │   │   ├── web/               # static built assets
 │   │   └── ecosystem.config.cjs
 │   └── <older sha>/ ...       # up to 5 kept, oldest pruned automatically
@@ -294,13 +301,25 @@ Lives at the repo root, gets copied into every release. Defines two pm2 apps:
 
 - **`daleelex-api`** — `cwd` resolved as `path.join(__dirname, 'api')`, runs
   `./dist/index.js`, `NODE_ENV: production`.
-- **`daleelex-ingestor`** — same shape, pointed at `ingestor/dist/index.js`, but with
-  `autorestart: false`. The current implementation
-  (`apps/ingestor/src/index.ts`) is a one-shot stub that logs and exits — it is
-  **not** a real long-running worker yet. `autorestart: false` stops pm2 from
-  crash-looping it. Once ingestor actually does its scanning-worker job, this needs
-  revisiting (probably `autorestart: true` plus a real long-running process, or a
-  `cron_restart` schedule if it's meant to run periodically rather than continuously).
+- **`daleelex-ingestor`** — same shape, pointed at `ingestor/dist/index.js`, with
+  `INGEST_INTERVAL_MINUTES: '60'`. That variable turns the ingestor from a one-shot
+  into a worker that repeats its run (catalogue, docs, scorecards) every hour and
+  stays up in between. The schedule is in the process, not in pm2's `cron_restart`,
+  because pm2 documents that option as needing the app to be running.
+  `restart_delay` and `max_restarts` keep a misconfigured ingestor (no
+  `DATABASE_URL`) from crash-looping: pm2 marks it errored after ten attempts.
+
+### `/opt/daleelex/shared/ingestor.env` (optional)
+
+Create this only to give the ingestor settings the API should not have. When it
+exists it replaces `api.env` for the ingestor, so it must carry everything the
+ingestor needs:
+
+- `DATABASE_URL` — the same database as the API.
+- `GITHUB_TOKEN` and `GITHUB_ORG` — to ingest `catalog-info.yaml` files and docs from
+  repositories, and to let the repository check report pass or fail. Without a token
+  the ingestor still runs the checks that only read the catalogue, and the repository
+  check reports "not applicable".
 
 There is intentionally **no `daleelex-web` pm2 app** in this config. See §8 — the old
 manually-managed `daleelex-web` process (running `pnpm dev -- --host`, i.e. Vite's
@@ -412,9 +431,11 @@ no tooling for this yet; treat it as a "stop and think" moment, not a scripted s
   `pm2 delete daleelex-web` on the VM. Don't do this before the Caddyfile is updated —
   you'd take the site down with nothing serving it.
 
-- **`apps/ingestor` is a stub, not a real worker.** `autorestart: false` in
-  `ecosystem.config.cjs` reflects this honestly rather than papering over it — see
-  §5. When ingestor becomes real, its pm2 config needs to change too.
+- **The ingestor's schedule has not been observed on the VM.** The hourly loop and
+  its stop-signal handling were tested locally; the pm2 side (`restart_delay`,
+  `max_restarts`, the delete-and-re-register step) was not. After the first deploy
+  with this change, check `pm2 logs daleelex-ingestor` for `ingestor.scheduled` and a
+  `scorecard.completed` line.
 
 - **No DB backup step before `prisma migrate deploy` in production.** In practice: a
   bad migration that reaches `master` and gets deployed has no automated undo — see

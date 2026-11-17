@@ -15,6 +15,16 @@ RELEASE_DIR="$BASE_DIR/releases/$RELEASE_SHA"
 # env.ts loader both read a plain .env from the process's cwd.
 ln -sfn "$BASE_DIR/shared/api.env" "$RELEASE_DIR/api/.env"
 
+# The ingestor loads .env from its own cwd, so it needs the same treatment or it
+# starts with no DATABASE_URL and does nothing. It gets its own file when the VM
+# has one (that is where GITHUB_TOKEN and GITHUB_ORG belong); otherwise it shares
+# the API's, which is enough for the checks that only read the catalogue.
+if [ -f "$BASE_DIR/shared/ingestor.env" ]; then
+  ln -sfn "$BASE_DIR/shared/ingestor.env" "$RELEASE_DIR/ingestor/.env"
+else
+  ln -sfn "$BASE_DIR/shared/api.env" "$RELEASE_DIR/ingestor/.env"
+fi
+
 cd "$RELEASE_DIR/api"
 ./node_modules/.bin/prisma migrate deploy
 
@@ -40,6 +50,12 @@ for app in daleelex-api daleelex-ingestor; do
     pm2 delete "$app"
   fi
 done
+
+# pm2 only re-reads env on reload; options such as autorestart and restart_delay
+# stick from whenever the app was first registered. The ingestor was registered as
+# a one-shot, so it is re-registered from the current config on every deploy. It
+# serves no traffic, so unlike the API there is no connection to drop.
+pm2 delete daleelex-ingestor > /dev/null 2>&1 || true
 
 # startOrReload handles both the very first deploy (nothing running yet) and every
 # deploy after (graceful reload, not a hard restart, so Caddy never sees a dropped

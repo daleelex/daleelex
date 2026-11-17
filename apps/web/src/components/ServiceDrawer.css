@@ -305,16 +305,35 @@
   font-size: 13px;
 }
 
-.check-label {
+.check-row svg {
+  flex-shrink: 0;
+}
+
+.check-text {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.check-label {
   color: var(--ink);
 }
 
-.check-row.fail .check-label {
+.check-row.fail .check-label,
+.check-row.skip .check-label {
   color: var(--ink-2);
 }
 
+.check-message {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .check-status {
+  flex-shrink: 0;
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 600;
@@ -327,6 +346,9 @@
 }
 .check-status.fail {
   color: var(--warn);
+}
+.check-status.skip {
+  color: var(--muted);
 }
 
 /* Dependencies empty state */
@@ -754,4 +776,16 @@
   font-weight: 500;
   color: var(--accent);
   white-space: nowrap;
+}
+
+.dep-graph-link {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dep-graph-link:hover {
+  text-decoration: underline;
 }

@@ -20,14 +20,24 @@
   --font-body: 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --sidebar-width: 260px;
+  --sidebar-width: 244px;
+  --rail-width: 68px;
+
+  /* Sidebar surface — dark in both themes, so only its background shifts. */
+  --side-ink: rgba(255, 255, 255, 0.74);
+  --side-muted: rgba(255, 255, 255, 0.52);
+  --side-line: rgba(255, 255, 255, 0.09);
+  --side-hover: rgba(255, 255, 255, 0.08);
+  --side-active: #7fe7d7;
+  --side-active-bg: rgba(62, 201, 184, 0.16);
   /* Each is enforced by that header's own min-height, so a page doing
      viewport math against it cannot drift from what actually renders. */
-  --topbar-h: 75px;
+  --topbar-h: 68px;
   --settings-header-h: 90px;
 }
 
 [data-theme='light'] {
+  --side-bg: linear-gradient(180deg, #0a3743 0%, #0b2a47 100%);
   --bg: #e8e6df;
   --bg-mesh:
     radial-gradient(1100px 560px at 0% -10%, rgba(47, 169, 155, 0.13), transparent 60%),
@@ -51,6 +61,7 @@
 }
 
 [data-theme='dark'] {
+  --side-bg: linear-gradient(180deg, #0b2028 0%, #071a21 100%);
   --bg: #05141a;
   --bg-mesh:
     radial-gradient(1100px 560px at 0% -10%, rgba(47, 169, 155, 0.2), transparent 60%),
@@ -144,17 +155,11 @@ input:focus {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 15px 30px;
+  padding: 12px 30px;
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--panel) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-}
-
-/* FAB is fixed at left:16px, width:36px → right edge 52px; add 8px gap = 60px.
-   Only the shell topbar needs this — it is the one element the FAB overlaps. */
-.sidebar-closed .topbar {
-  padding-left: 60px;
 }
 
 .crumb {
@@ -331,6 +336,21 @@ input:focus {
   background: color-mix(in srgb, var(--danger) 15%, transparent);
 }
 
+/* ── Shared: status dot ─────────────────────────────────────────────────── */
+.state-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ok);
+}
+.state-dot.watch {
+  background: var(--warn);
+}
+.state-dot.risk {
+  background: var(--danger);
+}
+
 @media (max-width: 900px) {
   .search {
     width: 200px;
@@ -340,19 +360,136 @@ input:focus {
   }
 }
 @media (max-width: 680px) {
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .top-right {
-    width: 100%;
-  }
-  .search {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-  }
   .kbd {
     display: none;
+  }
+}
+
+/* ── Shared: page intro + footer (Teams) ────────────────────────────────── */
+.hero {
+  padding: 32px 28px 24px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(47, 169, 155, 0.15), transparent 70%);
+  pointer-events: none;
+}
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.hero-kicker::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
+h1.page-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  margin: 10px 0 6px;
+  line-height: 1.05;
+}
+h1.page-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+.page-sub {
+  font-size: 15px;
+  color: var(--ink-2);
+  max-width: 580px;
+  line-height: 1.5;
+  margin: 0;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 20px 28px;
+}
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 28px 28px;
+  font-size: 11.5px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+.foot .mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.foot code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  color: var(--ink-2);
+}
+
+/* ── Shared: primary action button ──────────────────────────────────────── */
+.register-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    opacity 120ms,
+    transform 80ms;
+}
+.register-btn:hover {
+  opacity: 0.88;
+}
+.register-btn:active {
+  transform: scale(0.98);
+}
+.register-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  h1.page-title {
+    font-size: 32px;
+  }
+  .hero,
+  .stats,
+  .foot {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+@media (max-width: 680px) {
+  .stats {
+    grid-template-columns: 1fr;
   }
 }

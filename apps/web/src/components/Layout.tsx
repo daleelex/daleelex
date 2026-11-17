@@ -1,68 +1,53 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
-import { useTheme } from '../lib/theme';
 import { TopBarSlotProvider } from '../lib/topbar';
 import { TopBar } from './TopBar';
 import { CommandPalette } from './CommandPalette';
 import './Layout.css';
 
-const NAV_GROUPS = [
+const NAV_ITEMS = [
+  { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
+  { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: 'services', end: false },
   {
-    section: 'Workspace',
-    items: [
-      { to: '/', label: 'Home', icon: <HomeIcon />, countKey: null, end: true },
-      { to: '/services', label: 'Catalog', icon: <CatalogIcon />, countKey: null, end: false },
-      { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
-      { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
-    ],
+    to: '/dependencies',
+    label: 'Dependencies',
+    icon: <GraphIcon />,
+    countKey: null,
+    end: false,
   },
-  {
-    section: 'Operations',
-    items: [
-      {
-        to: '/health',
-        label: 'Health & SLO',
-        icon: <HealthIcon />,
-        countKey: null,
-        end: false,
-      },
-      {
-        to: '/settings',
-        label: 'Settings',
-        icon: <SettingsIcon />,
-        countKey: null,
-        end: false,
-      },
-    ],
-  },
+  { to: '/teams', label: 'Teams', icon: <TeamsIcon />, countKey: 'teams', end: false },
+  { to: '/docs', label: 'TechDocs', icon: <DocsIcon />, countKey: 'docs', end: false },
+  { to: '/health', label: 'Readiness', icon: <HealthIcon />, countKey: null, end: false },
 ] as const;
 
 export function Layout() {
-  const [theme, setTheme] = useTheme();
-
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('daleelex-nav-collapsed') ?? '{}');
-    } catch {
-      return {};
-    }
-  });
-
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+  // Desktop: the sidebar is either full width or an icon rail — it never
+  // disappears, so navigation is always one click away.
+  const [expanded, setExpanded] = useState<boolean>(() => {
     return localStorage.getItem('daleelex-sidebar-open') !== 'false';
   });
+  // Narrow screens: the sidebar is an off-canvas drawer instead.
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const [actionsSlot, setActionsSlot] = useState<HTMLDivElement | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const { pathname } = useLocation();
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setPaletteOpen((prev) => !prev);
+      }
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
       }
     }
 
@@ -85,94 +70,88 @@ export function Layout() {
     queryFn: api.stats,
   });
 
-  const navCounts: Record<'teams' | 'docs', number | null> = {
+  const navCounts: Record<'services' | 'teams' | 'docs', number | null> = {
+    services: statsQuery.data?.serviceCount ?? null,
     teams: statsQuery.data?.teamCount ?? null,
     docs: statsQuery.data?.docCount ?? null,
   };
 
-  function toggleTheme() {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  }
-
-  function toggleSection(section: string) {
-    setCollapsed((prev) => {
-      const next = { ...prev, [section]: !prev[section] };
-      localStorage.setItem('daleelex-nav-collapsed', JSON.stringify(next));
-      return next;
-    });
-  }
-
-  function toggleSidebar() {
-    setSidebarOpen((prev) => {
+  function toggleExpanded() {
+    setExpanded((prev) => {
       const next = !prev;
       localStorage.setItem('daleelex-sidebar-open', String(next));
       return next;
     });
   }
 
+  const sidebarClass = `sidebar${expanded ? '' : ' rail'}${mobileOpen ? ' mobile-open' : ''}`;
+
   return (
     <div className="root">
-      <aside className={`sidebar${sidebarOpen ? '' : ' closed'}`}>
-        <div className="brand">
-          <span className="brand-wordmark">DaleelEx</span>
-          <button className="brand-close" onClick={toggleSidebar} title="Close sidebar">
-            <CloseIcon />
-          </button>
-        </div>
-        <div className="sidebar-sep" />
-        <nav className="nav">
-          {NAV_GROUPS.map((group) => {
-            const isOpen = !collapsed[group.section];
-            return (
-              <div key={group.section}>
-                <button
-                  className="nav-section-btn"
-                  onClick={() => toggleSection(group.section)}
-                  aria-expanded={isOpen}
-                >
-                  {group.section}
-                  <ChevronDownIcon open={isOpen} />
-                </button>
-                <div className={`nav-group-items${isOpen ? ' open' : ''}`}>
-                  <div className="nav-group-inner">
-                    {group.items.map((item) => {
-                      const count = item.countKey === null ? null : navCounts[item.countKey];
+      {mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
 
-                      return (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          end={item.end}
-                          className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-                        >
-                          {item.icon}
-                          <span className="label">{item.label}</span>
-                          {count !== null && <span className="nav-count">{count}</span>}
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+      <aside className={sidebarClass} aria-label="Primary">
+        <NavLink to="/" className="brand" aria-label="DaleelEx home">
+          <img
+            className="brand-logo"
+            src="/logo-on-dark.png"
+            alt="DaleelEx"
+            width="133"
+            height="46"
+          />
+          <img className="brand-mark" src="/logo-mark.png" alt="" width="36" height="36" />
+        </NavLink>
+
+        <nav className="nav">
+          {NAV_ITEMS.map((item) => {
+            const count = item.countKey === null ? null : navCounts[item.countKey];
+
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                title={expanded ? undefined : item.label}
+                aria-label={item.label}
+                className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+              >
+                {item.icon}
+                <span className="label">{item.label}</span>
+                {count !== null && <span className="nav-count">{count}</span>}
+              </NavLink>
             );
           })}
         </nav>
+
         <div className="sidebar-foot">
-          <button className="theme-toggle" onClick={toggleTheme}>
-            {theme === 'light' ? <MoonIcon /> : <SunIcon />}
-            <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
+          <NavLink
+            to="/settings"
+            title={expanded ? undefined : 'Settings'}
+            aria-label="Settings"
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+          >
+            <SettingsIcon />
+            <span className="label">Settings</span>
+          </NavLink>
+          <button
+            className="nav-item sidebar-collapse"
+            onClick={toggleExpanded}
+            aria-expanded={expanded}
+            aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            <CollapseIcon flipped={!expanded} />
+            <span className="label">Collapse</span>
           </button>
         </div>
       </aside>
 
-      {!sidebarOpen && (
-        <button className="hamburger-fab" onClick={toggleSidebar} title="Open sidebar">
-          <HamburgerIcon />
-        </button>
-      )}
-
-      <main className={`main${sidebarOpen ? '' : ' sidebar-closed'}`}>
-        <TopBar onOpenSearch={() => setPaletteOpen(true)} actionsRef={setActionsSlot} />
+      <main className="main">
+        <TopBar
+          onOpenSearch={() => setPaletteOpen(true)}
+          onOpenNav={() => setMobileOpen(true)}
+          actionsRef={setActionsSlot}
+        />
         <TopBarSlotProvider value={actionsSlot}>
           <Outlet />
         </TopBarSlotProvider>
@@ -183,11 +162,29 @@ export function Layout() {
   );
 }
 
-function HomeIcon() {
+function CollapseIcon({ flipped }: { flipped: boolean }) {
   return (
     <svg
       width="15"
       height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      style={{ transform: flipped ? 'scaleX(-1)' : undefined, flexShrink: 0 }}
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+      <polyline points="16 9 13 12 16 15" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -201,8 +198,8 @@ function HomeIcon() {
 function CatalogIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -216,8 +213,8 @@ function CatalogIcon() {
 function TeamsIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -233,8 +230,8 @@ function TeamsIcon() {
 function DocsIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -245,11 +242,28 @@ function DocsIcon() {
     </svg>
   );
 }
+function GraphIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <rect x="2" y="9" width="6" height="6" rx="1.5" />
+      <rect x="16" y="3" width="6" height="6" rx="1.5" />
+      <rect x="16" y="15" width="6" height="6" rx="1.5" />
+      <path d="M8 12h3a2 2 0 0 0 2-2V8a2 2 0 0 1 2-2h1M13 14v2a2 2 0 0 0 2 2h1" />
+    </svg>
+  );
+}
 function HealthIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -262,8 +276,8 @@ function HealthIcon() {
 function SettingsIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="17"
+      height="17"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -271,92 +285,6 @@ function SettingsIcon() {
     >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  );
-}
-function SunIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1" x2="12" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" />
-      <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-    </svg>
-  );
-}
-function MoonIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-function ChevronDownIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      style={{
-        transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-        transition: 'transform 200ms ease',
-        flexShrink: 0,
-      }}
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-function HamburgerIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
-}
-function CloseIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }

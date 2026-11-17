@@ -193,3 +193,84 @@ describe('planCatalogSync', () => {
     );
   });
 });
+
+describe('planCatalogSync retirement', () => {
+  const tracked = new Map<string, ManagementSource>([
+    ['svc-one-001', 'repository'],
+    ['svc-gone-002', 'repository'],
+  ]);
+  const live = new Map<string, string | null>([
+    ['svc-one-001', 'acme/one'],
+    ['svc-gone-002', 'acme/gone'],
+  ]);
+
+  it('retires a service whose repository no longer declares it', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one')],
+      knownTeamIds: teams,
+      existing: tracked,
+      retirable: live,
+    });
+
+    expect(plan.retirements).toEqual([{ id: 'svc-gone-002', repository: 'acme/gone' }]);
+    expect(plan.retirementsHeld).toBeNull();
+  });
+
+  it('keeps a service that moved to another repository', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one'), file('acme/new-home', { id: 'svc-gone-002' })],
+      knownTeamIds: teams,
+      existing: tracked,
+      retirable: live,
+    });
+
+    expect(plan.retirements).toEqual([]);
+  });
+
+  it('keeps a service whose catalog file could not be downloaded', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one')],
+      knownTeamIds: teams,
+      existing: tracked,
+      retirable: live,
+      unreadable: new Set(['acme/gone']),
+    });
+
+    expect(plan.retirements).toEqual([]);
+  });
+
+  it('keeps a service whose catalog file stopped validating', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one'), file('acme/gone', { id: 'svc-gone-002', type: 'nonsense' })],
+      knownTeamIds: teams,
+      existing: tracked,
+      retirable: live,
+    });
+
+    expect(plan.skipped.map((entry) => entry.repository)).toEqual(['acme/gone']);
+    expect(plan.retirements).toEqual([]);
+  });
+
+  it('retires nothing, and says why, when no catalog file was found anywhere', () => {
+    const plan = planCatalogSync({
+      files: [],
+      knownTeamIds: teams,
+      existing: tracked,
+      retirable: live,
+    });
+
+    expect(plan.retirements).toEqual([]);
+    expect(plan.retirementsHeld).toContain('2 service(s) were kept');
+  });
+
+  it('never retires a service it was not told is repository-managed', () => {
+    const plan = planCatalogSync({
+      files: [file('acme/one')],
+      knownTeamIds: teams,
+      existing: new Map<string, ManagementSource>([['svc-portal-003', 'portal']]),
+    });
+
+    expect(plan.retirements).toEqual([]);
+    expect(plan.retirementsHeld).toBeNull();
+  });
+});

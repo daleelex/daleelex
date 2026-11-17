@@ -1,30 +1,21 @@
-import type { CSSProperties, KeyboardEvent } from 'react';
-import type { Service, ServiceType } from '@daleelex/shared';
+import type { KeyboardEvent } from 'react';
+import type { ServiceType } from '@daleelex/shared';
+import { STATE_LABEL, type ServiceHealth } from '../lib/health';
 import './ServiceCard.css';
 
 interface Props {
-  service: Service;
+  health: ServiceHealth;
   onClick?: () => void;
 }
 
-const CAT_COLORS: Record<ServiceType, { color: string; bg: string }> = {
-  api: { color: '#2FA99B', bg: 'rgba(47,169,155,0.14)' },
-  db: { color: '#1F5FA5', bg: 'rgba(31,95,165,0.12)' },
-  web: { color: '#0A3743', bg: 'rgba(10,55,67,0.10)' },
-  ml: { color: '#6B4FA8', bg: 'rgba(107,79,168,0.12)' },
-  tool: { color: '#D89510', bg: 'rgba(216,149,16,0.14)' },
-};
-
-const LIFECYCLE_COLOR: Record<string, string> = {
+export const LIFECYCLE_COLOR: Record<string, string> = {
   production: 'var(--ok)',
   beta: 'var(--warn)',
   deprecated: 'var(--muted)',
 };
 
-export function ServiceCard({ service, onClick }: Props) {
-  const cat = CAT_COLORS[service.type] ?? CAT_COLORS.api;
-  const visibleTags = service.tags.slice(0, 2);
-  const hiddenTagCount = Math.max(service.tags.length - visibleTags.length, 0);
+export function ServiceCard({ health, onClick }: Props) {
+  const { service, state, score, gaps } = health;
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (!onClick) {
@@ -39,8 +30,7 @@ export function ServiceCard({ service, onClick }: Props) {
 
   return (
     <article
-      className="card"
-      style={{ '--cat-color': cat.color, '--cat-bg': cat.bg } as CSSProperties}
+      className={`card cat-${service.type}`}
       onClick={onClick}
       onKeyDown={handleKeyDown}
       tabIndex={onClick ? 0 : undefined}
@@ -51,6 +41,14 @@ export function ServiceCard({ service, onClick }: Props) {
         <div className="card-icon">
           <TypeIcon type={service.type} />
         </div>
+        <div className="card-heading">
+          <h3 className="card-title">{service.name}</h3>
+          <div className="card-id">{service.id}</div>
+        </div>
+        <span className={`state-pill ${state}`}>{STATE_LABEL[state]}</span>
+      </div>
+
+      <div className="card-chips">
         <span className="type-label">{service.type}</span>
         <span className={`tier-badge tier-${service.tier}`}>T{service.tier}</span>
         <div className="lifecycle">
@@ -59,36 +57,24 @@ export function ServiceCard({ service, onClick }: Props) {
         </div>
       </div>
 
-      <h3 className="card-title">{service.name}</h3>
-      <div className="card-id">{service.id}</div>
-
-      {service.description && <p className="card-desc">{service.description}</p>}
-
       <div className="card-meta">
-        <div>
+        <div className="card-meta-owner">
           <div className="meta-label">Owner</div>
-          <div className="meta-value">{service.owner?.name ?? '—'}</div>
-        </div>
-        <div>
-          <div className="meta-label">Language</div>
-          <div className="meta-value">{service.language ?? 'Unspecified'}</div>
-        </div>
-      </div>
-
-      <div className="card-foot">
-        <div className="card-foot-item">
-          <div>
-            <div className="meta-label">SLO target</div>
-            <div className="meta-value">{service.sloTarget ?? '—'}</div>
+          <div className={`meta-value${service.owner ? '' : ' unowned'}`}>
+            {service.owner?.name ?? 'Unowned'}
           </div>
         </div>
-        <div className="card-foot-item">
-          {visibleTags.map((tag) => (
-            <span key={tag} className="tag">
-              {tag}
-            </span>
-          ))}
-          {hiddenTagCount > 0 && <span className="tag muted">+{hiddenTagCount}</span>}
+        <div
+          className="card-readiness"
+          title={gaps.length > 0 ? gaps.join(' · ') : 'Fully described'}
+        >
+          <div className="meta-label">Readiness</div>
+          <div className="readiness">
+            <div className="readiness-track">
+              <div className={`readiness-fill ${state}`} style={{ width: `${score}%` }} />
+            </div>
+            <span className="readiness-score">{score}</span>
+          </div>
         </div>
       </div>
     </article>
@@ -103,7 +89,7 @@ function CircleDot({ color }: { color: string }) {
   );
 }
 
-function TypeIcon({ type }: { type: ServiceType }) {
+export function TypeIcon({ type }: { type: ServiceType }) {
   switch (type) {
     case 'api':
       return (

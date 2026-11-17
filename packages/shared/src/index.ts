@@ -45,6 +45,27 @@ export interface ServiceListResponse {
   total: number;
 }
 
+export type ScorecardStatus = 'pass' | 'fail' | 'skip';
+export type ScorecardCategory = 'basics' | 'observability' | 'security' | 'reliability';
+
+export interface ScorecardCheckResult {
+  checkId: string;
+  label: string;
+  category: ScorecardCategory;
+  weight: number;
+  status: ScorecardStatus;
+  message: string | null;
+  /** When this outcome was first recorded; unchanged results are not rewritten. */
+  since: string;
+}
+
+export interface ServiceScorecardResponse {
+  serviceId: string;
+  /** Weighted share of applicable checks passing, 0-100. Null when none apply or none have run. */
+  score: number | null;
+  results: ScorecardCheckResult[];
+}
+
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
 export interface ServiceLogEntry {
@@ -240,4 +261,24 @@ export interface JenkinsTestResponse {
   ok: boolean;
   message: string;
   version: string | null;
+}
+
+export interface LokiConfigResponse {
+  baseUrl: string | null;
+  /** The stream label that carries the catalog service ID. */
+  serviceLabel: string;
+  /** Where the active config comes from; `none` means the Logs tab serves mock lines. */
+  source: 'db' | 'env' | 'none';
+}
+
+export interface LokiConfigRequest {
+  baseUrl: string;
+  serviceLabel?: string;
+}
+
+export interface LokiTestResponse {
+  ok: boolean;
+  message: string;
+  /** Whether Loki currently has streams carrying the service label; null if unknown. */
+  labelFound: boolean | null;
 }

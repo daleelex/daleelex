@@ -53,6 +53,7 @@ Filter params on the list endpoint: `?tier=1&type=api&owner=platform-identity&li
 GET    /api/v1/teams                       List
 GET    /api/v1/teams/:id                   Detail + member services
 POST   /api/v1/teams                       Create a portal-managed team (admin only)
+DELETE /api/v1/teams/:id                   Delete a portal-managed team (admin only)
 
 GET    /api/v1/teams/:id/members           List members (signed-in users)
 POST   /api/v1/teams/:id/members           Add a member by email (admin only)
@@ -73,6 +74,13 @@ channel-name shape; on-call schedules are free text up to 200 characters and are
 against PagerDuty or another provider. The endpoint returns `201` with the created team and its
 empty calculated statistics. Duplicate IDs return `409` with `team_id_conflict`; invalid bodies
 return `422` with `validation_failed`. Both use the standard error envelope and request ID.
+
+`DELETE /api/v1/teams/:id` hard-deletes a portal-managed team and returns `204`. Unknown IDs
+return `404` with `team_not_found`. Repository-managed teams return `409` with
+`repository_managed_team`. A team that still owns live services returns `409` with
+`team_has_services` and the blocking services (`id`, `name`) in `details.services`; reassign or
+delete them first. Soft-deleted services do not block the delete — the foreign key clears their
+owner.
 
 ### Scorecards
 

@@ -39,8 +39,8 @@ const PAGES: PaletteItem[] = [
   {
     key: 'page:health',
     group: 'Pages',
-    title: 'Health & SLO',
-    subtitle: 'Readiness and coverage',
+    title: 'Readiness',
+    subtitle: 'What each service is missing',
     to: '/health',
   },
   {

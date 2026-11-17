@@ -1,192 +1,224 @@
 import { useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
-import { computeHealth, STATE_LABEL } from '../lib/health';
+import { CHECKS, computeHealth, STATE_LABEL, type ServiceHealth } from '../lib/health';
 import './HealthPage.css';
+
+const LIFECYCLE_LABEL = { production: 'Production', beta: 'Beta', deprecated: 'Deprecated' };
 
 export function HealthPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['services'],
     queryFn: api.services,
   });
+  const [params, setParams] = useSearchParams();
 
-  const services = data?.data ?? [];
-  const health = useMemo(() => computeHealth(services), [services]);
+  const health = useMemo(() => computeHealth(data?.data ?? []), [data]);
+  const ready = health.healthyServices;
+
+  // The filter lives in the URL so a link to "everything without a runbook" can be shared.
+  const activeCheck = CHECKS.find((check) => check.id === params.get('gap')) ?? null;
+  const rows = activeCheck ? health.rows.filter((row) => !row.checks[activeCheck.id]) : health.rows;
+
+  const failing = health.checkSummary.filter((item) => item.missing > 0);
+  const passing = health.checkSummary.filter((item) => item.missing === 0);
+
+  function setGap(id: string | null) {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (id) next.set('gap', id);
+      else next.delete('gap');
+      return next;
+    });
+  }
 
   return (
-    <>
-      <header className="health-topbar">
-        <div>
-          <div className="health-kicker">Operations</div>
-          <h1 className="health-title">Health &amp; SLO</h1>
-        </div>
-        <div className="health-summary-pill">
-          <span className={`summary-dot ${health.overallState}`} />
-          {health.overallLabel}
-        </div>
+    <div className="ready-body">
+      <header className="ready-head">
+        <div className="ready-kicker">Readiness</div>
+        <h1 className="ready-title">{headline(isLoading, isError, ready, health.total)}</h1>
+        <p className="ready-sub">
+          A service is ready when its catalog entry has an SLO target, an owner, a runbook and a
+          dashboard, and it is running in production. This is what each team has declared in{' '}
+          <code>catalog-info.yaml</code> — it is not a measure of live uptime.
+        </p>
       </header>
 
-      <section className="health-hero">
-        <div>
-          <h2>Catalog-derived service readiness</h2>
-          <p>
-            Track SLO coverage, ownership, and operational links from the service catalog. This page
-            reflects the metadata DaleelEx already collects.
-          </p>
-        </div>
-        <div className="hero-meter" aria-label={`${health.readinessScore}% readiness`}>
-          <div
-            className="meter-ring"
-            style={{ '--meter': `${health.readinessScore}%` } as React.CSSProperties}
-          >
-            <span>{health.readinessScore}</span>
-          </div>
-          <div>
-            <strong>Readiness score</strong>
-            <span>{health.healthyServices} healthy services</span>
-          </div>
-        </div>
-      </section>
+      {!isLoading && !isError && health.total > 0 && (
+        <>
+          <section className="ready-gaps" aria-labelledby="ready-gaps-title">
+            <h2 id="ready-gaps-title" className="ready-section-title">
+              {failing.length > 0 ? 'What’s missing' : 'Nothing is missing'}
+            </h2>
 
-      <section className="health-stats">
-        <Stat
-          label="SLO coverage"
-          value={`${health.sloCoverage}%`}
-          sub={`${health.withSlo} of ${health.total} services`}
-        />
-        <Stat
-          label="Tier 1 ready"
-          value={`${health.tier1Ready}/${health.tier1Total}`}
-          sub="SLO, owner, runbook"
-        />
-        <Stat
-          label="Runbooks"
-          value={`${health.runbookCoverage}%`}
-          sub={`${health.withRunbook} linked`}
-        />
-        <Stat
-          label="Owners"
-          value={`${health.ownerCoverage}%`}
-          sub={`${health.withOwner} assigned`}
-          accent
-        />
-      </section>
+            {failing.length > 0 && (
+              <div className="gap-cards">
+                {failing.map(({ check, missing }) => {
+                  const active = activeCheck?.id === check.id;
+                  return (
+                    <button
+                      key={check.id}
+                      type="button"
+                      className={`gap-card${active ? ' active' : ''}`}
+                      aria-pressed={active}
+                      onClick={() => setGap(active ? null : check.id)}
+                    >
+                      <strong>{missing}</strong>
+                      <span>{check.describeMissing(missing)}</span>
+                      <small>{active ? 'Showing these — click to clear' : 'Show these'}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-      <section className="health-grid">
-        <div className="health-panel">
-          <div className="panel-head">
-            <div>
-              <h2>Service health</h2>
-              <p>
-                {isLoading
-                  ? 'Loading catalog signals...'
-                  : `${health.rows.length} services evaluated`}
+            {passing.length > 0 && (
+              <p className="ready-passing">
+                <Tick />
+                <span>
+                  Complete for every service: {passing.map((item) => item.check.label).join(', ')}.
+                </span>
               </p>
-            </div>
-          </div>
+            )}
+          </section>
 
-          {isLoading && <div className="health-empty">Loading health signals...</div>}
-          {isError && (
-            <div className="health-empty">Failed to load health signals. Check the API.</div>
-          )}
-          {!isLoading && !isError && (
-            <div className="health-table-wrap">
-              <table className="health-table">
+          <section className="ready-panel" aria-labelledby="ready-table-title">
+            <div className="ready-panel-head">
+              <h2 id="ready-table-title" className="ready-section-title">
+                {activeCheck
+                  ? `${rows.length} ${activeCheck.describeMissing(rows.length)}`
+                  : `All ${health.total} services`}
+              </h2>
+              {activeCheck && (
+                <button type="button" className="ready-clear" onClick={() => setGap(null)}>
+                  Show all {health.total}
+                </button>
+              )}
+            </div>
+
+            <div className="ready-table-wrap">
+              <table className="ready-table">
                 <thead>
                   <tr>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th>SLO</th>
-                    <th>Owner</th>
-                    <th>Ops links</th>
+                    <th scope="col">Service</th>
+                    <th scope="col">Status</th>
+                    {CHECKS.map((check) => (
+                      <th
+                        key={check.id}
+                        scope="col"
+                        className={activeCheck?.id === check.id ? 'active' : undefined}
+                      >
+                        {check.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {health.rows.map((row) => (
-                    <tr key={row.service.id}>
-                      <td>
-                        <div className="service-cell">
-                          <strong>{row.service.name}</strong>
-                          <span>
-                            {row.service.id} · Tier {row.service.tier}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`state-badge ${row.state}`}>{STATE_LABEL[row.state]}</span>
-                      </td>
-                      <td>
-                        <div className="compact-cell">
-                          <strong>{row.service.sloTarget ?? 'Missing'}</strong>
-                          <span>{row.service.sloWindow ?? 'No window'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        {row.service.owner?.name ?? <span className="muted">Unassigned</span>}
-                      </td>
-                      <td>
-                        <div className="ops-links">
-                          <span className={row.hasRunbook ? 'ok' : 'missing'}>Runbook</span>
-                          <span className={row.hasDashboard ? 'ok' : 'missing'}>Dashboard</span>
-                        </div>
-                      </td>
-                    </tr>
+                  {rows.map((row) => (
+                    <ServiceRow key={row.service.id} row={row} />
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-
-        <aside className="health-panel risk-panel">
-          <div className="panel-head">
-            <div>
-              <h2>Needs attention</h2>
-              <p>Highest priority gaps</p>
-            </div>
-          </div>
-          <div className="risk-list">
-            {health.risks.length === 0 && (
-              <div className="health-empty compact">No catalog health gaps found.</div>
-            )}
-            {health.risks.map((row) => (
-              <article key={row.service.id} className="risk-item">
-                <div>
-                  <strong>{row.service.name}</strong>
-                  <span>
-                    Tier {row.service.tier} · {row.service.owner?.name ?? 'No owner'}
-                  </span>
-                </div>
-                <ul>
-                  {row.gaps.map((gap) => (
-                    <li key={gap}>{gap}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </aside>
-      </section>
-    </>
+          </section>
+        </>
+      )}
+    </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  sub,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  accent?: boolean;
-}) {
+function headline(isLoading: boolean, isError: boolean, ready: number, total: number) {
+  if (isLoading) return 'Checking the catalog…';
+  if (isError) return 'The catalog could not be loaded';
+  if (total === 0) return 'No services in the catalog yet';
+  if (ready === total) return `All ${total} services are ready`;
+  return `${ready} of ${total} services are ready`;
+}
+
+function ServiceRow({ row }: { row: ServiceHealth }) {
+  const { service, checks } = row;
+  const slo = [service.sloTarget, service.sloWindow].filter(Boolean).join(' over ');
+
   return (
-    <article className={`health-stat${accent ? ' accent' : ''}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{sub}</small>
-    </article>
+    <tr>
+      <th scope="row">
+        <Link to={`/services?service=${encodeURIComponent(service.id)}`} className="ready-service">
+          <strong>{service.name}</strong>
+          <span>
+            {service.id} · Tier {service.tier}
+          </span>
+        </Link>
+      </th>
+      <td>
+        <span className={`state-pill ${row.state}`}>{STATE_LABEL[row.state]}</span>
+      </td>
+      <Check ok={checks.slo}>{slo || 'Not set'}</Check>
+      <Check ok={checks.owner}>{service.owner?.name ?? 'Unassigned'}</Check>
+      <Check ok={checks.runbook}>
+        <OpsLink url={row.runbookUrl} name={`${service.name} runbook`} />
+      </Check>
+      <Check ok={checks.dashboard}>
+        <OpsLink url={row.dashboardUrl} name={`${service.name} dashboard`} />
+      </Check>
+      <Check ok={checks.production}>{LIFECYCLE_LABEL[service.lifecycle]}</Check>
+    </tr>
+  );
+}
+
+// Pass and fail differ by icon and wording as well as colour.
+function Check({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <td>
+      <span className={`check ${ok ? 'ok' : 'missing'}`}>
+        {ok ? <Tick /> : <Cross />}
+        <span className="sr-only">{ok ? 'Pass: ' : 'Missing: '}</span>
+        <span>{children}</span>
+      </span>
+    </td>
+  );
+}
+
+function OpsLink({ url, name }: { url: string | null; name: string }) {
+  if (!url) return <>Not linked</>;
+  return (
+    <a href={url} target="_blank" rel="noreferrer" aria-label={`Open ${name}`}>
+      Open
+    </a>
+  );
+}
+
+function Tick() {
+  return (
+    <svg className="check-icon ok" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <path
+        d="M2.5 7.5l3 3 6-7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function Cross() {
+  return (
+    <svg
+      className="check-icon missing"
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 3.5l7 7m0-7l-7 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

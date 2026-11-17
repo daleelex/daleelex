@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/react';
-import type { Service, ServiceLink, ServiceDocSummary } from '@daleelex/shared';
+import type { Service, ServiceLink, ServiceDocSummary, ScorecardStatus } from '@daleelex/shared';
 import { DocMarkdown } from './DocMarkdown';
 import { api } from '../api';
 import { buildDependencyTree, flatten, type TreeNode } from '../lib/dependencyTree';
@@ -25,19 +25,6 @@ interface Props {
   onClose: () => void;
   onDeleteSuccess?: (service: Service) => void;
   onUpdateSuccess?: (service: Service) => void;
-}
-
-function deriveChecks(service: Service) {
-  return [
-    { label: 'README present', pass: true },
-    { label: 'Owner assigned', pass: service.owner !== null },
-    { label: 'On-call rotation configured', pass: !!service.owner?.onCallSchedule },
-    { label: 'SLO defined', pass: !!service.sloTarget },
-    { label: 'Runbook linked', pass: service.links.some((l) => l.type === 'runbook') },
-    { label: 'Vulnerability scan clean (7d)', pass: true },
-    { label: 'Tracing instrumented', pass: false },
-    { label: 'Chaos test passed (30d)', pass: false },
-  ];
 }
 
 export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSuccess }: Props) {
@@ -73,9 +60,6 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSucce
 
   if (!service) return null;
 
-  const checks = deriveChecks(service);
-  const passed = checks.filter((c) => c.pass).length;
-  const score = Math.round((passed / checks.length) * 100);
   const deleteError = deleteMutation.error instanceof Error ? deleteMutation.error.message : null;
 
   return (
@@ -169,7 +153,7 @@ export function ServiceDrawer({ service, onClose, onDeleteSuccess, onUpdateSucce
 
           <div className="tab-content">
             {tab === 'overview' && <OverviewTab service={service} />}
-            {tab === 'scorecard' && <ScorecardTab checks={checks} passed={passed} score={score} />}
+            {tab === 'scorecard' && <ScorecardTab serviceId={service.id} />}
             {tab === 'dependencies' && <DependenciesTab service={service} />}
             {tab === 'logs' && <ServiceLogsTab serviceId={service.id} />}
             {tab === 'docs' && <DocsTab serviceId={service.id} links={service.links} />}
@@ -241,42 +225,71 @@ function OverviewTab({ service }: { service: Service }) {
   );
 }
 
-function ScorecardTab({
-  checks,
-  passed,
-  score,
-}: {
-  checks: ReturnType<typeof deriveChecks>;
-  passed: number;
-  score: number;
-}) {
+const STATUS_LABEL: Record<ScorecardStatus, string> = {
+  pass: 'pass',
+  fail: 'action needed',
+  skip: 'not applicable',
+};
+
+function ScorecardTab({ serviceId }: { serviceId: string }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['service-scorecard', serviceId],
+    queryFn: () => api.serviceScorecard(serviceId),
+  });
+
+  if (isLoading) return <p className="dep-section-empty">Loading scorecard…</p>;
+  if (isError || !data) {
+    return (
+      <div className="dep-empty">
+        <p>The scorecard could not be loaded.</p>
+        <p className="dep-empty-sub">Try again in a moment.</p>
+      </div>
+    );
+  }
+  if (data.results.length === 0) {
+    return (
+      <div className="dep-empty">
+        <p>No checks have run for this service yet.</p>
+        <p className="dep-empty-sub">Results appear after the ingestor's next run.</p>
+      </div>
+    );
+  }
+
+  const applicable = data.results.filter((result) => result.status !== 'skip');
+  const passed = applicable.filter((result) => result.status === 'pass').length;
+  const skipped = data.results.length - applicable.length;
+
   return (
     <>
       <div className="score-hero">
         <div className="ring-wrap">
-          <Ring score={score} />
-          <span className="ring-pct">{score}%</span>
+          <Ring score={data.score ?? 0} />
+          <span className="ring-pct">{data.score === null ? '–' : `${data.score}%`}</span>
         </div>
         <div>
           <div className="score-hero-label">Production readiness</div>
           <div className="score-hero-main">
-            {passed} / {checks.length} checks passing
+            {passed} / {applicable.length} checks passing
           </div>
           <div className="score-hero-sub">
-            Last evaluated 2 hours ago · Policy <code>standard-v3</code>
+            Weighted by importance
+            {skipped > 0 && ` · ${skipped} not applicable`}
           </div>
         </div>
       </div>
 
       <h4 className="section-title">Checks</h4>
       <div>
-        {checks.map((c) => (
-          <div key={c.label} className={`check-row${c.pass ? ' pass' : ' fail'}`}>
-            {c.pass ? <CheckIcon /> : <AlertIcon />}
-            <span className="check-label">{c.label}</span>
-            <span className={`check-status${c.pass ? ' pass' : ' fail'}`}>
-              {c.pass ? 'pass' : 'action needed'}
-            </span>
+        {data.results.map((result) => (
+          <div key={result.checkId} className={`check-row ${result.status}`}>
+            {result.status === 'pass' && <CheckIcon />}
+            {result.status === 'fail' && <AlertIcon />}
+            {result.status === 'skip' && <SkipIcon />}
+            <div className="check-text">
+              <span className="check-label">{result.label}</span>
+              {result.message && <span className="check-message">{result.message}</span>}
+            </div>
+            <span className={`check-status ${result.status}`}>{STATUS_LABEL[result.status]}</span>
           </div>
         ))}
       </div>
@@ -314,6 +327,12 @@ function DependenciesTab({ service }: { service: Service }) {
 
   return (
     <>
+      <Link
+        className="dep-graph-link"
+        to={`/dependencies?service=${encodeURIComponent(service.id)}`}
+      >
+        View in dependency graph →
+      </Link>
       <DependencySection title="Depends on" empty="Nothing — this is a leaf." tree={upstream} />
       <DependencySection
         title="Used by"
@@ -629,6 +648,22 @@ function CheckIcon() {
     >
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function SkipIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--muted)"
+      strokeWidth="2.25"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="8" y1="12" x2="16" y2="12" />
     </svg>
   );
 }

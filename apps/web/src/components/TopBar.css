@@ -15,8 +15,16 @@
   min-width: 0;
 }
 
-.topbar > .crumb {
+.topbar > .top-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
+}
+
+/* The drawer trigger only exists where the sidebar is off-canvas. */
+.icon-btn.nav-toggle {
+  display: none;
 }
 
 .search-trigger:hover {
@@ -48,12 +56,24 @@
 }
 
 @media (max-width: 900px) {
+  .icon-btn.nav-toggle {
+    display: grid;
+  }
+
   .search-trigger {
     width: auto;
+    flex: 0 0 auto;
   }
 
   .search-trigger-label,
   .search-trigger .kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .crumb-root,
+  .crumb svg {
     display: none;
   }
 }

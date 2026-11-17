@@ -20,8 +20,18 @@ export interface SkippedRepository {
   reasons: string[];
 }
 
+export interface Retirement {
+  id: string;
+  /** The repository the service was last read from. */
+  repository: string | null;
+}
+
 export interface SyncPlan {
   upserts: ServiceRecord[];
+  /** Services no repository declares any more, to be soft-deleted. */
+  retirements: Retirement[];
+  /** Why nothing was retired this run although something could have been; null otherwise. */
+  retirementsHeld: string | null;
   skipped: SkippedRepository[];
   warnings: { repository: string; messages: string[] }[];
 }
@@ -32,6 +42,13 @@ export interface PlanInput {
   knownTeamIds: ReadonlySet<string>;
   /** How each existing service is managed, so ingestion cannot hijack a portal entry. */
   existing: ReadonlyMap<string, ManagementSource>;
+  /**
+   * Live repository-managed services, by id, with the repository each was last
+   * read from. Only these can be retired; leaving it out retires nothing.
+   */
+  retirable?: ReadonlyMap<string, string | null>;
+  /** Repositories whose catalog file could not be read this run. */
+  unreadable?: ReadonlySet<string>;
 }
 
 /**
@@ -40,7 +57,13 @@ export interface PlanInput {
  * Pure on purpose: every decision about what ingestion would do is testable
  * without a database, and `--dry-run` prints exactly what a real run applies.
  */
-export function planCatalogSync({ files, knownTeamIds, existing }: PlanInput): SyncPlan {
+export function planCatalogSync({
+  files,
+  knownTeamIds,
+  existing,
+  retirable = new Map(),
+  unreadable = new Set(),
+}: PlanInput): SyncPlan {
   const upserts: ServiceRecord[] = [];
   const skipped: SkippedRepository[] = [];
   const messagesByRepository = new Map<string, string[]>();
@@ -126,8 +149,31 @@ export function planCatalogSync({ files, knownTeamIds, existing }: PlanInput): S
     if (messages.length > 0) messagesByRepository.set(repository, messages);
   }
 
+  // A service nobody declared this run has had its catalog-info.yaml removed,
+  // or its repository archived or deleted. But "we could not tell" must never
+  // be read as "it is gone": a repository whose file failed to download or to
+  // validate keeps its service until a later run can read it properly.
+  const undetermined = new Set([...unreadable, ...skipped.map((entry) => entry.repository)]);
+  const unclaimed = [...retirable]
+    .filter(([id]) => !claimedBy.has(id))
+    .map(([id, repository]) => ({ id, repository }));
+
+  let retirements: Retirement[] = [];
+  let retirementsHeld: string | null = null;
+  if (unclaimed.length > 0 && files.length === 0) {
+    // Every service vanishing at once is far more likely a token that lost
+    // access, or the wrong organisation, than a real mass withdrawal.
+    retirementsHeld = `No catalog-info.yaml was found in any repository, so ${unclaimed.length} service(s) were kept rather than retired. Check the token's access and GITHUB_ORG.`;
+  } else {
+    retirements = unclaimed.filter(
+      ({ repository }) => !repository || !undetermined.has(repository),
+    );
+  }
+
   return {
     upserts,
+    retirements,
+    retirementsHeld,
     skipped,
     warnings: [...messagesByRepository].map(([repository, messages]) => ({ repository, messages })),
   };

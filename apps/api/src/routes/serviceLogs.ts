@@ -12,7 +12,8 @@ import {
 } from '../logs/logSource.js';
 
 interface ServiceLogsRouteOptions {
-  logSource: LogSource;
+  /** Called per request, so a config change applies without a restart. */
+  resolveLogSource: () => Promise<LogSource>;
 }
 
 interface ServiceLogsQuerystring {
@@ -129,7 +130,8 @@ export async function serviceLogsRoute(app: FastifyInstance, options: ServiceLog
       }
 
       try {
-        const page = await options.logSource.query({
+        const logSource = await options.resolveLogSource();
+        const page = await logSource.query({
           selector: { serviceId: service.id },
           start: req.query.start,
           end: req.query.end,

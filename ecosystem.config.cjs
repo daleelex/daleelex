@@ -21,11 +21,18 @@ module.exports = {
       name: 'daleelex-ingestor',
       cwd: `${BASE_DIR}/current/ingestor`,
       script: './dist/index.js',
-      // The current implementation (apps/ingestor/src/index.ts) is a one-shot stub that
-      // logs and exits — not a long-running worker yet. autorestart: false keeps pm2 from
-      // crash-looping it. Revisit once ingestor actually does its scanning-worker job.
-      autorestart: false,
-      env: { NODE_ENV: 'production' },
+      // A long-running worker: INGEST_INTERVAL_MINUTES makes it repeat its run
+      // (catalogue, docs, scorecards) instead of exiting after one. The schedule
+      // lives in the process rather than in pm2's cron_restart because pm2
+      // documents that option as needing the app to be running, and a one-shot
+      // has exited by then.
+      //
+      // It exits non-zero when it has no DATABASE_URL. The delay and cap stop
+      // that from becoming a tight crash loop: pm2 marks it errored and leaves
+      // the API alone.
+      restart_delay: 30_000,
+      max_restarts: 10,
+      env: { NODE_ENV: 'production', INGEST_INTERVAL_MINUTES: '60' },
     },
   ],
 };

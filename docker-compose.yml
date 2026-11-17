@@ -104,8 +104,9 @@ services:
     #
     #   docker compose build ingestor
     #
-    # This mirrors `autorestart: false` in ecosystem.config.cjs, set for the same
-    # reason. Revisit when the ingestor becomes an actual long-running worker.
+    # A one-shot here: with INGEST_INTERVAL_MINUTES unset it runs once and exits.
+    # The pm2 deploy sets that variable in ecosystem.config.cjs to keep it running
+    # on a schedule instead.
     profiles: [ingestor]
     restart: 'no'
     # List form, and the optional vars are bare on purpose. `VAR: ${VAR:-}` would set

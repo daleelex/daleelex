@@ -16,6 +16,7 @@ const dbMocks = vi.hoisted(() => ({
   teamFindUnique: vi.fn(),
   teamFindUniqueOrThrow: vi.fn(),
   teamUpdate: vi.fn(),
+  teamDelete: vi.fn(),
   queryRaw: vi.fn(),
 }));
 
@@ -38,6 +39,14 @@ vi.mock('./db.js', () => ({
       update: dbMocks.teamUpdate,
     },
     $queryRaw: dbMocks.queryRaw,
+    // DELETE /teams/:id runs inside a transaction: lock the team, check it owns nothing,
+    // then delete it.
+    $transaction: (run: (tx: unknown) => Promise<unknown>) =>
+      run({
+        $queryRaw: async () => [{ managementSource: 'portal' }],
+        service: { findMany: async () => [] },
+        team: { delete: dbMocks.teamDelete },
+      }),
   },
 }));
 
@@ -150,6 +159,13 @@ const mutationCases: MutationCase[] = [
     },
     successStatus: 200,
     mutation: dbMocks.teamUpdate,
+  },
+  {
+    name: 'DELETE /api/v1/teams/:id',
+    method: 'DELETE',
+    url: '/api/v1/teams/team-1',
+    successStatus: 204,
+    mutation: dbMocks.teamDelete,
   },
 ];
 

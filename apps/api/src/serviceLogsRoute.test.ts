@@ -59,7 +59,7 @@ const validQuery = 'start=2026-08-01T09%3A00%3A00.000Z&end=2026-08-01T10%3A00%3A
 
 async function buildApp() {
   const app = Fastify();
-  await app.register(serviceLogsRoute, { prefix: '/api/v1', logSource: source });
+  await app.register(serviceLogsRoute, { prefix: '/api/v1', resolveLogSource: async () => source });
   return app;
 }
 
@@ -227,7 +227,7 @@ describe('service logs route', () => {
     const app = Fastify();
     await app.register(serviceLogsRoute, {
       prefix: '/api/v1',
-      logSource: new MockLogSource(),
+      resolveLogSource: async () => new MockLogSource(),
     });
 
     const first = await app.inject({
