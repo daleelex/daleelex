@@ -9,6 +9,7 @@ import { ServicesPage } from './pages/ServicesPage';
 import { TeamsPage } from './pages/TeamsPage';
 import { TechDocsPage } from './pages/TechDocsPage';
 import { HealthPage } from './pages/HealthPage';
+import { DependenciesPage } from './pages/DependenciesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
@@ -47,6 +48,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             >
               <Route index element={<HomePage />} />
               <Route path="services" element={<ServicesPage />} />
+              <Route path="dependencies" element={<DependenciesPage />} />
               <Route path="teams" element={<TeamsPage />} />
               <Route path="docs" element={<TechDocsPage />} />
               <Route path="health" element={<HealthPage />} />

@@ -777,3 +777,15 @@
   color: var(--accent);
   white-space: nowrap;
 }
+
+.dep-graph-link {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dep-graph-link:hover {
+  text-decoration: underline;
+}

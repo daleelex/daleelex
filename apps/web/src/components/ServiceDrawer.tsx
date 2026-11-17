@@ -327,6 +327,12 @@ function DependenciesTab({ service }: { service: Service }) {
 
   return (
     <>
+      <Link
+        className="dep-graph-link"
+        to={`/dependencies?service=${encodeURIComponent(service.id)}`}
+      >
+        View in dependency graph →
+      </Link>
       <DependencySection title="Depends on" empty="Nothing — this is a leaf." tree={upstream} />
       <DependencySection
         title="Used by"
